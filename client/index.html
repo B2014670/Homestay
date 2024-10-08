@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + React</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+
+
+  <df-messenger intent="WELCOME" chat-title="HomestayBookingBot" agent-id="46b58091-c572-42d6-831d-ba3bb66c67c8"
+    language-code="en" chat-icon="iconBotchat.png" chat-subtitle="Đặt phòng homestay">
+  </df-messenger>
+
+  <style>
+    df-messenger {
+      --df-messenger-bot-message: #6AB187;
+      /* Bubble background color for agent messages */
+      --df-messenger-button-titlebar-color: #0d47a1;
+      /* Color for the floating button and titlebar */
+      --df-messenger-button-titlebar-font-color: #ffffff;
+      /* Font color for the title in the titlebar */
+      --df-messenger-chat-background-color: #d8d6d6;
+      /* Color for the chat dialog background */
+      --df-messenger-font-color: #ffffff;
+      /* Font color for messages */
+      --df-messenger-input-box-color: #ffffff;
+      /* Background color for the text input box */
+      --df-messenger-input-font-color: #000000;
+      /* Font color for the text input box */
+      --df-messenger-input-placeholder-font-color: #888888;
+      /* Font color for placeholder text in the text input box */
+      --df-messenger-minimized-chat-close-icon-color: #0d47a1;
+      /* Color of the close icon in the closed chat view */
+      --df-messenger-send-icon: #0d47a1;
+      /* Color of the send icon in the text input box */
+      --df-messenger-user-message: #0084FF;
+      /* Bubble background color for user messages */
+    }
+  </style>
+
+
+
+
+</body>
+
+</html>

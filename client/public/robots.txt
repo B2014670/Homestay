@@ -1,0 +1,8 @@
+# https://www.robotstxt.org/robotstxt.html
+
+# Allow all crawlers access to everything except /private and /admin
+User-agent: *
+Disallow: /private
+Disallow: /admin
+
+
