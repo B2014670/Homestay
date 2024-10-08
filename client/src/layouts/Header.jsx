@@ -166,7 +166,7 @@ const Header = () => {
                             <Link
                                 to={path.TRANGCHU}
                                 onClick={toggleMenu}
-                                className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                                className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                             >
                                 Trang chủ
                             </Link>
@@ -175,7 +175,7 @@ const Header = () => {
                             <Link
                                 to={path.ABOUT}
                                 onClick={toggleMenu}
-                                className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                                className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                             >
                                 Giới thiệu
                             </Link>
@@ -184,7 +184,7 @@ const Header = () => {
                             <Link
                                 to={path.ROOMS}
                                 onClick={toggleMenu}
-                                className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                                className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                             >
                                 Xem Phòng
                             </Link>
@@ -195,7 +195,7 @@ const Header = () => {
                                     <Link
                                         to={path.ORDERROOM}
                                         onClick={toggleMenu}
-                                        className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                                        className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                                     >
                                         Đơn Đặt Phòng
                                     </Link>
@@ -203,7 +203,7 @@ const Header = () => {
                                     <Link
                                         to={path.CANHAN}
                                         onClick={toggleMenu}
-                                        className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                                        className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                                     >
                                         Cá Nhân
                                     </Link>
@@ -219,7 +219,7 @@ const Header = () => {
                                 <li>
                                     <button
                                         onClick={goLogin}
-                                        className="block text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                                        className="block font-medium text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                                     >
                                         Đăng Nhập
                                     </button>
@@ -227,7 +227,7 @@ const Header = () => {
                                 <li>
                                     <button
                                         onClick={goRegister}
-                                        className="block text-white bg-blue-600 hover:bg-blue-700 w-full py-2 px-4 rounded-lg"
+                                        className="block font-medium text-white bg-blue-600 hover:bg-blue-700 text-left py-2 px-4 rounded-lg"
                                     >
                                         Đăng Ký
                                     </button>

@@ -72,7 +72,7 @@ const Home = () => {
                 >
                     {/* Text section */}
                     <div className="max-w-4xl p-8 md:p-20">
-                        <h1 className="text-6xl font-semibold mb-4 text-white">Chào mừng bạn đến Homestay7d</h1>
+                        <h1 className="text-6xl font-semibold mb-4 text-white">Chào mừng bạn đến Homestay</h1>
                         <h1 className="text-xl text-gray-200">Tận hưởng kỳ nghỉ của bạn</h1>
                         <p className="text-xl text-gray-200">
                             Đặt phòng với mức giá thấp nhất.
@@ -81,7 +81,7 @@ const Home = () => {
 
                     {/* Search Form */}
                     <div className="absolute bottom-[-4rem] left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] md:w-[calc(100%-6rem)] flex items-center gap-4 p-6 md:p-8 rounded-2xl bg-white bg-opacity-70 backdrop-blur-md shadow-lg">
-                        <form className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+                        <form className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-4 w-full">
                             <div className="relative">
                                 <Input
                                     prefix={<CiSearch className="ml-2" size={24} />}
@@ -90,7 +90,7 @@ const Home = () => {
                                     onChange={handleChangePlace}
                                     className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
                                 />
-                                <label className="absolute left-0 transform -translate-y-6 text-gray-600 text-sm">
+                                <label className="absolute left-0 transform -translate-y-6 text-gray-800 text-sm">
                                     Địa điểm
                                 </label>
                             </div>
@@ -103,7 +103,7 @@ const Home = () => {
                                     disabledDate={disabledDate}
                                 // onChange={handleDateChange}
                                 />
-                                <label className="absolute left-0 transform -translate-y-6 text-gray-600 text-sm">
+                                <label className="absolute left-0 transform -translate-y-6 text-gray-800 text-sm">
                                     Thời gian
                                 </label>
                             </div>
@@ -124,7 +124,7 @@ const Home = () => {
                                         },
                                     ]}
                                 />
-                                <label className="absolute left-0 transform -translate-y-6 text-gray-600 text-sm">
+                                <label className="absolute left-0 transform -translate-y-6 text-gray-800 text-sm">
                                     Loại phòng
                                 </label>
                             </div>
@@ -142,7 +142,7 @@ const Home = () => {
                                         </Option>
                                     ))}
                                 </Select>
-                                <label className="absolute left-0 top-0 transform -translate-y-6 text-sm pointer-events-none transition-all duration-300">
+                                <label className="absolute left-0 transform -translate-y-6 text-gray-800 text-sm">
                                     Khu vực
                                 </label>
                             </div>

@@ -1,17 +1,32 @@
 import axiosConfig from './axiosConfig'
 
-export const apiGetAllRoom = () => new Promise(async(resolve, reject)=>{
+export const apiSearchRoom = (payload) => new Promise(async(resolve, reject)=>{
     try {
         
         const response = await axiosConfig({
-            method: 'get',
-            url: '/user/getAllRoom',
+            method: 'post',
+            url: '/user/searchRoom',
+            data: payload
         })
         resolve(response)
     } catch (error) {
         reject(error)
     }
 })
+
+export const apiGetAllRoom = () => new Promise(async(resolve, reject)=>{
+    try {
+        
+        const response = await axiosConfig({
+            method: 'get',
+            url: '/user/getAllRoom',            
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+})
+
 export const apiGetAllSector = () => new Promise(async(resolve, reject)=>{
     try {
         

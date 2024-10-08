@@ -25,8 +25,8 @@ const Rooms = () => {
   const { search } = location.state || {};
   const [searchPlace, setSearchPlace] = useState(search);
   const [selectedDateRange, setSelectedDateRange] = useState([]);
-  const [selectedTypeRoom, setSelectedTypeRoom] = useState('');
-  const [selectSector, setSelectSector] = useState('');
+  const [selectedTypeRoom, setSelectedTypeRoom] = useState(null);
+  const [selectSector, setSelectSector] = useState();
   const [rooms, setRooms] = useState([]);
   const [filterRoom, setFilterRoom] = useState(rooms);
   const [disabledDateData, setDisabledDateData] = useState([]);
@@ -47,18 +47,8 @@ const Rooms = () => {
   };
 
   const getdataRooms = async () => {
-    const formattedDateRange = (selectedDateRange || []).map(date => date.toISOString());
-
-    const searchParams = {
-      place: searchPlace,
-      dateRange: formattedDateRange.join(","),
-      roomType: selectedTypeRoom,
-      sector: selectSector,
-    };
-    const response = await apiSearchRoom(searchParams);
-
-    // const data = await apiGetAllRoom();
-    setRooms(response.data);
+    const data = await apiGetAllRoom();
+    setRooms(data.data);
   };
 
   const fetchAllSector = async () => {
@@ -84,17 +74,29 @@ const Rooms = () => {
   useEffect(() => {
     let filteredData = rooms;
 
-    // if (searchPlace) {
-    //   const searchPlaceNormalized = normalize(searchPlace.toLowerCase());
-    //   filteredData = filteredData.filter((item) =>
-    //     normalize(item.nameRoom.toLowerCase()).includes(searchPlaceNormalized)
-    //   );
-    // }
+    if (searchPlace) {
+      const searchPlaceNormalized = normalize(searchPlace.toLowerCase());
+      filteredData = filteredData.filter((item) =>
+        normalize(item.nameRoom.toLowerCase()).includes(searchPlaceNormalized)
+      );
+    }
 
     if (rollSliderStart && rollSliderEnd) {
       filteredData = filteredData.filter(
         (item) =>
           item.giaRoom >= rollSliderStart && item.giaRoom < rollSliderEnd
+      );
+    }
+
+    if (selectedTypeRoom) {
+      filteredData = filteredData.filter(
+        (item) => item.loaiRoom === selectedTypeRoom
+      );
+    }
+
+    if (selectSector) {
+      filteredData = filteredData.filter(
+        (item) => item.idSectorRoom === selectSector
       );
     }
 
@@ -130,8 +132,6 @@ const Rooms = () => {
     setSelectedTypeRoom('');
     setSelectSector('');
     setFilterRoom(rooms);
-    setRollSliderStart(100000);
-    setRollSliderEnd(10000000);
   };
 
   const handleOnChangeSlider = (value) => {
@@ -140,7 +140,23 @@ const Rooms = () => {
   };
 
   const handleSearch = async () => {
-    getdataRooms();
+
+    const formattedDateRange = (selectedDateRange || []).map(date => date.toISOString());
+
+    const searchParams = {
+      place: searchPlace,
+      dateRange: formattedDateRange.join(","),
+      roomType: selectedTypeRoom,
+      sector: selectSector,
+    };
+    try {
+      const response = await apiSearchRoom(searchParams);
+      // Assuming the response contains the available rooms
+      console.log(response);
+    } catch (error) {
+      console.error("Search error:", error);
+      setError("Failed to fetch search results. Please try again.");
+    }
   };
 
 
@@ -148,92 +164,9 @@ const Rooms = () => {
   return (
     <div className="container mx-auto lg:px-20 md:px-2 px-1 sm:px-6 py-8">
 
-      <div className="hidden flex items-center gap-4 mb-4 p-6 md:p-8 rounded-2xl bg-slate-500 backdrop-blur-md shadow-lg">
-        <form className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-4 w-full">
-          <div className="relative">
-            <Input
-              prefix={<CiSearch className="ml-2" size={24} />}
-              placeholder="Nhập nơi cần tìm ..."
-              value={searchPlace}
-              onChange={handleChangePlace}
-              className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
-            />
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Địa điểm
-            </label>
-          </div>
-
-          <div className="relative">
-            <RangePicker
-              className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
-              placeholder={["Ngày đi", "Ngày về"]}
-              format={dateFormat}
-              disabledDate={disabledDate}
-              value={selectedDateRange}
-              onChange={handleDateChange}
-            />
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Thời gian
-            </label>
-          </div>
-
-          <div className="relative">
-            <Select
-              className="w-full h-[40px] rounded-md"
-              placeholder="Loại phòng"
-              value={selectedTypeRoom}
-              onChange={handleChangeSelectRoomType}
-              options={[
-                {
-                  options: [
-                    { label: "1-2 người", value: "1-2 người" },
-                    { label: "3-4 người", value: "3-4 người" },
-                    { label: "5-6 người", value: "5-6 người" },
-                  ],
-                },
-              ]}
-            />
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Loại phòng
-            </label>
-          </div>
-
-          <div className="relative">
-            <Select
-              placeholder="Khu vực ..."
-              value={selectSector}
-              onChange={handleChangeSelectSector}
-              className="w-full h-[40px] rounded-md"
-            >
-              {allSector?.map((sector) => (
-                <Option key={sector._id} value={sector._id}>
-                  {sector.nameSector}
-                </Option>
-              ))}
-            </Select>
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Khu vực
-            </label>
-          </div>
-        </form>
-
-        <div className="flex flex-col gap-4">
-          <button
-            className="p-4 bg-blue-600 hover:bg-blue-700 rounded-full transition-shadow shadow-md hover:shadow-lg"
-            onClick={handleSearch}
-          >
-            <CiSearch className="text-white" size={24} />
-          </button>
-        </div>
-      </div>
-
-
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 mb-4 bg-slate-500 rounded-md w-full h-auto items-center">
-        {/* Search Input */}
+        {/* Search input */}
         <div className="col-span-1 md:col-span-2">
-          <label className="text-white mb-1" htmlFor="searchPlace">
-            Tên phòng
-          </label>
           <Input
             prefix={<CiSearch className="ml-2" size={24} />}
             placeholder="Nhập nơi cần tìm ..."
@@ -245,9 +178,6 @@ const Rooms = () => {
 
         {/* Date Range Picker */}
         <div className="col-span-1 md:col-span-2">
-          <label className="text-white mb-1" htmlFor="searchPlace">
-            Thời gian
-          </label>
           <RangePicker
             className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
             placeholder={["Ngày đi", "Ngày về"]}
@@ -258,11 +188,8 @@ const Rooms = () => {
           />
         </div>
 
-        {/* Room Type Selector */}
+        {/* Room type selector */}
         <div className="col-span-1">
-          <label className="text-white mb-1" htmlFor="searchPlace">
-            Loại phòng
-          </label>
           <Select
             className="w-full h-[40px] rounded-md"
             placeholder="Loại phòng"
@@ -280,17 +207,14 @@ const Rooms = () => {
           />
         </div>
 
-        {/* Sector Selector */}
+        {/* Sector selector */}
         <div className="col-span-1">
-          <label className="text-white mb-1" htmlFor="searchPlace">
-            Khu vực
-          </label>
           <Select
             placeholder="Khu vực ..."
             value={selectSector}
             onChange={handleChangeSelectSector}
             className="w-full h-[40px] rounded-md"
-          >            
+          >
             {allSector?.map((sector) => (
               <Option key={sector._id} value={sector._id}>
                 {sector.nameSector}
@@ -299,36 +223,25 @@ const Rooms = () => {
           </Select>
         </div>
 
-        {/* Reset Button */}
-        <div className="col-span-1 mt-2">
-          <label className="block text-white mb-1" htmlFor="searchPlace">
-            Thao tác
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {/* Search Button */}
-            <button
-              className="flex items-center justify-center w-full h-[40px] rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-shadow"
-              onClick={handleSearch}
-            >
-              <CiSearch size={26} />
-              <span className="ml-1">Tìm</span>
-            </button>
+        {/* Reset button */}
+        <div className="col-span-1 md:col-span-1">
+          <button
+            className="flex items-center justify-center w-full h-[40px] rounded-md bg-[#17e9e0] hover:bg-[#0ec4b7] transition-all"
+            onClick={handleReset}
+          >
+            <AiOutlineReload size={20} />
+            <span className="ml-1">Đặt lại</span>
+          </button>
 
-            {/* Reset Button */}
-            <button
-              className="flex items-center justify-center w-full h-[40px] mb-2 rounded-md bg-[#17e9e0] hover:bg-[#0ec4b7] transition-all"
-              onClick={handleReset}
-            >
-              <AiOutlineReload size={20} />
-              <span className="ml-1">Đặt lại</span>
-            </button>
-
-          </div>
+          <button
+            className="flex items-center justify-center w-full h-[40px] rounded-md bg-[#17e9e0] hover:bg-[#0ec4b7] transition-all"
+            onClick={handleSearch}
+          >
+            <CiSearch size={20} />
+            <span className="ml-1">Tìm</span>
+          </button>
         </div>
       </div>
-
-
-
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Filters */}
@@ -377,6 +290,39 @@ const Rooms = () => {
                 </div>
               </div>
             </div>
+            {/* <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Room type</h3>
+              {roomTypes.map(type => (
+                <div key={type} className="flex items-center mb-2">
+                  <input
+                    id={`room-type-${type}`}
+                    name="room-type"
+                    type="checkbox"
+                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  />
+                  <label htmlFor={`room-type-${type}`} className="ml-3 text-sm text-gray-700">
+                    {type}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Amenities</h3>
+              {amenities.map(amenity => (
+                <div key={amenity.name} className="flex items-center mb-2">
+                  <input
+                    id={`amenity-${amenity.name}`}
+                    name="amenity"
+                    type="checkbox"
+                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  />
+                  <label htmlFor={`amenity-${amenity.name}`} className="ml-3 text-sm text-gray-700 flex items-center">
+                    {amenity.icon}
+                    <span className="ml-2">{amenity.name}</span>
+                  </label>
+                </div>
+              ))}
+            </div> */}
           </div>
         </div>
 
@@ -420,7 +366,7 @@ const Rooms = () => {
           </div>
 
           {/* Pagination */}
-          {filterRoom.length > 0 ?
+          {filterRoom.length>0 ?
             <>
               <div className="mt-6">
                 <nav className="flex items-center justify-between border-t border-gray-200 px-4 sm:px-0">

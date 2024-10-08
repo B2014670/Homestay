@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt");
 const jwtMethod = require('../utils/jwt.util');
 const useragent = require('express-useragent');
 
-
+// START USER
 exports.register = async (req, res, next) => {
   const { name, email, password, phone, address } = req.body;
   try {
@@ -318,7 +318,6 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-
 exports.infoUser = async (req, res, next) => {
   // console.log(req)
   try {
@@ -332,7 +331,39 @@ exports.infoUser = async (req, res, next) => {
   }
 };
 
+exports.updateInfoUser = async (req, res, next) => {
 
+  try {
+
+    const userService = new UserService(MongoDB.client);
+    const result = await userService.updateInfoUser(req.body)
+
+    return res.send({
+      "status": "1",
+      "msg": "Cập nhật thông tin tài khoản thành công !"
+    })
+  } catch (error) {
+    // console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong truy xuat phòng !"));
+  }
+};
+// END USER
+
+
+// // START ROOM
+exports.searchRoom = async (req, res, next) => {
+  
+  console.log(req.body);
+  try {   
+    const roomService = new RoomService(MongoDB.client);
+    const rooms = await roomService.searchRoom(req.body);
+    
+    return res.send(rooms)
+  } catch (error) {
+    console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuất tất cả phòng !"));
+  }
+};
 exports.getAllRoom = async (req, res, next) => {
 
   try {
@@ -472,23 +503,6 @@ exports.getAllSector = async (req, res, next) => {
   } catch (error) {
     // console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuat khu vực !"));
-  }
-};
-
-exports.UpdateInfoUser = async (req, res, next) => {
-
-  try {
-
-    const userService = new UserService(MongoDB.client);
-    const result = await userService.updateInfoUser(req.body)
-
-    return res.send({
-      "status": "1",
-      "msg": "Cập nhật thông tin tài khoản thành công !"
-    })
-  } catch (error) {
-    // console.log(error)
-    return next(new ApiError(500, "Xảy ra lỗi trong truy xuat phòng !"));
   }
 };
 

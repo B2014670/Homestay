@@ -1,4 +1,6 @@
 const { ObjectId } = require("mongodb");
+const moment = require('moment');
+
 class RoomService {
   constructor(client) {
     this.Room = client.db().collection("rooms");
@@ -42,9 +44,9 @@ class RoomService {
         },
         {
           $lookup: {
-            from: "sectors", 
-            localField: "idSectorRoom", 
-            foreignField: "_id", 
+            from: "sectors",
+            localField: "idSectorRoom",
+            foreignField: "_id",
             as: "sectorDetails",
           },
         },
@@ -69,6 +71,74 @@ class RoomService {
       _id: ObjectId.isValid(filter.idRoom) ? new ObjectId(filter.idRoom) : null,
     });
     return await cursor.toArray();
+  }
+
+  async searchRoom(queryParams) {
+    console.log(queryParams);
+    const { place, dateRange, roomType, sector } = queryParams;
+    const query = {};
+
+    if (place) {
+      query.nameRoom = { $regex: new RegExp(place, "i") };
+    }
+
+    if (roomType) {
+      query.loaiRoom = roomType;
+    }
+
+    if (sector) {
+      query.idSectorRoom = sector;
+    }
+
+    const rooms = await this.Room.aggregate([
+      { $match: query }, // Apply the filters
+      {
+        $addFields: {
+          idSectorRoom: { $toObjectId: "$idSectorRoom" } // Convert string to ObjectId
+        }
+      },
+      {
+        $lookup: {
+          from: "sectors",
+          localField: "idSectorRoom",
+          foreignField: "_id",
+          as: "sectorDetails", // Fetch sector details
+        }
+      },
+      {
+        $unwind: {
+          path: "$sectorDetails", // Unwind the array to get a single sector detail
+          preserveNullAndEmptyArrays: true // In case there is no match, preserve the room
+        }
+      }
+    ]).toArray();
+
+    // If there's no date range provided return all fetched rooms
+    if (!dateRange) {
+      return rooms;
+    }
+
+    // Check for availability based on the provided date range
+    const [inputStartDate, inputEndDate] = dateRange.split(',').map(date => new Date(date));
+
+    function parseDate(dateStr) {
+      const [day, month, year] = dateStr.split("/").map(Number);
+      return new Date(year, month - 1, day); // Months are zero-indexed
+    }
+
+    const availableRooms = rooms.filter(room => {
+      return !room.ordersRoom.some(booking => {
+        const bookingStartDate = parseDate(booking[0]);
+        const bookingEndDate = parseDate(booking[1]);
+
+        return (
+          (inputStartDate < bookingEndDate && inputEndDate > bookingStartDate)
+          // (bookingEndDate >= inputStartDate && bookingStartDate <= inputEndDate )
+        );
+      });
+    });
+
+    return availableRooms;
   }
 
   async addRoom(payload) {

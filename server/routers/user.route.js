@@ -18,6 +18,8 @@ router.post("/token", users.refreshToken);
 
 router.post("/info", users.infoUser);
 
+router.post("/searchRoom", users.searchRoom);
+
 router.get("/getAllRoom", users.getAllRoom);
 
 router.post("/orderRoom", users.orderRoom);
@@ -30,7 +32,7 @@ router.post("/updatePaypalOrder", users.updatePaypalOrder);
 
 router.post("/infoSector", users.getInfoSector);
 
-router.post("/updateInfoUser", users.UpdateInfoUser);
+router.post("/updateInfoUser", users.updateInfoUser);
 
 router.get("/getAllSector", users.getAllSector);
 
