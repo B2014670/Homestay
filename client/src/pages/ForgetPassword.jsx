@@ -2,8 +2,8 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import swal from "sweetalert";
 import { apiForgotPassword } from '../services'
+import { path } from '../ultils/constant';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 
 const ForgetPassword = () => {
     const navigate = useNavigate();
@@ -19,7 +19,7 @@ const ForgetPassword = () => {
             const response = await apiForgotPassword({ email: data.email });
 
             if (response.data.err === 0) {
-                swal('Thành Công', response.data.msg, 'success').then((value) => { navigate('/login') })
+                swal('Thành Công', response.data.msg, 'success').then((value) => { navigate(`/${path.LOGIN}`) })
             } else {
                 swal('Thông Báo !', response.data.msg, 'warning')
                 alert('Email không tồn tại trong hệ thống.');

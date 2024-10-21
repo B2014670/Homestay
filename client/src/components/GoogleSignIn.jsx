@@ -13,6 +13,7 @@ const GoogleSignIn = ({ onSignIn }) => {
         const userData = {
           name: res.data.name,
           email: res.data.email,
+          address: '',
           img: {url:res.data.picture},
           oauth: "google"
         };

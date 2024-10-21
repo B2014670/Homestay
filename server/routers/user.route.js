@@ -21,6 +21,8 @@ router.post("/token", users.refreshToken);
 
 router.post("/info", users.infoUser);
 
+router.post("/updateInfoUser", users.updateInfoUser);
+
 router.post('/forgot-password', forgotPasswordLimiter,  users.forgotPassword);
 
 router.post('/reset-password/:token', users.resetPassword);
@@ -40,8 +42,6 @@ router.post("/cancleOrderRoom", users.cancleOrderRoom);
 router.post("/updatePaypalOrder", users.updatePaypalOrder);
 
 router.post("/infoSector", users.getInfoSector);
-
-router.post("/updateInfoUser", users.updateInfoUser);
 
 router.get("/getAllSector", users.getAllSector);
 

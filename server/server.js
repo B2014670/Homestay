@@ -1,8 +1,5 @@
-const app = require("./app");
-
+const { server } = require("./app"); //app
 const config = require("./config");
-// const UserService = require("./services/user/user.service");
-
 const MongoDB = require("./utils/mongodb.util")
 
 async function startServer() {
@@ -12,7 +9,7 @@ async function startServer() {
    console.log("Connected to the MongoDB");
 
     const PORT = config.app.port;
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
 

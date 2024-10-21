@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import useAuthStore from '../stores/authStore';
+import { path } from '../ultils/constant';
 
 const Register = () => {
-    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [userData, setUserData] = useState(null);
     const { isLoading, register } = useAuthStore();
@@ -145,7 +145,7 @@ const Register = () => {
                 <div className="mt-6">
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Đã có tài khoản?{' '}
-                        <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+                        <Link to={`/${path.LOGIN}`} className="font-medium text-indigo-600 hover:text-indigo-500">
                             Đăng nhập ngay!
                         </Link>
                     </p>

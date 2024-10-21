@@ -414,7 +414,6 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.changePassword = async (req, res, next) => {
   const { phone, oldPassword, newPassword } = req.body;
-  console.log(req.body)
   try {
     if (!oldPassword || !newPassword || !phone) {
       return res.status(200).json({ err: 1, msg: "Thông tin không được để trống!" });

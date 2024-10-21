@@ -103,7 +103,7 @@ class UserService {
 
       await this.User.findOneAndUpdate(
         data,
-        { $set: { img: {}, order: [], refreshToken: null } },
+        { $set: { img: data.img || {}, order: [], refreshToken: null } },
         { returnDocument: "after", upsert: true }
       );
 
@@ -118,13 +118,12 @@ class UserService {
     const idUser = payload.idUser;
 
     const updateFields = {};
-    if (payload.email) updateFields.email = payload.email;
-    if (payload.password) updateFields.password = payload.password;
+    // if (payload.email) updateFields.email = payload.email;
+    // if (payload.password) updateFields.password = payload.password;
+    // if (payload.phone) updateFields.phone = payload.phone;
     if (payload.name) updateFields.name = payload.name;
-    if (payload.phone) updateFields.phone = payload.phone;
     if (payload.address) updateFields.address = payload.address;
     if (payload.img) updateFields.img = payload.img;
-    // Thêm các trường khác tương tự
 
     const result = await this.User.findOneAndUpdate(
       {

@@ -15,7 +15,7 @@ function mailOptions(to, type, data) {
 
         case 'resetPassword':
             subject = 'Yêu Cầu Đặt Lại Mật Khẩu';
-            const resetUrl = `http://localhost:3000/reset-password/${data.token}`;
+            const resetUrl = `http://localhost:3000/resetmatkhau/${data.token}`;
             text = `Bạn nhận được email này vì bạn (hoặc một người khác) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.\n\n` +
                 `Vui lòng nhấp vào liên kết sau đây, hoặc dán vào trình duyệt của bạn để hoàn tất quy trình:\n\n` +
                 `${resetUrl}\n\n` +

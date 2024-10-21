@@ -18,7 +18,7 @@ const About = () => {
                     <div className='aboutBanner flex justify-center items-end'>
                         Giới Thiệu
                         <div className='aboutBannerContent flex justify-center items-center'>
-                            /<NavLink to={'/trangchu'} className='contentBanner'>Trang Chủ</NavLink>
+                            <NavLink to={`/.${path.HOME}`} className='contentBanner'>Trang Chủ</NavLink>
                         </div>
                     </div>
                 </div>

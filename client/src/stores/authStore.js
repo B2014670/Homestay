@@ -8,7 +8,7 @@ const tokenCookie = Cookies.get('accessToken');
 
 const useAuthStore = create((set) => ({
     isLoggedIn: storedUser && tokenCookie ? true : false,
-    user: storedUser ? JSON.parse(storedUser) : null,
+    user: storedUser&& tokenCookie ? JSON.parse(storedUser) : null,
 
     initializeAuth: async () => {
         

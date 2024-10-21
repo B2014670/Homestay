@@ -107,7 +107,7 @@ const Login = () => {
                                 <div className="text-sm">
                                     <Link
                                         className="font-medium text-indigo-600 hover:text-indigo-500"
-                                        to="/forget-password"
+                                        to={`/${path.FORGET}`}
                                     >
                                         Quên mật khẩu?
                                     </Link>
@@ -143,7 +143,7 @@ const Login = () => {
                     </div>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Chưa có tài khoản?{' '}
-                        <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500" >Đăng ký !</Link>
+                        <Link to={`/${path.REGISTER}`} className="font-medium text-indigo-600 hover:text-indigo-500" >Đăng ký !</Link>
                     </p>
                 </div>
             </div>
