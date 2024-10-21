@@ -43,15 +43,15 @@ const About = () => {
                     {/* Right Column - Text Content */}
                     <div className='w-full md:w-[50%] flex flex-col space-y-5 p-4 md:p-0'>
                         <p className='text-justify'>
-                            HOMESTAY24H là lựa chọn tuyệt vời cho những ai cần homestay giá rẻ tại Hòn Sơn. Chúng tôi cung cấp các phòng từ 1-4 người, đầy đủ tiện nghi, sạch sẽ, với mức giá hợp lý, đáp ứng nhiều nhu cầu khác nhau.
+                            HOMESTAY là lựa chọn tuyệt vời cho những ai cần homestay giá rẻ tại Hòn Sơn. Chúng tôi cung cấp các phòng từ 1-4 người, đầy đủ tiện nghi, sạch sẽ, với mức giá hợp lý, đáp ứng nhiều nhu cầu khác nhau.
                         </p>
 
                         <p className='text-justify'>
-                            Nhân viên tại HOMESTAY24H luôn phục vụ tận tâm và chuyên nghiệp, đảm bảo mang đến trải nghiệm thoải mái cho khách hàng. Chúng tôi cam kết sự hài lòng và dịch vụ tốt nhất.
+                            Nhân viên tại HOMESTAY luôn phục vụ tận tâm và chuyên nghiệp, đảm bảo mang đến trải nghiệm thoải mái cho khách hàng. Chúng tôi cam kết sự hài lòng và dịch vụ tốt nhất.
                         </p>
 
                         <p className='text-justify'>
-                            HOMESTAY24H đã khẳng định uy tín qua nhiều năm hoạt động, thu hút không chỉ khách trong nước mà còn du khách quốc tế nhờ vào chất lượng và dịch vụ hàng đầu.
+                            HOMESTAY đã khẳng định uy tín qua nhiều năm hoạt động, thu hút không chỉ khách trong nước mà còn du khách quốc tế nhờ vào chất lượng và dịch vụ hàng đầu.
                         </p>
                     </div>
                 </div>

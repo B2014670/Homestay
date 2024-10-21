@@ -1,35 +1,51 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import { path } from '../ultils/constant'
+import { checkEmailLinked } from "../services"
 import useAuthStore from '../stores/authStore'
 import GoogleSignIn from '../components/GoogleSignIn'
 import PhoneNumberForm from '../components/PhoneNumberForm'
 
 const Login = () => {
 
+    const location = useLocation();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [userData, setUserData] = useState(null);
-    const { isLoggedIn, login } = useAuthStore();
+    const [emailLinked, setEmailLinked] = useState(false);
+    const { isLoggedIn, login, oauthLogin } = useAuthStore();
 
+    const from = location.state?.from?.pathname || path.HOME;
+      
     useEffect(() => {
-        isLoggedIn && navigate('/', path.TRANGCHU)
+        isLoggedIn && navigate(from, { replace: true })
     }, [isLoggedIn])
 
     const validationSchema = Yup.object({
         phone: Yup.string()
             .required('Số điện thoại không được để trống')
-            .matches(/^[0-9]{10}$/, 'Số điện thoại phải gồm 10 chữ số'),
+            .matches(/^[0-9]{10,}$/, 'Số điện thoại phải có ít nhất 10 chữ số'),
         password: Yup.string()
             .required('Mật khẩu không được để trống')
             .min(6, 'Mật khẩu phải ít nhất 6 ký tự'),
     });
 
-    const handleGGSignIn = (data) => {
+    const handleGGSignIn = async (data) => {
         setUserData(data);
+
+        const isEmailLinked = await checkEmailLinked({ email: data.email });
+        setEmailLinked(isEmailLinked);
+
+        if (isEmailLinked) {
+            try {
+                await oauthLogin({ ...data });
+            } catch (error) {
+                setError('An error occurred while logging in. Please try again.');
+            }
+        }
     };
 
     return (
@@ -89,7 +105,12 @@ const Login = () => {
 
                             <div className="flex items-center justify-between">
                                 <div className="text-sm">
-                                    <Link className="font-medium text-indigo-600 hover:text-indigo-500" to="/register">Quên mật khẩu?</Link>
+                                    <Link
+                                        className="font-medium text-indigo-600 hover:text-indigo-500"
+                                        to="/forget-password"
+                                    >
+                                        Quên mật khẩu?
+                                    </Link>
                                 </div>
                             </div>
 
@@ -118,7 +139,7 @@ const Login = () => {
 
                     <div className="mt-6 space-y-3">
                         <GoogleSignIn onSignIn={handleGGSignIn} />
-                        {userData && <PhoneNumberForm userData={userData} />}
+                        {!emailLinked && userData && <PhoneNumberForm userData={userData} />}
                     </div>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Chưa có tài khoản?{' '}

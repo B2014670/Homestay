@@ -75,7 +75,7 @@ class RoomService {
 
   async searchRoom(queryParams) {
     console.log(queryParams);
-    const { place, dateRange, roomType, sector } = queryParams;
+    const { place, dateRange, roomType, sector, page = 1, limit = 10 } = queryParams;
     const query = {};
 
     if (place) {
@@ -91,7 +91,7 @@ class RoomService {
     }
 
     const rooms = await this.Room.aggregate([
-      { $match: query }, // Apply the filters
+      { $match: query },
       {
         $addFields: {
           idSectorRoom: { $toObjectId: "$idSectorRoom" } // Convert string to ObjectId
@@ -110,15 +110,19 @@ class RoomService {
           path: "$sectorDetails", // Unwind the array to get a single sector detail
           preserveNullAndEmptyArrays: true // In case there is no match, preserve the room
         }
-      }
+      },
     ]).toArray();
 
-    // If there's no date range provided return all fetched rooms
+    console.log(rooms.length);
+
     if (!dateRange) {
-      return rooms;
+      // Manually paginate the results
+      const startIndex = (page - 1) * limit;
+      const paginatedRooms = rooms.slice(startIndex, startIndex + limit);
+
+      return { totalRooms: rooms.length, paginatedRooms };
     }
 
-    // Check for availability based on the provided date range
     const [inputStartDate, inputEndDate] = dateRange.split(',').map(date => new Date(date));
 
     function parseDate(dateStr) {
@@ -126,19 +130,30 @@ class RoomService {
       return new Date(year, month - 1, day); // Months are zero-indexed
     }
 
+    // Check for availability based on the provided date range
     const availableRooms = rooms.filter(room => {
+
+      // Ensure that the room has 'ordersRoom' array and process it
+      if (!Array.isArray(room.ordersRoom)) {
+        return true; // If no orders, room is available
+      }
+
       return !room.ordersRoom.some(booking => {
         const bookingStartDate = parseDate(booking[0]);
         const bookingEndDate = parseDate(booking[1]);
 
         return (
+          // Check date overlaps
           (inputStartDate < bookingEndDate && inputEndDate > bookingStartDate)
-          // (bookingEndDate >= inputStartDate && bookingStartDate <= inputEndDate )
         );
       });
     });
 
-    return availableRooms;
+    // Manually paginate the results
+    const startIndex = (page - 1) * limit;
+    const paginatedRooms = availableRooms.slice(startIndex, startIndex + limit);
+
+    return { totalRooms: availableRooms.length, paginatedRooms };
   }
 
   async addRoom(payload) {

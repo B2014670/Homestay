@@ -1,9 +1,10 @@
 import React, { useCallback, useState, useEffect } from 'react'
-import Navigation from './Navigation';
-import Button from '../components/Button'
+import { Avatar, Dropdown, Menu } from 'antd';
+import { UserOutlined, LogoutOutlined, OrderedListOutlined } from '@ant-design/icons';
+import { DownOutlined, SettingOutlined } from '@ant-design/icons';
+import { Space } from 'antd';
 import icons from '../ultils/icons'
 import oip from '../assets/OIP.png'
-import logo from '../assets/logo.png'
 import { Link, useNavigate, NavLink } from 'react-router-dom'
 import { path } from '../ultils/constant'
 import useAuthStore from '../stores/authStore';
@@ -22,17 +23,17 @@ const Header = () => {
 
     const goLogin = useCallback(() => {
         if (windowWidth < 1024) {
-            toggleMenu();            
-        } 
-        setIsOpen(false);      
+            toggleMenu();
+        }
+        setIsOpen(false);
         navigate(path.LOGIN)
     }, [])
 
     const goRegister = useCallback(() => {
         if (windowWidth < 1024) {
             toggleMenu();
-        }        
-        setIsOpen(false);   
+        }
+        setIsOpen(false);
         navigate(path.REGISTER)
     }, [])
 
@@ -56,6 +57,30 @@ const Header = () => {
         }
     }, [windowWidth]);
 
+    const menuItems = [
+        {
+            key: 'account',
+            icon: <UserOutlined />,
+            label: <NavLink to={path.ACCOUNT}>Cá Nhân</NavLink>,
+        },
+        {
+            key: 'orderroom',
+            icon: <OrderedListOutlined />,
+            label: <NavLink to={path.ORDERROOM}>Đơn Đặt Phòng</NavLink>,
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: (
+                <div onClick={logout}>
+                    Đăng Xuất
+                </div>
+            ),
+        },
+    ];
 
     return (
         <header className="w-full bg-white shadow-md dark:bg-gray-800 headerSticky h-auto">
@@ -76,6 +101,7 @@ const Header = () => {
                                 { label: "Trang Chủ", path: path.TRANGCHU },
                                 { label: "Giới Thiệu", path: path.ABOUT },
                                 { label: "Xem Phòng", path: path.ROOMS },
+                                { label: "Liên hệ", path: path.CONTACT },
                             ].map(({ label, path }) => (
                                 <NavLink
                                     key={path}
@@ -88,30 +114,6 @@ const Header = () => {
                                     {label}
                                 </NavLink>
                             ))}
-                            {isLoggedIn ? (
-                                <>
-                                    <NavLink
-                                        to={path.ORDERROOM}
-                                        style={({ isActive }) => ({
-                                            color: isActive ? "#2563EB" : "#1F2937",
-                                        })}
-                                    >
-                                        Đơn Đặt Phòng
-                                    </NavLink>
-
-                                    <NavLink
-                                        to={path.CANHAN}
-                                        style={({ isActive }) => ({
-                                            color: isActive ? "#2563EB" : "#1F2937",
-                                        })}
-                                    >
-                                        Cá Nhân
-                                    </NavLink>
-                                </>
-                            ) : (
-                                <>
-                                </>
-                            )}
                         </ul>
                     </div>
 
@@ -131,13 +133,15 @@ const Header = () => {
                             </button>
                         </>
                     ) : (
-                        <>
-                            <button
-                                onClick={logout}
-                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                            >
-                                Đăng Xuất
-                            </button>
+                        <>                            
+                            <Dropdown menu={{ items: menuItems }}  trigger={['click']} placement="bottomRight">
+                                <Avatar
+                                    src={user?.avatarUrl}
+                                    icon={!user?.avatarUrl && <UserOutlined />}
+                                    size="large"
+                                    className="cursor-pointer bg-gray-200 text-gray-600 hover:bg-gray-300 hover:shadow-md transition-all duration-300 ease-in-out"
+                                />
+                            </Dropdown>
                         </>
                     )}
                 </div>
@@ -189,6 +193,15 @@ const Header = () => {
                                 Xem Phòng
                             </Link>
                         </li>
+                        <li>
+                            <Link
+                                to={path.CONTACT}
+                                onClick={toggleMenu}
+                                className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                            >
+                                Liên hệ
+                            </Link>
+                        </li>
                         {isLoggedIn ? (
                             <>
                                 <li>
@@ -201,7 +214,7 @@ const Header = () => {
                                     </Link>
                                 </li><li>
                                     <Link
-                                        to={path.CANHAN}
+                                        to={path.ACCOUNT}
                                         onClick={toggleMenu}
                                         className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                                     >

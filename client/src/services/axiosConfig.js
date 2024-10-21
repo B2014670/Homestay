@@ -44,8 +44,8 @@ instance.interceptors.response.use(function (response) {
         // Ensure data contains accessToken and refreshToken
         if (data && data.data && data.data.accessToken && data.data.refreshToken) {
           // Update cookies with the new tokens
-          Cookies.set('accessToken', data.data.accessToken, { expires: 15 / 1440 }); // 15 minutes
-          Cookies.set('refreshToken', data.data.refreshToken, { expires: 7 }); // 7 days
+          Cookies.set('accessToken', data.data.accessToken, { expires: 15 / 24 /60 }); // 15 minutes
+          Cookies.set('refreshToken', data.data.refreshToken, { expires: 2 }); // 2 days
 
           // Retry the original request with the new access token
           return instance(originalRequest);

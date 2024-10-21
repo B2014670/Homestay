@@ -1,18 +1,8 @@
 const GoogleMapEmbed = () => {
   return (
     <div className="w-full h-[400px] p-0 m-0">
-      {/* <div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000;">
-        <iframe
-          src="https://www.youtube.com/embed/ZdM2zp7ZcnI"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-        </iframe>
-      </div> */}
-
       <iframe
-        src="https://www.google.com/maps/embed?pb=!1m13!1m8!1m3!1d31430.108934217147!2d105.789643!3d10.036355!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTDCsDAyJzEwLjkiTiAxMDXCsDQ3JzIyLjciRQ!5e0!3m2!1sen!2sus!4v1726562632204!5m2!1sen!2sus"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3931.4875908148124!2d104.65430075917791!3d9.809351790245977!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a717e6f30ed999%3A0xd9718060d1c17752!2zS2h1IGR1IGzhu4tjaCBCw6NpIELDoG5n!5e0!3m2!1svi!2s!4v1728556841344!5m2!1svi!2s"
         width="100%"
         height="100%"
         allowFullScreen

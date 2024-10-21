@@ -5,20 +5,36 @@ const RoomService = require("../services/room/room.service");
 const SectorService = require("../services/sector/sector.service");
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
+const Yup = require('yup');
 const bcrypt = require("bcrypt");
 const jwtMethod = require('../utils/jwt.util');
 const useragent = require('express-useragent');
+const transporter = require('../config/nodemailer');
+const mailOptions = require('../utils/mailOptions.util');
 
 // START USER
 exports.register = async (req, res, next) => {
-  const { name, email, password, phone, address } = req.body;
+
   try {
-    if (!name || !email || !password || !phone || !address) {
-      return res.status(400).json({
-        err: 1,
-        msg: "Thông tin không được để trống !"
-      })
-    }
+    const registerSchema = Yup.object({
+      name: Yup.string()
+        .min(2, 'Tên tài khoản quá ngắn!')
+        .required('Vui lòng nhập tên tài khoản'),
+      phone: Yup.string()
+        .matches(/^[0-9]{10,}$/, 'Số điện thoại phải có ít nhất 10 số')
+        .required('Vui lòng nhập số điện thoại'),
+      email: Yup.string()
+        .email('Email không hợp lệ')
+        .required('Vui lòng nhập email'),
+      address: Yup.string().required('Vui lòng nhập địa chỉ'),
+      password: Yup.string()
+        .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+        .required('Vui lòng nhập mật khẩu'),
+    });
+
+    // Clean phone input by removing all non-digit characters
+    req.body.phone = req.body.phone.replace(/\D/g, '');
+    await registerSchema.validate(req.body);
 
     const userService = new UserService(MongoDB.client);
     const registered = await userService.checkDuplicatePhone({ "phone": req.body.phone })
@@ -43,6 +59,14 @@ exports.register = async (req, res, next) => {
       err: 0, msg: "Tạo tài khoản thành công ",
     });
   } catch (error) {
+    // Handle Yup validation errors
+    if (error instanceof Yup.ValidationError) {
+      return res.status(400).json({
+        err: 1,
+        msg: error.message,
+      });
+    }
+
     console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình Tạo tài khoản !"));
   }
@@ -50,10 +74,21 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   const { phone, password } = req.body;
+
   try {
-    if (!password || !phone) {
-      return res.status(400).json({ err: 1, msg: "Thông tin không được để trống !" })
-    }
+    const loginSchema = Yup.object({
+      phone: Yup.string()
+        .required('Số điện thoại không được để trống')
+        .matches(/^[0-9]{10,}$/, 'Số điện thoại phải có ít nhất 10 chữ số'),
+      password: Yup.string()
+        .required('Mật khẩu không được để trống')
+        .min(6, 'Mật khẩu phải ít nhất 6 ký tự'),
+    });
+
+    // Clean phone input by removing all non-digit characters
+    req.body.phone = req.body.phone.replace(/\D/g, '');
+    await loginSchema.validate(req.body);
+
     const userService = new UserService(MongoDB.client);
     const user = await userService.fineOne({ "phone": req.body.phone })
 
@@ -94,6 +129,35 @@ exports.login = async (req, res, next) => {
     return res.status(200).json(result)
 
   } catch (error) {
+    // Handle Yup validation errors
+    if (error instanceof Yup.ValidationError) {
+      return res.status(400).json({
+        err: 1,
+        msg: error.message,
+      });
+    }
+
+    console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình đăng nhập vào hệ thống !"));
+  }
+};
+
+exports.checkEmailLinked = async (req, res, next) => {
+  const { email } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ err: 1, msg: "Thông tin không được để trống !" })
+    }
+    const userService = new UserService(MongoDB.client);
+    const user = await userService.fineOne({ "email": req.body.email, "oauth": "google" })
+
+    if (user) {
+      return res.json(true);
+    } else {
+      return res.json(false);
+    }
+
+  } catch (error) {
     console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình đăng nhập vào hệ thống !"));
   }
@@ -103,31 +167,44 @@ exports.oauthLogin = async (req, res, next) => {
   const { phone, email, name, img } = req.body;
 
   try {
-    if (!email || !phone || !name || !img) {
+    let flag = false;
+    if (!email || !name || !img || (!phone && req.body.phone !== undefined)) {
       return res.status(400).json({ err: 1, msg: "Thông tin không được để trống !" })
     }
     const userService = new UserService(MongoDB.client);
 
-    let user = await userService.fineOne({ "phone": req.body.phone });
+    let user = await userService.fineOne({ "email": req.body.email });
 
     if (user && user.oauth !== "google") {
       return res.status(400).json({
         err: -1,
-        msg: "Số điện thoại đã dùng cho phương thức đăng nhập khác!",
+        msg: "Email đã dùng cho phương thức đăng nhập khác!",
       });
     }
 
-    if ( user === null) {
-      const status = await userService.create(req.body);
+    if (!user && phone) {
+      user = await userService.fineOne({ "phone": req.body.phone });
 
-      if (!status) {
+      if (user && user.oauth !== "google") {
         return res.status(400).json({
           err: -1,
-          msg: "Tạo tài khoản thất bại ",
+          msg: "Số điện thoại đã dùng cho phương thức đăng nhập khác!",
         });
-      } 
-      
-      user = await userService.fineOne({ "phone": req.body.phone });
+      }
+
+      if (user === null) {
+        const status = await userService.create(req.body);
+        flag = true;
+        if (!status) {
+          flag = false;
+          return res.status(400).json({
+            err: -1,
+            msg: "Tạo tài khoản thất bại ",
+          });
+        }
+
+        user = await userService.fineOne({ "phone": req.body.phone });
+      }
     }
 
     // Generate Tokens
@@ -150,7 +227,7 @@ exports.oauthLogin = async (req, res, next) => {
 
     const result = {
       err: 0,
-      msg: "Đăng nhập thành công !",
+      msg: flag ? "Liên kết thành công" : "Đăng nhập thành công !",
       data: {
         user: data,
         accessToken: accessToken,
@@ -273,6 +350,68 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
+exports.forgotPassword = async (req, res, next) => {
+  const { phone, email } = req.body;
+
+  try {
+    const userService = new UserService(MongoDB.client);
+
+    if (email) {
+      registeredUser = await userService.check({ "email": email });
+    } else if (phone) {
+      registeredUser = await userService.check({ "phone": phone });
+    }
+
+    if (!registeredUser || !registeredUser[0]) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Tài khoản không tồn tại!"
+      });
+    }
+
+    const token = await userService.generateResetToken(registeredUser[0].email);
+
+    const options = mailOptions(registeredUser[0].email, 'resetPassword', { token });
+
+    await transporter.sendMail(options);
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Email đặt lại mật khẩu đã được gửi, vui lòng kiểm tra email!"
+    });
+
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình thay đổi mật khẩu!"));
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  try {
+    const userService = new UserService(MongoDB.client);
+    const response = await userService.resetPassword(token, newPassword);
+
+    if (!response) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Token không hợp lệ hoặc đã hết hạn!"
+      });
+    }
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Mật khẩu đã được thay đổi thành công!"
+    });
+
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình thay đổi mật khẩu!"));
+  }
+};
+
 exports.changePassword = async (req, res, next) => {
   const { phone, oldPassword, newPassword } = req.body;
   console.log(req.body)
@@ -318,6 +457,8 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
+
+
 exports.infoUser = async (req, res, next) => {
   // console.log(req)
   try {
@@ -352,13 +493,16 @@ exports.updateInfoUser = async (req, res, next) => {
 
 // // START ROOM
 exports.searchRoom = async (req, res, next) => {
-  
-  console.log(req.body);
-  try {   
+
+  // console.log(req.body);
+  try {
     const roomService = new RoomService(MongoDB.client);
-    const rooms = await roomService.searchRoom(req.body);
-    
-    return res.send(rooms)
+    const { totalRooms, paginatedRooms } = await roomService.searchRoom(req.body);
+
+    return res.send({
+      totalRooms,
+      paginatedRooms
+    })
   } catch (error) {
     console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuất tất cả phòng !"));

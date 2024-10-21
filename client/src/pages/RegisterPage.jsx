@@ -16,9 +16,8 @@ const Register = () => {
             .min(2, 'Tên tài khoản quá ngắn!')
             .required('Vui lòng nhập tên tài khoản'),
         phone: Yup.string()
-            .matches(/^[0-9]+$/, 'Số điện thoại không hợp lệ')
-            .min(10, 'Số điện thoại phải có ít nhất 10 số')
-            .required('Vui lòng nhập số điện thoại'),
+            .required('Số điện thoại không được để trống')
+            .matches(/^[0-9]{10,}$/, 'Số điện thoại phải có ít nhất 10 chữ số'),
         email: Yup.string()
             .email('Email không hợp lệ')
             .required('Vui lòng nhập email'),
@@ -27,20 +26,6 @@ const Register = () => {
             .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
             .required('Vui lòng nhập mật khẩu'),
     });
-
-    // const handleRegister = (event) => {
-    //     event.preventDefault();
-    //     const formData = new FormData(event.target);
-    //     const newUser = {
-    //         name: formData.get('name'),
-    //         phone: formData.get('phone'),
-    //         email: formData.get('email'),
-    //         address: formData.get('address'),
-    //         password: formData.get('password'),
-    //     };
-    //     register(newUser);
-    //     // navigate('/login');
-    // };
 
     const handleSubmit = (values) => {
         register(values);
@@ -156,109 +141,6 @@ const Register = () => {
                         </Form>
                     )}
                 </Formik>
-                {/* <form className="space-y-6" onSubmit={handleRegister}>
-                    <div>
-                        <label htmlFor="name" className="block font-medium text-gray-700">
-                            Tên Tài Khoản
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                autoComplete="off"
-                                required
-                                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Tên tài khoản"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label htmlFor="phone" className="block font-medium text-gray-700">
-                            Số điện thoại
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="tel"
-                                autoComplete="off"
-                                required
-                                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Số điện thoại"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label htmlFor="email" className="block font-medium text-gray-700">
-                            Email
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="off"
-                                required
-                                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Email"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label htmlFor="address" className="block font-medium text-gray-700">
-                            Địa chỉ
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                id="address"
-                                name="address"
-                                type="text"
-                                autoComplete="off"
-                                required
-                                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Địa chỉ"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block font-medium text-gray-700">
-                            Mật Khẩu
-                        </label>
-                        <div className="mt-1 relative">
-                            <input
-                                id="password"
-                                name="password"
-                                type={showPassword ? "text" : "password"}
-                                autoComplete="off"
-                                required
-                                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Nhập mật khẩu"
-                            />
-                            <button
-                                type="button"
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <FaEyeSlash className="h-5 w-5 text-gray-400" /> : <FaEye className="h-5 w-5 text-gray-400" />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            disabled={isLoading}
-                        >
-                            Đăng Ký
-                        </button>
-                    </div>
-                </form> */}
 
                 <div className="mt-6">
                     <p className="mt-2 text-center text-sm text-gray-600">

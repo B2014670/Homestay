@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require('crypto');
 require("dotenv").config();
 
 const hashpwd = (password) => bcrypt.hashSync(password, bcrypt.genSaltSync(12));
@@ -68,7 +69,6 @@ class UserService {
     try {
       const projection = { order: 0, password: 0, refreshToken: 0 };
       const user = await this.User.findOne(filter, { projection });
-      console.log(user);
       return user;
     } catch (error) {
       console.log(error);
@@ -97,7 +97,7 @@ class UserService {
     }
   }
 
-  async create(payload) { 
+  async create(payload) {
     try {
       const data = this.extractUserData(payload);
 
@@ -138,6 +138,59 @@ class UserService {
     return result;
   }
 
+  async generateResetToken(email) {
+    try {
+      const user = await this.User.findOne({ email });
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const token = crypto.randomBytes(20).toString("hex");
+      const expiration = Date.now() + 15*60*1000; // 15 minute
+
+      await this.User.updateOne(
+        { email },
+        { $set: { reset_password_token: token, reset_password_expires: expiration } } 
+      );
+
+      return token; // Return the token to send via email
+    } catch (error) {
+      console.error("Error generating reset token:", error);
+      throw error; // Rethrow the error for further handling
+    }
+  }
+
+  async resetPassword(token, newPassword) {
+    try {
+      const user = await this.User.findOne({
+        reset_password_token: token,
+        reset_password_expires: { $gt: Date.now() },
+      });
+
+      if (!user) {
+        throw new Error("Token is invalid or has expired");
+      }
+
+      const hashedNewPassword = hashpwd(newPassword);
+      await this.User.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            password: hashedNewPassword,
+            reset_password_token: undefined,
+            reset_password_expires: undefined,
+          },
+        }
+      );
+
+      return true; 
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      throw error; // Rethrow the error for further handling
+    }
+  }
+
+
   async updatePassword(payload) {
     console.log(payload)
     try {
@@ -171,6 +224,7 @@ class UserService {
 
     return result;
   }
+
   async CancleOrderRoomUser(payload) {
     const idUser = payload.idUser;
     const idOrder = payload.idOrder;

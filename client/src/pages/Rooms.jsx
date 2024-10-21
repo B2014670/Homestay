@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiGetAllSector, apiGetAllRoom, apiSearchRoom } from "../services";
 import '../layouts/containers.css'
+import { FaStar } from 'react-icons/fa';
+import { Pagination, Input, Select, Slider, DatePicker } from 'antd';
+import icons from "../ultils/icons";
 
 dayjs.extend(customParseFormat);
 const dateFormat = "DD/MM/YYYY";
-
-import { FaStar } from 'react-icons/fa';
-import { Input, Select, Slider, DatePicker } from 'antd';
-import icons from "../ultils/icons";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -18,21 +17,37 @@ const { CiSearch, AiOutlineReload } = icons;
 
 const Rooms = () => {
 
+  const navigate = useNavigate();
   const location = useLocation();
+
+  // Initial states for search filters
   const [rollSliderStart, setRollSliderStart] = useState(100000);
   const [rollSliderEnd, setRollSliderEnd] = useState(10000000);
-  const [allSector, setAllSector] = useState();
-  const { search } = location.state || {};
-  const [searchPlace, setSearchPlace] = useState(search);
-  const [selectedDateRange, setSelectedDateRange] = useState([]);
-  const [selectedTypeRoom, setSelectedTypeRoom] = useState('');
-  const [selectSector, setSelectSector] = useState('');
+  const [allSector, setAllSector] = useState([]);
+  const searchQuery = location.state || {};
+  const initialDateRange = location.state?.dateRange
+    ? [dayjs(location.state.dateRange[0]), dayjs(location.state.dateRange[1])]
+    : [];
+  const [disabledDateData, setDisabledDateData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRooms, setTotalRooms] = useState(0);
+
+
+  // Search-related states with default values from location
+  const [searchPlace, setSearchPlace] = useState(searchQuery.searchPlace || '');
+  const [selectedDateRange, setSelectedDateRange] = useState(initialDateRange);
+  const [selectedTypeRoom, setSelectedTypeRoom] = useState(searchQuery.roomType || '');
+  const [selectSector, setSelectSector] = useState(searchQuery.sector || '');
+
+  // Data and filtering states
   const [rooms, setRooms] = useState([]);
   const [filterRoom, setFilterRoom] = useState(rooms);
-  const [disabledDateData, setDisabledDateData] = useState([]);
 
+  // Formatter function for currency
   const formatter = (value) => `${value.toLocaleString()} vnđ`;
 
+  // Date disabling logic
   const disabledDate = (current) => {
     const formattedDisabledDays = disabledDateData.map((day) =>
       dayjs(day, "DD/MM/YYYY")
@@ -46,19 +61,22 @@ const Rooms = () => {
     );
   };
 
-  const getdataRooms = async () => {
-    const formattedDateRange = (selectedDateRange || []).map(date => date.toISOString());
+  const getdataRooms = async (page = 1) => {
+    const formattedDateRange = selectedDateRange?.map(date => date.toISOString());
 
     const searchParams = {
       place: searchPlace,
       dateRange: formattedDateRange.join(","),
       roomType: selectedTypeRoom,
       sector: selectSector,
+      page: page,
+      limit: pageSize,
     };
     const response = await apiSearchRoom(searchParams);
 
     // const data = await apiGetAllRoom();
-    setRooms(response.data);
+    setRooms(response.data.paginatedRooms);
+    setTotalRooms(response.data.totalRooms);
   };
 
   const fetchAllSector = async () => {
@@ -72,24 +90,17 @@ const Rooms = () => {
   // };
 
   useEffect(() => {
-    getdataRooms();
+    getdataRooms(currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
     fetchAllSector();
     // fetchAllTypeRoom();
   }, []);
 
-  const normalize = (str) => {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  };
-
+  // Filtering the rooms based on the selected filters
   useEffect(() => {
     let filteredData = rooms;
-
-    // if (searchPlace) {
-    //   const searchPlaceNormalized = normalize(searchPlace.toLowerCase());
-    //   filteredData = filteredData.filter((item) =>
-    //     normalize(item.nameRoom.toLowerCase()).includes(searchPlaceNormalized)
-    //   );
-    // }
 
     if (rollSliderStart && rollSliderEnd) {
       filteredData = filteredData.filter(
@@ -99,14 +110,7 @@ const Rooms = () => {
     }
 
     setFilterRoom(filteredData);
-  }, [
-    searchPlace,
-    selectedTypeRoom,
-    selectSector,
-    rooms,
-    rollSliderStart,
-    rollSliderEnd,
-  ]);
+  }, [rooms, rollSliderStart, rollSliderEnd]);
 
   const handleChangeSelectRoomType = (value) => {
     setSelectedTypeRoom(value);
@@ -132,6 +136,7 @@ const Rooms = () => {
     setFilterRoom(rooms);
     setRollSliderStart(100000);
     setRollSliderEnd(10000000);
+    navigate(window.location.pathname, { state: {} });
   };
 
   const handleOnChangeSlider = (value) => {
@@ -143,94 +148,17 @@ const Rooms = () => {
     getdataRooms();
   };
 
-
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    getdataRooms(page);
+  };
 
   return (
     <div className="container mx-auto lg:px-20 md:px-2 px-1 sm:px-6 py-8">
 
-      <div className="hidden flex items-center gap-4 mb-4 p-6 md:p-8 rounded-2xl bg-slate-500 backdrop-blur-md shadow-lg">
-        <form className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-4 w-full">
-          <div className="relative">
-            <Input
-              prefix={<CiSearch className="ml-2" size={24} />}
-              placeholder="Nhập nơi cần tìm ..."
-              value={searchPlace}
-              onChange={handleChangePlace}
-              className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
-            />
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Địa điểm
-            </label>
-          </div>
-
-          <div className="relative">
-            <RangePicker
-              className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
-              placeholder={["Ngày đi", "Ngày về"]}
-              format={dateFormat}
-              disabledDate={disabledDate}
-              value={selectedDateRange}
-              onChange={handleDateChange}
-            />
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Thời gian
-            </label>
-          </div>
-
-          <div className="relative">
-            <Select
-              className="w-full h-[40px] rounded-md"
-              placeholder="Loại phòng"
-              value={selectedTypeRoom}
-              onChange={handleChangeSelectRoomType}
-              options={[
-                {
-                  options: [
-                    { label: "1-2 người", value: "1-2 người" },
-                    { label: "3-4 người", value: "3-4 người" },
-                    { label: "5-6 người", value: "5-6 người" },
-                  ],
-                },
-              ]}
-            />
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Loại phòng
-            </label>
-          </div>
-
-          <div className="relative">
-            <Select
-              placeholder="Khu vực ..."
-              value={selectSector}
-              onChange={handleChangeSelectSector}
-              className="w-full h-[40px] rounded-md"
-            >
-              {allSector?.map((sector) => (
-                <Option key={sector._id} value={sector._id}>
-                  {sector.nameSector}
-                </Option>
-              ))}
-            </Select>
-            <label className="absolute left-0 transform -translate-y-6 text-white text-md font-bold">
-              Khu vực
-            </label>
-          </div>
-        </form>
-
-        <div className="flex flex-col gap-4">
-          <button
-            className="p-4 bg-blue-600 hover:bg-blue-700 rounded-full transition-shadow shadow-md hover:shadow-lg"
-            onClick={handleSearch}
-          >
-            <CiSearch className="text-white" size={24} />
-          </button>
-        </div>
-      </div>
-
-
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 mb-4 bg-slate-500 rounded-md w-full h-auto items-center">
+      <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 gap-4 p-4 mb-4 bg-slate-500 rounded-md w-full h-auto items-center">
         {/* Search Input */}
-        <div className="col-span-1 md:col-span-2">
+        <div className="col-span-1 md:col-span-3 lg:col-span-2">
           <label className="text-white mb-1" htmlFor="searchPlace">
             Tên phòng
           </label>
@@ -244,7 +172,7 @@ const Rooms = () => {
         </div>
 
         {/* Date Range Picker */}
-        <div className="col-span-1 md:col-span-2">
+        <div className="col-span-1 md:col-span-3 lg:col-span-2">
           <label className="text-white mb-1" htmlFor="searchPlace">
             Thời gian
           </label>
@@ -259,7 +187,7 @@ const Rooms = () => {
         </div>
 
         {/* Room Type Selector */}
-        <div className="col-span-1">
+        <div className="col-span-1 md:col-span-2 lg:col-span-1">
           <label className="text-white mb-1" htmlFor="searchPlace">
             Loại phòng
           </label>
@@ -269,19 +197,15 @@ const Rooms = () => {
             value={selectedTypeRoom}
             onChange={handleChangeSelectRoomType}
             options={[
-              {
-                options: [
-                  { label: "1-2 người", value: "1-2 người" },
-                  { label: "3-4 người", value: "3-4 người" },
-                  { label: "5-6 người", value: "5-6 người" },
-                ],
-              },
+              { label: "1-2 người", value: "1-2 người" },
+              { label: "3-4 người", value: "3-4 người" },
+              { label: "5-6 người", value: "5-6 người" },
             ]}
           />
         </div>
 
         {/* Sector Selector */}
-        <div className="col-span-1">
+        <div className="col-span-1 md:col-span-2 lg:col-span-1">
           <label className="text-white mb-1" htmlFor="searchPlace">
             Khu vực
           </label>
@@ -290,7 +214,7 @@ const Rooms = () => {
             value={selectSector}
             onChange={handleChangeSelectSector}
             className="w-full h-[40px] rounded-md"
-          >            
+          >
             {allSector?.map((sector) => (
               <Option key={sector._id} value={sector._id}>
                 {sector.nameSector}
@@ -300,8 +224,8 @@ const Rooms = () => {
         </div>
 
         {/* Reset Button */}
-        <div className="col-span-1 mt-2">
-          <label className="block text-white mb-1" htmlFor="searchPlace">
+        <div className="col-span-1 md:col-span-2 lg:col-span-1 mt-2">
+          <label className="block text-white mb-1">
             Thao tác
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -326,9 +250,6 @@ const Rooms = () => {
           </div>
         </div>
       </div>
-
-
-
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Filters */}
@@ -382,6 +303,7 @@ const Rooms = () => {
 
         {/* Room List */}
         <div className="w-full md:w-3/4">
+
           <div className="space-y-4">
             {filterRoom.map(room => (
               <div key={room._id} className="bg-white overflow-hidden shadow rounded-lg flex">
@@ -419,10 +341,10 @@ const Rooms = () => {
             ))}
           </div>
 
-          {/* Pagination */}
-          {filterRoom.length > 0 ?
+          {/* Pagination filterRoom.length */}
+          {1 > 0 ?
             <>
-              <div className="mt-6">
+              {/* <div className="mt-6">
                 <nav className="flex items-center justify-between border-t border-gray-200 px-4 sm:px-0">
                   <div className="-mt-px w-0 flex-1 flex">
                     <a
@@ -453,6 +375,17 @@ const Rooms = () => {
                     </a>
                   </div>
                 </nav>
+              </div> */}
+              {/* Pagination */}
+              <div className="pagination flex justify-center mt-6">
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={totalRooms} // total number of rooms
+                  onChange={handlePageChange} // handle page change
+                  showSizeChanger={false} // Disable page size changer if not needed
+                  className="pagination" // Optionally add custom Tailwind classes for styling
+                />
               </div>
             </> : <></>
           }

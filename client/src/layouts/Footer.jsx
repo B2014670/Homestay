@@ -20,11 +20,11 @@ const Footer = () => {
           <ul className="space-y-2">
             <li className="flex items-center">
               <FaLocationDot size={20} className='mr-2' />
-              <span>Số 2, Đường Hai Bà Trưng, Tân An, Ninh Kiều, Cần Thơ</span>
+              <span>ấp Bãi Bàng, Lại Sơn, Kiên Hải, Kiên Giang.</span>
             </li>
             <li className="flex items-center">
               <FaPhoneVolume size={20} className='mr-2' />
-              <span>ĐT: +84292 2222 222</span>
+              <span>ĐT: 0292 2222 222</span>
             </li>
             <li className="flex items-center">
               <MdMarkEmailUnread size={20} className='mr-2' />
@@ -41,16 +41,16 @@ const Footer = () => {
           <h4 className="text-lg font-semibold mb-4">Về chúng tôi</h4>
           <ul className="space-y-2">
             <li><NavLink to={path.ABOUT}>Giới thiệu</NavLink></li>
-            <li><NavLink to={path.LOGIN}>Liên Hệ</NavLink></li>
-            <li><NavLink to={path.LOGIN}>Tin Tức</NavLink></li>
+            <li><NavLink to={path.CONTACT}>Liên Hệ</NavLink></li>
+            <li><NavLink to={path.NEWS}>Tin Tức</NavLink></li>
           </ul>
         </div>
         {/* Third Column */}
         <div>
-          <h4 className="text-lg font-semibold mb-4">Điều khoản và cài đặt</h4>
+          <h4 className="text-lg font-semibold mb-4">Điều khoản và Chính sách</h4>
           <ul className="space-y-2">
-            <li><NavLink to={path.LOGIN}>Điều khoản và điều kiện</NavLink></li>
-            <li><NavLink to={path.LOGIN}>Chính sách bảo mật</NavLink></li>
+            <li><NavLink to={path.TERMS}>Điều khoản thanh toán</NavLink></li>
+            <li><NavLink to={path.POLICY}>Chính sách bảo mật</NavLink></li>
           </ul>
         </div>
       </div>

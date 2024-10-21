@@ -3,12 +3,15 @@ import swal from "sweetalert";
 import Cookies from 'js-cookie';
 import { apiRegister, apiLogin, validateToken, apiOauthLogin } from '../services/auth';
 
+const storedUser = localStorage.getItem('user');
+const tokenCookie = Cookies.get('accessToken');
+
 const useAuthStore = create((set) => ({
-    isLoggedIn: false,
-    user: null,
+    isLoggedIn: storedUser && tokenCookie ? true : false,
+    user: storedUser ? JSON.parse(storedUser) : null,
 
     initializeAuth: async () => {
-        const tokenCookie = Cookies.get('accessToken');
+        
         if (tokenCookie) {
             try {
                 const response = await validateToken();
@@ -18,26 +21,12 @@ const useAuthStore = create((set) => ({
                         isLoggedIn: true,
                         user: response.data.data.user,
                     });
+                    localStorage.setItem('user', JSON.stringify(response.data.data.user));
                 } else {
                     swal('Thông Báo !', response.data.msg, 'warning');
                 }
             } catch (error) {
-                if (error.response) {
-                    switch (error.response.status) {
-                        case 400:
-                        case 401:
-                            swal("Thông Báo", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "warning");
-                            break;
-                        case 500:
-                            swal('Lỗi Server', 'Có lỗi xảy ra trên server. Vui lòng thử lại sau.', 'error');
-                            break;
-                        default:
-                            swal("Error!", "An unexpected error occurred.", "error");
-                    }
-                } else {
-                    console.error('Error initializing auth:', error);
-                    swal("Error!", "Network errors occurred during login.", "error");
-                }
+                handleAuthError(error);
             }
         }
     },
@@ -53,7 +42,8 @@ const useAuthStore = create((set) => ({
                     user: response.data.data.user,
                 });
                 Cookies.set('accessToken', response.data.data.accessToken, { expires: (1 / 24 / 60) * 15 });
-                Cookies.set('refreshToken', response.data.data.refreshToken, { expires: (1 / 24 / 60) * 60 * 24 });
+                Cookies.set('refreshToken', response.data.data.refreshToken, { expires: 2 });
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
             } else {
                 swal('Thông Báo !', response.data.msg, 'warning');
             }
@@ -85,7 +75,8 @@ const useAuthStore = create((set) => ({
                     user: response.data.data.user,
                 });
                 Cookies.set('accessToken', response.data.data.accessToken, { expires: (1 / 24 / 60) * 15 });
-                Cookies.set('refreshToken', response.data.data.refreshToken, { expires: (1 / 24 / 60) * 60 * 24 });
+                Cookies.set('refreshToken', response.data.data.refreshToken, { expires: 2 }); //2 days
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
             } else {
                 swal('Thông Báo !', response.data.msg, 'warning');
             }
@@ -128,6 +119,7 @@ const useAuthStore = create((set) => ({
             isLoggedIn: false,
             user: null,
         });
+        localStorage.removeItem('user');
     },
     // Get the current state
     getState: () => ({
@@ -137,3 +129,23 @@ const useAuthStore = create((set) => ({
 }));
 
 export default useAuthStore;
+
+// Helper function to handle errors
+const handleAuthError = (error) => {
+    if (error.response) {
+        switch (error.response.status) {
+            case 400:
+            case 401:
+                swal("Thông Báo", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "warning");
+                break;
+            case 500:
+                swal('Lỗi Server', 'Có lỗi xảy ra trên server. Vui lòng thử lại sau.', 'error');
+                break;
+            default:
+                swal("Error!", "An unexpected error occurred.", "error");
+        }
+    } else {
+        console.error('Error initializing auth:', error);
+        swal("Error!", "Network errors occurred during login.", "error");
+    }
+};
