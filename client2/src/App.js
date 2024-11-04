@@ -11,7 +11,7 @@ import {
   CaNhan,
 } from "./containers/Public";
 
-import { path } from "./ultils/constant";
+import { path } from "./utils/constant";
 import DetailRoom from "./containers/Public/DetailRoom";
 
 function App() {

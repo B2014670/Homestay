@@ -59,7 +59,7 @@ const DetailRoom = () => {
     statusOrder: 1,
   });
   // console.log(formData)
-  
+
   const onChange1 = ({ target: { value } }) => {
     setPaymentByPaypal(value);
     setFormData({ ...formData, pay: value });
@@ -111,32 +111,32 @@ const DetailRoom = () => {
   const handleDateChange = (e) => {
     // console.log(e)
 
-   if(e){
-    getDaysBetween(e[0].$d, e[1].$d);
+    if (e) {
+      getDaysBetween(e[0].$d, e[1].$d);
 
-    setFormData({ ...formData, dateInput: arrayDateInput });
-    const isOverlap = arrayDateInput.some((date) =>
-      disabledDateData.includes(date)
-    );
-    if (isOverlap) {
-      swal(
-        "Thông báo ! ",
-        "Vui lòng không chọn những ngày đã vô hiệu hóa trước đó !",
-        "warning"
+      setFormData({ ...formData, dateInput: arrayDateInput });
+      const isOverlap = arrayDateInput.some((date) =>
+        disabledDateData.includes(date)
       );
+      if (isOverlap) {
+        swal(
+          "Thông báo ! ",
+          "Vui lòng không chọn những ngày đã vô hiệu hóa trước đó !",
+          "warning"
+        );
+      }
+      setAmount(Number(((arrayDateInput.length * giaRoom) / 24000).toFixed(2)))
+
     }
-    setAmount(Number(((arrayDateInput.length*giaRoom)/24000).toFixed(2)))
-   
-   }
   };
- 
+
   useEffect(() => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       dateInput: arrayDateInput,
       totalMoney: arrayDateInput.length * giaRoom,
     }));
-    
+
     const isOverlap = arrayDateInput.some((date) =>
       disabledDateData.includes(date)
     );
@@ -147,7 +147,7 @@ const DetailRoom = () => {
         "warning"
       );
     }
-    setAmount(Number(((arrayDateInput.length*giaRoom)/24000).toFixed(2)))
+    setAmount(Number(((arrayDateInput.length * giaRoom) / 24000).toFixed(2)))
   }, [arrayDateInput]);
 
   useEffect(() => {
@@ -176,20 +176,20 @@ const DetailRoom = () => {
     };
     const response = await apiOrder(datainput);
     if (response.status === 200)
-      swal("Thành Công !", " Đặt phòng thành công !", "success" ).then((value) => {
+      swal("Thành Công !", " Đặt phòng thành công !", "success").then((value) => {
         window.location.reload();
       });
   };
 
   useEffect(() => {
-    const fetchSectors = async () =>{
-      const response = await apiInfoSector({"idSector":idSectorRoom})
+    const fetchSectors = async () => {
+      const response = await apiInfoSector({ "idSector": idSectorRoom })
       setSector(response.data)
     }
     fetchSectors()
     // console.log(Sector)
   }, [])
-  
+
 
   return (
     <div className=" m-1 w-1100 ">
@@ -263,6 +263,7 @@ const DetailRoom = () => {
             {/* dong img nho */}
           </div>
           {/* dong img preview */}
+
           {/* card thanh toán */}
           <div className=" m-1 w-[400px] z rounded-lg ">
             <Form
@@ -278,47 +279,6 @@ const DetailRoom = () => {
               <div className="font-semibold flex justify-around text_bigSize1">
                 Đặt Phòng
               </div>
-              {/* <div className="flex justify-around items-center">
-                <Form.Item
-                  label="Tên người Đặt :"
-                  name="nameUser"
-                  onChange={(e) => {
-                    setFormData({ ...formData, userInput: e.target.value });
-                  }}
-                  className="w-[80%]"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập thông tin người đặt !",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Nhập tên người đặt ..." />
-                </Form.Item>
-              </div> */}
-              {/* <div className="flex justify-around items-center">
-                <Form.Item
-                  label="Số Điện Thoại :"
-                  name="phoneUser"
-                  className="w-[80%]"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập thông tin người đặt !",
-                    },
-                    {
-                      pattern: /^0\d{9}$/,
-                      message:
-                        "Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số.",
-                    },
-                  ]}
-                  onChange={(e) => {
-                    setFormData({ ...formData, phoneInput: e.target.value });
-                  }}
-                >
-                  <Input placeholder="Nhập SĐT người đặt ..." />
-                </Form.Item>
-              </div> */}
               <div className="flex justify-around items-center">
                 <Form.Item
                   label="Nhập ngày nhận và trả phòng :"
@@ -373,6 +333,7 @@ const DetailRoom = () => {
                   phòng, Xin liên hệ qua hostline để hoàn tiền
                 </div>
               </div>
+              
               {IsLoggedIn ? (
                 <PayButton
                   Room={r}
@@ -416,7 +377,7 @@ const DetailRoom = () => {
           <div>Khu vực : {Sector.nameSector}</div>
           <div>Vị trí của khu vực : {Sector.addressSector}</div>
           <div className="text-sm">Điểm nổi bật của khu vực : {Sector.discSector}</div>
-          
+
         </div>
 
         <div className="bg-black w-1100 h-[2px] mt-5 mb-5 flex justify-center items-center"></div>
@@ -430,7 +391,7 @@ const DetailRoom = () => {
             </div>
           ) : (
             <div>
-              {cmtRoom?.map((cmt,index) => (
+              {cmtRoom?.map((cmt, index) => (
                 <div className=" comment_box" key={index}>
                   <div>
                     <Rate value={cmt.rate} disabled allowHalf />

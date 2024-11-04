@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom';
-import { path } from '../ultils/constant.js'
-import icons from '../ultils/icons'
+import { path } from '../utils/constant.js'
+import icons from '../utils/icons'
 
 import './containers.css';
 

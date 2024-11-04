@@ -3,15 +3,15 @@ import swal from "sweetalert";
 import Cookies from 'js-cookie';
 import { apiRegister, apiLogin, validateToken, apiOauthLogin } from '../services/auth';
 
-const storedUser = localStorage.getItem('user');
+const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
 const tokenCookie = Cookies.get('accessToken');
 
 const useAuthStore = create((set) => ({
-    isLoggedIn: storedUser && tokenCookie ? true : false,
-    user: storedUser&& tokenCookie ? JSON.parse(storedUser) : null,
+    isLoggedIn: !!storedUser && !!tokenCookie,
+    user: storedUser || null,
 
     initializeAuth: async () => {
-        
+
         if (tokenCookie) {
             try {
                 const response = await validateToken();
@@ -120,12 +120,17 @@ const useAuthStore = create((set) => ({
             user: null,
         });
         localStorage.removeItem('user');
+
+        try {
+            fetch('https://www.sandbox.paypal.com/signout', {
+                method: 'GET',
+                credentials: 'include', // Allows cookies to be sent with the request
+                mode: 'no-cors' // Prevents CORS issues by not expecting a response
+            });
+        } catch (error) {
+            console.warn('PayPal signout request failed, redirecting directly.');
+        }
     },
-    // Get the current state
-    getState: () => ({
-        isLoggedIn: useAuthStore((state) => state.isLoggedIn),
-        user: useAuthStore((state) => state.user),
-    }),
 }));
 
 export default useAuthStore;

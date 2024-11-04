@@ -37,6 +37,8 @@ router.post("/orderRoom", users.orderRoom);
 
 router.post("/infoRoom", users.getInfoRoom);
 
+router.post("/getRoomWithSector", users.getRoomWithSector);
+
 router.post("/cancleOrderRoom", users.cancleOrderRoom);
 
 router.post("/updatePaypalOrder", users.updatePaypalOrder);

@@ -3,10 +3,10 @@ import { Avatar, Dropdown, Menu } from 'antd';
 import { UserOutlined, LogoutOutlined, OrderedListOutlined } from '@ant-design/icons';
 import { DownOutlined, SettingOutlined } from '@ant-design/icons';
 import { Space } from 'antd';
-import icons from '../ultils/icons'
+import icons from '../utils/icons'
 import oip from '../assets/OIP.png'
 import { Link, useNavigate, NavLink } from 'react-router-dom'
-import { path } from '../ultils/constant'
+import { path } from '../utils/constant'
 import useAuthStore from '../stores/authStore';
 import './containers.css'
 

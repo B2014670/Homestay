@@ -26,7 +26,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (isLoggedIn) {
       // Connect to the socket server
-      const newSocket = io('http://localhost:5000');
+      const newSocket = io(import.meta.env.VITE_REACT_APP_SERVER);
       setSocket(newSocket);
 
       // Listen for messages from the server
@@ -312,8 +312,8 @@ export default function AccountPage() {
       children: (
         <div className="flex flex-col h-[400px]">
           <div className="flex-grow overflow-y-auto mb-4 space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender === 'User' ? 'justify-end' : 'justify-start'}`}>
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex ${msg.sender === 'User' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs p-3 rounded-lg ${msg.sender === 'User' ? 'bg-blue-100' : 'bg-gray-100'}`}>
                   <p className="font-semibold">{msg.sender}</p>
                   <p>{msg.content}</p>

@@ -24,7 +24,6 @@ router.post("", async (req, res) => {
   }
 
   // Hàm này sẽ liệt kê tất cả các phòng
-
   async function inTotalRoom() {
     try {
       const data = await dialogflow.getAllRoom();
@@ -32,8 +31,9 @@ router.post("", async (req, res) => {
       // Tạo custom payload cho thẻ accordion
       const accordionPayload = {
         type: "accordion",
-        title: `Danh sách phòng tại Homestay24h bao gồm ${data.length} phòng`,
-        subtitle: 'gõ "&lt;Tên phòng&gt;" để thực hiện đặt phòng',
+        title: `Danh sách phòng tại Homestay  bao gồm ${data.length} phòng`,
+        // subtitle: 'gõ "&lt;Tên phòng&gt;" để thực hiện đặt phòng',
+        subtitle: 'Chọn phòng để thực hiện đặt phòng',
       };
 
       // Tạo custom payload cho danh sách các phòng
@@ -43,19 +43,101 @@ router.post("", async (req, res) => {
         subtitle: "",
         // event: {
         //   name: "",
-        //   languageCode: "",
+        //   languageCode: "vi",
         //   parameters: {},
         // },
       };
 
       // Tạo danh sách các phòng dựa trên dữ liệu từ API
+      // const listItems = data.map((room) => {
+      //   const listItem = { ...listItemsPayload };
+      //   listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${
+      //     room.loaiRoom
+      //   } `;
+      //   listItem.subtitle = `${room.giaRoom} vnđ/Đêm`;
+      //   return listItem;
+      // });
+
       const listItems = data.map((room) => {
-        const listItem = { ...listItemsPayload };
-        listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${
-          room.loaiRoom
-        } `;
-        listItem.subtitle = `${room.giaRoom} vnđ/Đêm`;
-        return listItem;
+        return {
+          ...listItemsPayload,
+          title: `${capitalizeFirstLetter(room.nameRoom)} - ${room.loaiRoom}`,
+          subtitle: `${room.giaRoom} vnđ/Đêm`,
+          event: {
+            name: "select_room",
+            languageCode: "en",
+            parameters: { enTenPhong: room._id },
+          },
+        };
+      });
+
+      // Tạo cấu trúc rich content
+      const richContent = [
+        [accordionPayload],
+        listItems,
+        [{ type: "divider" }],
+      ];
+
+      // Tạo message fulfillment cuối cùng
+      const fulfillmentMessage = {
+        fulfillmentMessages: [
+          {
+            payload: {
+              richContent: richContent,
+            },
+          },
+        ],
+      };
+
+      // Trả về fulfillment message (bạn có thể gửi nó cho client theo nhu cầu)
+      return res.send(fulfillmentMessage);
+    } catch (error) {
+      return {
+        fulfillmentText: "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn.",
+      };
+    }
+  }
+
+  // Hàm này sẽ liệt kê tất cả các khu vực
+  async function inNumberRoomOfSector() {
+    try {
+      const data = await dialogflow.getAllSectorChatbot();
+      console.log(data);
+
+      // // Check if data is available
+      if (!data || !data.sectors || data.sectors.length === 0) {
+        return {
+          fulfillmentText: "Không có khu vực nào được tìm thấy.",
+        };
+      }
+
+      // Tạo custom payload cho thẻ accordion
+      const accordionPayload = {
+        type: "accordion",
+        title: `Homestay bao gồm ${data.length} khu vực`,
+        subtitle: 'Chọn khu vực để xem phòng',
+      };
+
+      // Tạo custom payload cho danh sách các khu vực
+      const listItemsPayload = {
+        type: "list",
+        title: "",
+        subtitle: "",
+      };
+
+      // Tạo danh sách các khu vực dựa trên dữ liệu từ API
+
+      const listItems = data.sectors.map((sector) => {
+        return {
+          ...listItemsPayload,
+          title: `${capitalizeFirstLetter(sector.nameSector)} - ${sector.totalRoomInSector} phòng`,
+          subtitle: `${sector.discSector}`,
+          event: {
+            name: "select_sector",
+            languageCode: "en",
+            parameters: { enKhuVuc: sector._id },
+          },
+        };
       });
 
       // Tạo cấu trúc rich content
@@ -89,18 +171,22 @@ router.post("", async (req, res) => {
   async function orderRoomBySector() {
     try {
       const data = await dialogflow.findRoomsByIdSector(parameters);
-      // const rooms = data.map(
-      //   (room) =>
-      //     `phòng ${room.nameRoom} - giá ${room.giaRoom}vnđ/Đêm - loại phòng : ${room.loaiRoom}.`
-      // );
-      // const roomListString = `Sau đây là danh sách các phòng cùng với giá phòng: ${rooms.join(
-      //   ", "
-      // )}. Bạn đã chọn được phòng ưng ý nào ạ?`;
+
+      if (!Array.isArray(data) || data.length === 0) {
+        return res.send({
+          fulfillmentMessages: [{
+            text: {
+              text: ["Xin lỗi, hiện tại không có phòng nào khả dụng."]
+            }
+          }]
+        });
+      }
 
       const accordionPayload = {
         type: "accordion",
         title: "Danh sách phòng tại khu vực bạn đã chọn :",
-        subtitle: `gõ "&lt;Tên phòng&gt;" để thực hiện đặt phòng`,
+        // subtitle: `gõ "&lt;Tên phòng&gt;" để thực hiện đặt phòng`,
+        subtitle: 'Chọn phòng để thực hiện đặt phòng',
       };
 
       // Tạo custom payload cho danh sách các phòng
@@ -111,13 +197,26 @@ router.post("", async (req, res) => {
       };
 
       // Tạo danh sách các phòng dựa trên dữ liệu từ API
+      // const listItems = data.map((room) => {
+      //   const listItem = { ...listItemsPayload };
+      //   listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${
+      //     room.loaiRoom
+      //   } `;
+      //   listItem.subtitle = `${room.giaRoom} vnđ/Đêm`;
+      //   return listItem;
+      // });
+
       const listItems = data.map((room) => {
-        const listItem = { ...listItemsPayload };
-        listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${
-          room.loaiRoom
-        } `;
-        listItem.subtitle = `${room.giaRoom} vnđ/Đêm`;
-        return listItem;
+        return {
+          ...listItemsPayload,
+          title: `${capitalizeFirstLetter(room.nameRoom)} - ${room.loaiRoom}`,
+          subtitle: `${room.giaRoom} vnđ/Đêm`,
+          event: {
+            name: "select_room",
+            languageCode: "en",
+            parameters: { enTenPhong: room._id },
+          },
+        };
       });
 
       // Tạo cấu trúc rich content
@@ -165,8 +264,8 @@ router.post("", async (req, res) => {
             .getDate()
             .toString()
             .padStart(2, "0")}/${(currentDate.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}/${currentDate.getFullYear()}`;
+              .toString()
+              .padStart(2, "0")}/${currentDate.getFullYear()}`;
           dateArray.push(formattedDate);
           currentDate = new Date(
             currentDate.setDate(currentDate.getDate() + 1)
@@ -193,21 +292,19 @@ router.post("", async (req, res) => {
 
       console.log('data', data);
 
-      const confirmationMessage = `Chào anh/chị ${
-        enTen.name
-      }! Homestay24h xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ. 
-        Anh/chị ${enTen.name} đặt phòng ${room.nameRoom} ngày nhận phòng : ${
-        arrayDate[0]
-      }, ngày trả phòng: ${arrayDate[arrayDate.length - 1]}. 
+      const confirmationMessage = `Chào anh/chị ${enTen.name
+        }! Homestay  xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ. 
+        Anh/chị ${enTen.name} đặt phòng ${room.nameRoom} ngày nhận phòng : ${arrayDate[0]
+        }, ngày trả phòng: ${arrayDate[arrayDate.length - 1]}. 
         Tổng số ngày là ${arrayDate.length}.
         Tổng tiền: ${arrayDate.length * room.giaRoom}vnđ.
-        Khi nhận phòng tại quầy, vui lòng cung cấp tên và SĐT để nhận phòng hoặc mã đặt phòng: ${
-          data.order[data.order.length - 1].idOrder
+        Khi nhận phòng tại quầy, vui lòng cung cấp tên và SĐT để nhận phòng hoặc mã đặt phòng: ${data.order[data.order.length - 1].idOrder
         }.`;
       return res.send({
         fulfillmentText: confirmationMessage,
       });
     } catch (error) {
+      console.log(error);
       return res.send({
         fulfillmentText: "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn. confirmOrderRoom",
       });
@@ -226,10 +323,8 @@ router.post("", async (req, res) => {
       // console.log(data);
       const rooms = data.map(
         (room) =>
-          `phòng ${
-            room.nameRoom
-          } - giá ${room.giaRoom.toLocaleString()}vnđ/Đêm - loại phòng : ${
-            room.loaiRoom
+          `phòng ${room.nameRoom
+          } - giá ${room.giaRoom.toLocaleString()}vnđ/Đêm - loại phòng : ${room.loaiRoom
           }.`
       );
       const roomListString = `Sau đây là danh sách các phòng cùng với giá phòng: ${rooms.join(
@@ -355,7 +450,7 @@ router.post("", async (req, res) => {
           type: "list",
           title: "",
           subtitle: "",
-          image : {
+          image: {
             src: {
               rawUrl: "",
             },
@@ -365,9 +460,8 @@ router.post("", async (req, res) => {
         // // Tạo danh sách các phòng dựa trên dữ liệu từ API
         const listItems = data.map((room) => {
           const listItem = { ...listItemsPayload };
-          listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${
-            room.loaiRoom
-          } `;
+          listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${room.loaiRoom
+            } `;
           listItem.subtitle = `${room.giaRoom} vnđ/Đêm`;
           listItem.image.src.rawUrl = `${room.imgRoom[0].secure_url}`
           return listItem;
@@ -397,7 +491,7 @@ router.post("", async (req, res) => {
       }
 
       return res.send({
-        fulfillmentText: `Xin lỗi vì sự bất tiện này ! Hiện tại từ ngày ${enIn} đến ngày ${enOut} chúng tôi đã hết phòng trống . Xin cảm ơn quý khách đã tin tưởng đến với Homestay24h`,
+        fulfillmentText: `Xin lỗi vì sự bất tiện này ! Hiện tại từ ngày ${enIn} đến ngày ${enOut} chúng tôi đã hết phòng trống . Xin cảm ơn quý khách đã tin tưởng đến với Homestay `,
       });
     } catch (error) {
       console.error(error);
@@ -447,7 +541,7 @@ router.post("", async (req, res) => {
       const data = await dialogflow.getInfoOrderRoomByChatBot({
         idOrder: idOrder,
       });
-      if(data === 2) {
+      if (data === 2) {
         return res.send({
           fulfillmentText: "Không tìm thấy mã đơn đặt phòng trùng khớp với mã đơn đã cung cấp.",
         });
@@ -481,8 +575,7 @@ router.post("", async (req, res) => {
                       `Họ và Tên : ${data.userInput}\n`,
                       `Số điện thoại : ${data.phoneInput}\n`,
                       `Ngày nhận phòng : ${data.dateInput[0]}\n`,
-                      `Ngày trả phòng : ${
-                        data.dateInput[data.dateInput.length - 1]
+                      `Ngày trả phòng : ${data.dateInput[data.dateInput.length - 1]
                       }\n`,
                       `Tổng tiền : ${data.totalMoney}`,
                       `Thanh toán : ${paymentStatus}`,
@@ -510,9 +603,12 @@ router.post("", async (req, res) => {
     inTotalRoom();
   }
   if (intent === "orderRoom - khuvuc") {
+    inNumberRoomOfSector();
+  }
+  if (intent === "orderRoom - khuvuc - select") {
     orderRoomBySector();
   }
-  if (intent === "orderRoom - khuvuc - confirmOrder") {
+  if (intent === "orderRoom - khuvuc - select - confirmOrder") {
     confirmOrderRoom();
   }
   if (intent === "orderRoom - tenPhong") {
@@ -520,7 +616,7 @@ router.post("", async (req, res) => {
     inTotalRoom();
   }
   if (intent === "orderRoom - tenPhong - confirmOrder") {
-    confirmOrderRoom();
+    confirmOrderRoom() ;
   }
   if (intent === "inGiaPhong") {
     inTotalRoom();
@@ -540,4 +636,4 @@ router.post("", async (req, res) => {
   // console.log(intent)
 });
 
-module.exports = router;
+module.exports = router ;

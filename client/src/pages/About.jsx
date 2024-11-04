@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { path } from '../ultils/constant'
-import icons from '../ultils/icons'
+import { path } from '../utils/constant'
+import icons from '../utils/icons'
 import banner4 from '../assets/banner4.jpg'
 import tieuchi from '../assets/tieuchi.png'
 
@@ -55,8 +55,7 @@ const About = () => {
                         </p>
                     </div>
                 </div>
-            </div>
-
+            </div>          
         </div>
     );
 }

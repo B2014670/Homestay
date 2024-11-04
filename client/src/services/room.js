@@ -82,6 +82,21 @@ export const apiGetInfoRoom = (payload) => new Promise(async(resolve, reject)=>{
         reject(error)
     }
 })
+
+export const apiGetRoomWithSector = (payload) => new Promise(async(resolve, reject)=>{
+    try {
+        // console.log(payload)
+        const response = await axiosConfig({
+            method: 'post',
+            url: '/user/getRoomWithSector',
+            data : payload,
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+})
+
 export const apiCancleRoom = (payload) => new Promise(async(resolve, reject)=>{
     try {
         // console.log(payload)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Image, Rate } from "antd";
-import { path } from "../ultils/constant";
+import { path } from "../utils/constant";
 import { useNavigate } from "react-router-dom";
 import { apiInfoSector } from "../services";
 import './component.css';

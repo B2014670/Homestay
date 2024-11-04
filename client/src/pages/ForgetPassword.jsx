@@ -2,7 +2,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import swal from "sweetalert";
 import { apiForgotPassword } from '../services'
-import { path } from '../ultils/constant';
+import { path } from '../utils/constant';
 import { useNavigate } from 'react-router-dom';
 
 const ForgetPassword = () => {

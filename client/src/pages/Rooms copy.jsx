@@ -10,7 +10,7 @@
 
 // import { FaStar } from 'react-icons/fa';
 // import { Input, Select, Slider, DatePicker } from 'antd';
-// import icons from "../ultils/icons";
+// import icons from "../utils/icons";
 
 // const { RangePicker } = DatePicker;
 // const { Option } = Select;

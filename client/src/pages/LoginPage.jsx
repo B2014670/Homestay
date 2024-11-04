@@ -3,7 +3,7 @@ import * as Yup from 'yup';
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
-import { path } from '../ultils/constant'
+import { path } from '../utils/constant'
 import { checkEmailLinked } from "../services"
 import useAuthStore from '../stores/authStore'
 import GoogleSignIn from '../components/GoogleSignIn'
@@ -21,7 +21,7 @@ const Login = () => {
     const from = location.state?.from?.pathname || path.HOME;
       
     useEffect(() => {
-        isLoggedIn && navigate(from, { replace: true })
+        isLoggedIn && navigate(from, {state: location.state}, { replace: true })
     }, [isLoggedIn])
 
     const validationSchema = Yup.object({
@@ -70,6 +70,7 @@ const Login = () => {
                                         type="text"
                                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                         placeholder="Nhập số điện thoại"
+                                        autoComplete="off"
                                     />
                                     <ErrorMessage name="phone" component="div" className="text-red-500 text-sm mt-1" />
                                 </div>
@@ -84,6 +85,7 @@ const Login = () => {
                                         type={showPassword ? "text" : "password"}
                                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                         placeholder="Nhập mật khẩu"
+                                        autoComplete="off"
                                     />
                                     <button
                                         type="button"

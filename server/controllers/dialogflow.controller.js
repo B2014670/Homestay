@@ -61,7 +61,7 @@ exports.getInfoRoom = async (payload) => {
     const roomService = new RoomService(MongoDB.client);
     const result1 = await roomService.checkByIdRoom(payload);
 
-    return  result1[0]
+    return result1[0]
   } catch (error) {
     // console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong truy xuat phòng !"));
@@ -121,32 +121,49 @@ exports.getAllSector = async (req, res, next) => {
   try {
     const sectorService = new SectorService(MongoDB.client);
     const data = await sectorService.check();
+
     const result = {
       sectors: data,
       length: data.length,
     };
-    if (result) {
-      return res.status(200).json(result);
-    } else {
-      return res.send("Đã xảy ra lỗi");
-    }
+
+    return res.status(200).json(result);
+
   } catch (error) {
     // console.log(error)
     return next(
-      new ApiError(500, "Xảy ra lỗi trong quá trình truy xuat khu vực !")
+      new ApiError(500, "Xảy ra lỗi trong quá trình truy xuất khu vực !")
     );
   }
 };
 
+exports.getAllSectorChatbot = async (req, res, next) => {
+  try {
+    const sectorService = new SectorService(MongoDB.client);
+    const data = await sectorService.check();
+
+    const result = {
+      sectors: data,
+      length: data.length,
+    };
+
+    return result;
+
+  } catch (error) {
+    return next(
+      new ApiError(500, "Xảy ra lỗi trong quá trình truy xuất khu vực !")
+    );
+  }
+};
 
 exports.findRoomsByIdSector = async (req, res, next) => {
   try {
     const roomService = new RoomService(MongoDB.client);
     const data = await roomService.findRoomByIdSector(req);
-   
-      return  data;
-   
-    
+
+    return data;
+
+
   } catch (error) {
     // console.log(error)
     return next(
@@ -163,7 +180,7 @@ exports.orderRoomByChatBot = async (payload) => {
   };
 
   const infoOrder = {
-    idUser: "66b86a7795307a46d21b5820",//id of ? user ? admin
+    idUser: "6716e891ad9c5603b1499655",// user ảo đóng vai trò là bot
     userInput: payload.enTen,
     phoneInput: payload.enSdt,
     idRoom: payload.enTenPhong,
@@ -190,8 +207,8 @@ exports.orderRoomByChatBot = async (payload) => {
 };
 
 exports.checkRoomByChatBot = async (payload) => {
-    const date = payload.date
-    // console.log(date)
+  const date = payload.date
+  // console.log(date)
   try {
     const roomService = new RoomService(MongoDB.client);
     const result = await roomService.findAvailableRooms(date)
@@ -205,14 +222,14 @@ exports.checkRoomByChatBot = async (payload) => {
 };
 
 exports.cancleOrderRoomByChatBot = async (payload) => {
-try {
-  const userService = new UserService(MongoDB.client);
-  const result = await userService.CancleOrderRoomByChatBot(payload)
-  return result;
-} catch (error) {
-  console.log(error)
-  // return next(new ApiError(500, "Xảy ra lỗi trong quá trình đặt phòng !"));
-}
+  try {
+    const userService = new UserService(MongoDB.client);
+    const result = await userService.CancleOrderRoomByChatBot(payload)
+    return result;
+  } catch (error) {
+    console.log(error)
+    // return next(new ApiError(500, "Xảy ra lỗi trong quá trình đặt phòng !"));
+  }
 };
 
 
@@ -225,8 +242,8 @@ exports.getInfoOrderRoomByChatBot = async (payload) => {
     console.log(error)
     // return next(new ApiError(500, "Xảy ra lỗi trong quá trình đặt phòng !"));
   }
-  };
-  
+};
+
 
 
 

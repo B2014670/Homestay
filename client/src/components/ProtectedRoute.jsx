@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation  } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
-import { path } from '../ultils/constant';
+import { path } from '../utils/constant';
 
 const ProtectedRoute = ({ element }) => {
     const location = useLocation();

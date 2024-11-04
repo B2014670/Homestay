@@ -51,48 +51,48 @@ app.use((err, req, res, next) => {
 // Setup HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO with CORS options
-const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins,
-        credentials: true,
-    },
-});
+// // Initialize Socket.IO with CORS options
+// const io = new Server(server, {
+//     cors: {
+//         origin: allowedOrigins,
+//         credentials: true,
+//     },
+// });
 
-// Handle Socket.IO connections
-io.on('connection', (socket) => {
-    console.log(`${socket.id} user just connected!`);
+// // Handle Socket.IO connections
+// io.on('connection', (socket) => {
+//     console.log(`${socket.id} user just connected!`);
 
-    // Listen for incoming messages
-    socket.on('sendMessage', async (data) => {
-        console.log('Message received:', data);
+//     // Listen for incoming messages
+//     socket.on('sendMessage', async (data) => {
+//         console.log('Message received:', data);
 
-        // Use MongoDB to save message
-        try {
-            const db = MongoDB.getDb();  // Use existing MongoDB connection
-            const result = await db.collection('messages').insertOne({
-                sender: data.sender,
-                content: data.content,
-                timestamp: new Date(),
-            });
-            console.log('Message saved to MongoDB:', result.insertedId);
+//         // Use MongoDB to save message
+//         try {
+//             const db = MongoDB.getDb();  // Use existing MongoDB connection
+//             const result = await db.collection('messages').insertOne({
+//                 sender: data.sender,
+//                 content: data.content,
+//                 timestamp: new Date(),
+//             });
+//             console.log('Message saved to MongoDB:', result.insertedId);
 
-            // Broadcast the message to all clients
-            io.emit('receiveMessage', {
-                sender: data.sender,
-                content: data.content,
-                timestamp: new Date(),
-            });
-        } catch (error) {
-            console.error('Error saving message:', error);
-        }
-    });
+//             // Broadcast the message to all clients
+//             io.emit('receiveMessage', {
+//                 sender: data.sender,
+//                 content: data.content,
+//                 timestamp: new Date(),
+//             });
+//         } catch (error) {
+//             console.error('Error saving message:', error);
+//         }
+//     });
 
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        console.log(`${socket.id} user disconnected!`);
-    });
-});
+//     // Handle disconnection
+//     socket.on('disconnect', () => {
+//         console.log(`${socket.id} user disconnected!`);
+//     });
+// });
 
 
 module.exports = { app, server }; 

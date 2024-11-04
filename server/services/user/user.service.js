@@ -35,6 +35,12 @@ class UserService {
     return await cursor.toArray();
   }
 
+  async getUserOrder(filter) {
+    const projection = { refreshToken: 0 };
+    const cursor = await this.User.find(filter, { projection });
+    return await cursor.toArray();
+  }
+
   async checkDuplicatePhone(filter) {
     try {
       const user = await this.User.findOne(filter);

@@ -4,7 +4,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import useAuthStore from '../stores/authStore';
-import { path } from '../ultils/constant';
+import { path } from '../utils/constant';
 
 const Register = () => {
     const [showPassword, setShowPassword] = useState(false);

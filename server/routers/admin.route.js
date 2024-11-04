@@ -26,6 +26,8 @@ router.get("/getAllRoom", admins.getAllRoom);
 
 router.get("/getAllUser", admins.getAllUser);
 
+router.get("/getAllUserOrder", admins.getAllUserOrder);
+
 router.get("/getAllAdmin", admins.getAllAdmin);
 
 router.post('/confirmOrderRoom', admins.confirmOrderRoom);

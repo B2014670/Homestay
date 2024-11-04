@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import GoogleMapEmbed from '../components/GoogleMapEmbed';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import WeatherDisplay from '../components/WeatherDisplay';
-import icons from "../ultils/icons";
-import { path } from '../ultils/constant';
+import icons from "../utils/icons";
+import { path } from '../utils/constant';
 import { apiGetAllSector, apiGetAllRoom, apiGetWeather } from "../services";
 import { Form, Input, Select, DatePicker, Button, message, Spin } from 'antd';
 import dayjs from "dayjs";
@@ -97,7 +97,7 @@ const Home = () => {
                     </div>
 
                     {/* Search Form */}
-                    <div className="absolute bottom-[-4rem] left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] md:w-[calc(100%-6rem)] flex items-center gap-4 px-6 md:px-8 py-4 rounded-2xl bg-white bg-opacity-70 backdrop-blur-md shadow-lg">
+                    <div className="absolute bottom-[-4rem] left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] md:w-[calc(100%-4rem)] flex items-center gap-4 px-6 md:px-8 py-4 rounded-2xl bg-white bg-opacity-70 backdrop-blur-md shadow-lg">
                         <Form
                             layout="vertical"
                             className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 gap-0 md:gap-4 w-full"

@@ -2,10 +2,9 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import swal from "sweetalert";
 import { apiResetPassword } from '../services'
-import { path } from '../ultils/constant';
-import { useNavigate } from 'react-router-dom';
+import { path } from '../utils/constant';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 
 const ResetPassword = () => {

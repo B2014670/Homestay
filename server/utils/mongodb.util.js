@@ -17,6 +17,17 @@ class MongoDB {
         }
         return this.db;
     };
+
+    static disconnect = async () => {
+        if (this.client) {
+            await this.client.close();
+            this.client = null;
+            this.db = null;
+            console.log("Disconnected from MongoDB");
+        } else {
+            console.log("No MongoDB connection to close.");
+        }
+    };
 }
 
 module.exports = MongoDB;

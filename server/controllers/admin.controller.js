@@ -227,6 +227,26 @@ exports.getAllUser = async (req, res, next) => {
   }
 };
 
+exports.getAllUserOrder = async (req, res, next) => {
+  try{
+    const userService = new UserService(MongoDB.client);
+    const data = await userService.getUserOrder();
+    const result = {
+      users: data,
+      length: data.length,
+    }
+    if(result){
+      return res.status(200).json(result);
+    }else{
+      return res.send("Đã xảy ra lỗi")
+    }
+    
+  } catch (error) {
+    // console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuat phong !"));
+  }
+};
+
 
 exports.deleteRoom = async (req, res, next) => {
   // console.log(req.body)

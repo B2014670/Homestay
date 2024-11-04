@@ -6,12 +6,13 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vite + React</title>
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
 </head>
 
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
-  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+  
 
 
   <df-messenger intent="WELCOME" chat-title="HomestayBookingBot" agent-id="46b58091-c572-42d6-831d-ba3bb66c67c8"
@@ -35,7 +36,7 @@
       --df-messenger-input-font-color: #000000;
       /* Font color for the text input box */
       --df-messenger-input-placeholder-font-color: #888888;
-      /* Font color for placeholder text in the text input box */
+      /* Font color for placeholder text */
       --df-messenger-minimized-chat-close-icon-color: #0d47a1;
       /* Color of the close icon in the closed chat view */
       --df-messenger-send-icon: #0d47a1;
@@ -43,10 +44,6 @@
       --df-messenger-user-message: #0084FF;
       /* Bubble background color for user messages */
     }
-
-    
-
-    
   </style>
 </body>
 

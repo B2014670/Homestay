@@ -3,6 +3,7 @@ const UserService = require("../services/user/user.service");
 const MongoDB = require("../utils/mongodb.util");
 const RoomService = require("../services/room/room.service");
 const SectorService = require("../services/sector/sector.service");
+const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const Yup = require('yup');
@@ -522,7 +523,7 @@ exports.getAllRoom = async (req, res, next) => {
 exports.orderRoom = async (req, res, next) => {
   const idv4 = uuidv4();
   const room = {
-    idRoom: req.query.Room._id,
+    idRoom: req.query.Room?._id ?? req.query.infoOrder.idRoom,
     dateOrderRoom: req.query.infoOrder.dateInput,
   }
   console.log(req.query.infoOrder)
@@ -535,6 +536,13 @@ exports.orderRoom = async (req, res, next) => {
     totalMoney: req.query.infoOrder.totalMoney,
     pay: req.query.infoOrder.pay,
     statusOrder: req.query.infoOrder.statusOrder,
+    // discount: req.query.infoOrder.discount,  // New field: discount
+    // tax: req.query.infoOrder.tax,  // New field: tax
+    // totalAfterDiscount: req.query.infoOrder.totalAfterDiscount,  // New field: total after discount
+    // notes: req.query.infoOrder.notes,  // New field: order notes
+    // createdAt: new Date(),  // New field: creation timestamp
+    // updatedAt: new Date(),  // New field: updated timestamp (initially same as createdAt)
+    // completedAt: req.query.infoOrder.completedAt || null,  // New field: completion date (if order is complete)
     idOrder: idv4
   }
   const user = {
@@ -569,6 +577,19 @@ exports.getInfoRoom = async (req, res, next) => {
   }
 };
 
+exports.getRoomWithSector = async (req, res, next) => {
+  try {
+    const roomService = new RoomService(MongoDB.client);
+    const roomId = ObjectId.isValid(req.body.idRoom) ? new ObjectId(req.body.idRoom) : req.body.idRoom;
+
+    const result1 = await roomService.check({ "_id": roomId })
+
+    return res.send(result1[0])
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Xảy ra lỗi trong truy xuất thông tin phòng!"));
+  }
+};
 
 exports.cancleOrderRoom = async (req, res, next) => {
   const idUser = req.body.idUser;

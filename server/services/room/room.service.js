@@ -119,11 +119,10 @@ class RoomService {
       // Manually paginate the results
       const startIndex = (page - 1) * limit;
       const paginatedRooms = rooms.slice(startIndex, startIndex + limit);
-
       return { totalRooms: rooms.length, paginatedRooms };
     }
 
-    const [inputStartDate, inputEndDate] = dateRange.split(',').map(date => new Date(date));
+    const [inputStartDate, inputEndDate] = dateRange?.split(',').map(date => new Date(date));
 
     function parseDate(dateStr) {
       const [day, month, year] = dateStr.split("/").map(Number);
@@ -139,6 +138,9 @@ class RoomService {
       }
 
       return !room.ordersRoom.some(booking => {
+        if (!Array.isArray(booking) || booking.length < 2) {
+          return false; // Skip invalid bookings
+        }
         const bookingStartDate = parseDate(booking[0]);
         const bookingEndDate = parseDate(booking[1]);
 
