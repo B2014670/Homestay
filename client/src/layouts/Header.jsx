@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { Avatar, Dropdown, Menu } from 'antd';
-import { UserOutlined, LogoutOutlined, OrderedListOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, OrderedListOutlined, HeartOutlined } from '@ant-design/icons';
 import { DownOutlined, SettingOutlined } from '@ant-design/icons';
 import { Space } from 'antd';
 import icons from '../utils/icons'
@@ -67,6 +67,11 @@ const Header = () => {
             key: 'orderroom',
             icon: <OrderedListOutlined />,
             label: <NavLink to={path.ORDERROOM}>Đơn Đặt Phòng</NavLink>,
+        },
+        {
+            key: 'orderroom',
+            icon: <HeartOutlined />,
+            label: <NavLink to={path.WISHLIST}>Yêu thích</NavLink>,
         },
         {
             type: 'divider',

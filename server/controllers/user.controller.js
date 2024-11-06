@@ -3,6 +3,7 @@ const UserService = require("../services/user/user.service");
 const MongoDB = require("../utils/mongodb.util");
 const RoomService = require("../services/room/room.service");
 const SectorService = require("../services/sector/sector.service");
+const WishlistService = require("../services/wishlist/wishlist.service");
 const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
@@ -669,6 +670,91 @@ exports.getAllSector = async (req, res, next) => {
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuat khu vực !"));
   }
 };
+
+exports.createWishlist = async (req, res, next) => {
+  try {
+    const wishlistService = new WishlistService(MongoDB.client);
+    const result = await wishlistService.createWishlist(req.body);
+    
+    if (!result.success) {
+      return res.status(400).json({
+        err: -1,
+        msg: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      err: 0, msg: "Lưu vào yêu thích thành công",
+    });
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình lưu yêu thích!"));
+  }
+}
+
+exports.getUserWishlist = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const wishlistService = new WishlistService(MongoDB.client);
+    const items = await wishlistService.getWishlistByUserId(userId);
+    
+    return res.status(200).json({
+      err: 0, msg: "Lấy danh sách yêu thích thành công",
+      data: items,
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi truy xuất danh sách yêu thích của người dùng."));
+  }
+}
+
+exports.getUserWishlistRooms = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const wishlistService = new WishlistService(MongoDB.client);
+    const items = await wishlistService.getWishlistRoomsByUserId(userId);
+    
+    return res.status(200).json({
+      err: 0, msg: "Lấy danh sách phòng yêu thích thành công",
+      data: items,
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi truy xuất danh sách yêu thích của người dùng."));
+  }
+}
+
+exports.updateWishlist = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const wishlistService = new WishlistService(MongoDB.client);
+    const updatedItem = await wishlistService.updateWishlist(id, req.body);
+    return res.status(200).json({
+      err: 0, msg: "Sửa yêu thích thành công!"
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi cập nhật danh sách yêu thích của người dùng."));
+  }
+}
+
+exports.deleteWishlist = async (req, res, next) => {
+  try {
+    const wishlistService = new WishlistService(MongoDB.client);
+    const result = await wishlistService.deleteWishlist(req.body);
+    
+    if (!result) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không tìm thấy yêu thích!",
+      });
+    }
+    return res.status(200).json({
+      err: 0, msg: "Xoá yêu thích thành công!"
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi xoá yêu thích của người dùng."));
+
+  }
+}
+
 
 
 

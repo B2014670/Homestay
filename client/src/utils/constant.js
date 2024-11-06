@@ -9,6 +9,7 @@ export const path = {
     CONTACT: 'lienhe',
     ROOMS : 'xemphong',
     ORDERROOM : 'datphong',
+    WISHLIST: 'yeuthich',
     ACCOUNT : 'taikhoan',
     DETAILROOM : 'chitietphong',
     TERMS: 'dieukhoan',

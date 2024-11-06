@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Form, Card, Carousel, Typography, Descriptions, Rate, Button, DatePicker, message, Tag, Divider, Image, Radio, Space } from 'antd';
 import { UserOutlined, EnvironmentOutlined, DollarOutlined, LoginOutlined } from '@ant-design/icons';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -9,7 +10,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import CommentList from '../components/CommentList';
 import Editor from '../components/Editor';
 import useAuthStore from '../stores/authStore';
-import { apiGetRoomWithSector, apiPostOrderRoom } from '../services';
+import { apiGetRoomWithSector, apiPostOrderRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist } from '../services';
 import { path } from '../utils/constant';
 
 dayjs.extend(customParseFormat);
@@ -32,6 +33,7 @@ const DetailRoom = () => {
   const [value, setValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const [formData, setFormData] = useState({
     idUser: user ? user._id : null,
@@ -51,6 +53,12 @@ const DetailRoom = () => {
   }, [id]);
 
   useEffect(() => {
+    if (user?._id) {
+      fetchUserWishlist(user._id);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (user) {
       setFormData(prev => ({
         ...prev,
@@ -60,6 +68,20 @@ const DetailRoom = () => {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (homestayData?.ordersRoom) {
+      const newDisabledDateData = [];
+      homestayData.ordersRoom.forEach(order => {
+        if (Array.isArray(order) && order.length === 2) {
+          const [start, end] = order;
+          const datesInRange = getDatesBetween(start, end);
+          newDisabledDateData.push(...datesInRange);
+        }
+      });
+      setDisabledDateData(newDisabledDateData);
+    }
+  }, [homestayData]);
 
   const fetchRoom = async () => {
     try {
@@ -71,6 +93,17 @@ const DetailRoom = () => {
       }
     } catch (error) {
       console.error('Error fetching room:', error);
+    }
+  };
+
+  const fetchUserWishlist = async (userId) => {
+    try {
+      const response = await apiGetUserWishlist(userId);
+      const wishlist = response.data.data || [];
+      const isInWishlist = wishlist.some(item => item.roomId === id);
+      setIsWishlisted(isInWishlist);  // Check if the current room is in the wishlist
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
     }
   };
 
@@ -123,20 +156,6 @@ const DetailRoom = () => {
     return current < dayjs().startOf("day") || formattedDisabledDays.some((disabledDay) => current.isSame(disabledDay, "day"));
   };
 
-  useEffect(() => {
-    if (homestayData?.ordersRoom) {
-      const newDisabledDateData = [];
-      homestayData.ordersRoom.forEach(order => {
-        if (Array.isArray(order) && order.length === 2) {
-          const [start, end] = order;
-          const datesInRange = getDatesBetween(start, end);
-          newDisabledDateData.push(...datesInRange);
-        }
-      });
-      setDisabledDateData(newDisabledDateData);
-    }
-  }, [homestayData]);
-
   const handlePaymentMethodChange = (e) => {
     setPaymentMethod(e.target.value);
     setFormData({ ...formData, pay: e.target.value });
@@ -176,15 +195,55 @@ const DetailRoom = () => {
     }, 1000);
   };
 
+  const handleWishlistToggle = async () => {
+    if (!isLoggedIn) {
+      message.error('Please log in to add to wishlist');
+      return;
+    }
+
+    if (isWishlisted) {
+      // Remove room from wishlist
+      try {
+        await apiDeleteWishlist({ roomId: id, userId: user._id });
+        setIsWishlisted(false);
+        message.success('Đã xóa khỏi danh sách yêu thích');
+      } catch (error) {
+        message.error('Lỗi xóa khỏi danh sách yêu thích');
+      }
+    } else {
+      // Add room to wishlist
+      try {
+        await apiCreateWishlist({ roomId: id, userId: user._id });
+        setIsWishlisted(true);
+        message.success('Đã thêm vào danh sách yêu thích');
+      } catch (error) {
+        message.error('Lỗi thêm vào danh sách yêu thích');
+      }
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <Card className="shadow-lg rounded-lg overflow-hidden">
         <div className="flex flex-col lg:flex-row">
           {/* Left Section - Room Details */}
-          <div className="lg:w-2/3 lg:pr-8">
+          <div className="lg:w-2/3 lg:pr-8 relative">
             {homestayData ? (
               <>
-                <Title level={2} className='mb-4'>{homestayData.nameRoom}</Title>
+                <Title level={2} className="mb-4 text-2xl font-semibold text-gray-900">
+                  {homestayData.nameRoom}
+                </Title>
+                {isLoggedIn ? (
+                  <Button
+                    type="default"
+                    shape="circle"
+                    icon={isWishlisted ? <FaHeart style={{ color: 'red' }} /> : <FaRegHeart />}
+                    size="large"
+                    onClick={handleWishlistToggle}
+                    className="absolute top-2 right-2 bg-transparent hover:bg-gray-100 text-gray-700 hover:text-red-500 border border-gray-300 hover:border-red-500 rounded-full p-2 transition-all duration-300"
+                  />
+                ) : null}
+
                 <div className="px-4">
                   <Image.PreviewGroup>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -258,10 +317,10 @@ const DetailRoom = () => {
 
                   <Descriptions.Item label="Giá">
                     <Tag icon={<DollarOutlined />} color="green">
-                      {homestayData.giaRoom.toLocaleString()} VND / đêm
+                      {homestayData.giaRoom.toLocaleString()} VND/đêm
                     </Tag>
                   </Descriptions.Item>
-                </Descriptions>                
+                </Descriptions>
 
                 <Divider />
                 <Title level={4}>Mô tả</Title>
@@ -310,7 +369,7 @@ const DetailRoom = () => {
                     {homestayData?.giaRoom.toLocaleString()} VND
                   </Descriptions.Item>
                   <Descriptions.Item label="Tổng tiền">
-                    {totalAmount.toLocaleString()} VNĐ
+                    {totalAmount.toLocaleString()} VND
                   </Descriptions.Item>
                 </Descriptions>
 

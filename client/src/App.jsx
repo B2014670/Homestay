@@ -15,6 +15,7 @@ import DetailRoom from './pages/DetailRoom';
 import Terms from './pages/Terms';
 import Policies from './pages/Policies';
 import Account from './pages/Account';
+import WishList from './pages/WishList';
 import useAuthStore from './stores/authStore';
 import ProtectedRoute from './components/ProtectedRoute';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
@@ -58,6 +59,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path={path.HOME} element={<Layout />}>
               <Route path={path.ACCOUNT} element={<Account />} />
+              <Route path={path.WISHLIST} element={<WishList />} />
             </Route>
           </Route>
 

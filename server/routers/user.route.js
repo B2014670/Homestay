@@ -48,4 +48,15 @@ router.post("/infoSector", users.getInfoSector);
 router.get("/getAllSector", users.getAllSector);
 
 // router.get("/getAllTypeRoom", users.getAllTypeRoom);
+
+router.post('/wishlist', users.createWishlist);
+
+router.get('/wishlist/:userId', users.getUserWishlist);
+
+router.get('/wishlist/:userId/room', users.getUserWishlistRooms);
+
+router.put('/wishlist/:id', users.updateWishlist);
+
+router.delete('/wishlist', users.deleteWishlist);
+
 module.exports = router;

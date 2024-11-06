@@ -84,3 +84,5 @@ class OrderService {
         return result;
       }
 }
+
+module.exports = OrderService;
