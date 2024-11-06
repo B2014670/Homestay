@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Tabs, Form, Input, Button, List, Tag, Card, message, Avatar, Upload } from 'antd'
-import { UserOutlined, LockOutlined, HistoryOutlined, MessageOutlined, UploadOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, HistoryOutlined, MessageOutlined, UploadOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, DeleteOutlined } from '@ant-design/icons'
 import { apiInfoUser, apiUpdateInfoUser, apiChangePassword } from '../services'
 import axios from 'axios';
 import io from 'socket.io-client';
 import useAuthStore from '../stores/authStore';
+
 
 const { TabPane } = Tabs
 
@@ -23,24 +24,24 @@ export default function AccountPage() {
   const [form] = Form.useForm();
   const [socket, setSocket] = useState(null);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      // Connect to the socket server
-      const newSocket = io(import.meta.env.VITE_REACT_APP_SERVER);
-      setSocket(newSocket);
+  // useEffect(() => {
+  //   if (isLoggedIn) {
+  //     // Connect to the socket server
+  //     const newSocket = io(import.meta.env.VITE_REACT_APP_SERVER);
+  //     setSocket(newSocket);
 
-      // Listen for messages from the server
-      newSocket.on('receiveMessage', (message) => {
-        setMessages((prevMessages) => [...prevMessages, message]);
-      });
+  //     // Listen for messages from the server
+  //     newSocket.on('receiveMessage', (message) => {
+  //       setMessages((prevMessages) => [...prevMessages, message]);
+  //     });
 
-      // Clean up the socket connection when the component unmounts
-      return () => {
-        newSocket.off('receiveMessage');
-        newSocket.disconnect(); // Disconnect when the component is unmounted
-      };
-    }
-  }, []);
+  //     // Clean up the socket connection when the component unmounts
+  //     return () => {
+  //       newSocket.off('receiveMessage');
+  //       newSocket.disconnect(); // Disconnect when the component is unmounted
+  //     };
+  //   }
+  // }, []);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -56,10 +57,10 @@ export default function AccountPage() {
         setUserInfo(response.data);
         form.setFieldsValue(response.data);
       } else {
-        message.error('Failed to fetch user info: ' + response.data.message);
+        message.error('Không tìm nạp được thông tin người dùng: ' + response.data.message);
       }
     } catch (error) {
-      message.error('Error fetching user info: ' + error.message);
+      message.error('Lỗi tìm nạp thông tin người dùng: ' + error.message);
     }
   };
 
@@ -71,33 +72,27 @@ export default function AccountPage() {
         setUserInfo({ ...userInfo, ...values });
         message.success('Hồ sơ được cập nhật thành công');
       } else {
-        message.error('Failed to update profile: ' + response.data.message);
+        message.error('Không thể cập nhật hồ sơ: ' + response.data.message);
       }
     } catch (error) {
-      message.error('Error updating profile: ' + error.message);
+      message.error('Lỗi cập nhật hồ sơ: ' + error.message);
     }
   }
 
-  const beforeUpload = () => {
-    const allowedTypes = [
-      "image/jpeg",  // JPEG
-      "image/png",   // PNG
-      "image/gif",   // GIF
-      "image/bmp",   // BMP
-      "image/tiff",  // TIFF
-      "image/svg+xml" // SVG
-    ];
-    const isAllowed = allowedTypes.includes(file.type);
-    if (!isAllowed) {
-      console.error("You can only upload image files (JPEG, PNG, GIF, BMP, TIFF, SVG)!");
-      swal(
-        "Cảnh báo !",
-        "Tệp tải lên phải là hình ảnh (JPEG, PNG, GIF, BMP, TIFF, SVG)!",
-        "warning"
-      );
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    const isLt2M = file.size / 1024 / 1024 < 200; // File size must be less than 200MB
+
+    if (!isImage) {
+      message.error('You can only upload image files!');
     }
-    return isAllowed;
-  }
+
+    if (!isLt2M) {
+      message.error('Image must be smaller than 200MB!');
+    }
+
+    return isImage && isLt2M;
+  };
 
   const uploadImage = async (file) => {
     const formData = new FormData();
@@ -116,9 +111,9 @@ export default function AccountPage() {
               delete_token: response.data.delete_token,
             }
           });
-          message.success('Image uploaded successfully!');
+          message.success('Hình ảnh được tải lên thành công!');
         } else {
-          message.error('Image upload failed');
+          message.error('Tải hình ảnh lên không thành công!');
         }
       })
       .catch((err) => {
@@ -126,26 +121,28 @@ export default function AccountPage() {
       });
   };
 
-  const deleteImage = async (img) => {
+  const deleteImageByDelete_token = async (delete_token) => {
     try {
       const response = await axios.post('https://api.cloudinary.com/v1_1/dwcrfnnov/delete_by_token', {
-        token: img.delete_token,
+        token: delete_token,
       });
       if (response.status === 200) {
-        message.success('Image deleted successfully!');
-        setUserInfo({ ...userInfo, img: null });
-      } else {
-        message.error('Failed to delete image');
+        setUserInfo({
+          ...userInfo,
+          img: {}
+        });
+        message.success('Đã xóa hình ảnh thành công!');
+        return;
       }
     } catch (error) {
-      console.error(error);
-      message.error('Error deleting image');
+      console.error('Error deleting image by token:', error);
+      message.error('Không thể xóa hình ảnh: token đã hết hạn hoặc không hợp lệ.');
     }
   };
 
   const handleRemove = async () => {
     if (userInfo.img && userInfo.img.delete_token) {
-      deleteImage(userInfo.img);
+      deleteImageByDelete_token(userInfo.img.delete_token);
     }
   };
 
@@ -203,14 +200,31 @@ export default function AccountPage() {
         <div className="space-y-8">
           <Card title="Thông tin cá nhân">
             <div className="flex items-center space-x-4 mb-6">
-              <Avatar size={64} src={userInfo?.img?.url} icon={<UserOutlined />} />
+              <div className="relative inline-block group">
+                {/* Avatar component */}
+                <Avatar
+                  size={64}
+                  src={userInfo?.img?.url}
+                  icon={<UserOutlined />}
+                  className="cursor-pointer border-black group-hover:bg-white group-hover:opacity-50"
+                />
 
+                {/* Delete button (visible on hover) */}
+                <Button
+                  icon={<DeleteOutlined style={{ fontSize: '32px' }} />}
+                  type="text"
+                  size="large"
+                  onClick={handleRemove}
+                  className="absolute inset-0 m-auto rounded-full hidden group-hover:block"
+                />
+              </div>
               <Upload
                 name="avatar"
                 customRequest={({ file, onSuccess }) => {
                   uploadImage(file);
                   onSuccess("ok"); // Manually trigger success
                 }}
+                accept="image/*"
                 beforeUpload={beforeUpload}
                 onRemove={handleRemove}
                 showUploadList={true}
@@ -219,17 +233,17 @@ export default function AccountPage() {
                 <Button icon={<UploadOutlined />}>Đỗi ảnh đại diện</Button>
               </Upload>
             </div>
-            <Form form={form} layout="vertical" onFinish={handleUpdateProfile}>
+            <Form form={form} layout="vertical" onFinish={handleUpdateProfile} initialValues={userInfo}>
               <Form.Item name="name" label="Tên" rules={[{ required: true }]}>
                 <Input prefix={<UserOutlined />} value={userInfo.name} onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })} />
               </Form.Item>
               <Form.Item name="address" label="Địa chỉ" rules={[{ required: true }]}>
                 <Input prefix={<EnvironmentOutlined />} />
               </Form.Item>
-              <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+              <Form.Item name="email" label="Email" rules={[{ type: 'email' }]}>
                 <Input prefix={<MailOutlined />} disabled />
               </Form.Item>
-              <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true }]}>
+              <Form.Item name="phone" label="Số điện thoại">
                 <Input prefix={<PhoneOutlined />} disabled />
               </Form.Item>
               <Form.Item>
