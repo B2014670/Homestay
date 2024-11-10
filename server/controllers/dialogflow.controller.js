@@ -68,7 +68,7 @@ exports.getInfoRoom = async (payload) => {
   }
 };
 
-exports.cancleOrderRoom = async (req, res, next) => {
+exports.cancelOrderRoom = async (req, res, next) => {
   const idUser = req.body.idUser;
   const idOrder = req.body.idOrder;
   console.log(req.body);
@@ -78,7 +78,7 @@ exports.cancleOrderRoom = async (req, res, next) => {
   };
   try {
     const userService = new UserService(MongoDB.client);
-    const result1 = await userService.CancleOrderRoomUser(payload);
+    const result1 = await userService.CancelOrderRoomUser(payload);
     return res.send(result1);
   } catch (error) {
     // console.log(error)
@@ -221,10 +221,10 @@ exports.checkRoomByChatBot = async (payload) => {
   }
 };
 
-exports.cancleOrderRoomByChatBot = async (payload) => {
+exports.cancelOrderRoomByChatBot = async (payload) => {
   try {
     const userService = new UserService(MongoDB.client);
-    const result = await userService.CancleOrderRoomByChatBot(payload)
+    const result = await userService.CancelOrderRoomByChatBot(payload)
     return result;
   } catch (error) {
     console.log(error)

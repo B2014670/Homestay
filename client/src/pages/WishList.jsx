@@ -38,7 +38,7 @@ const WishList = () => {
         try {
             await apiDeleteWishlist({ roomId, userId: user._id });
             setWishlists(prevWishlist => prevWishlist.filter(item => item.roomId !== roomId));
-            message.success('Đã xóa khỏi danh sách yêu thích');       
+            message.success('Đã xóa khỏi danh sách yêu thích');
         } catch (error) {
             console.error('Error removing wishlist:', error);
             message.error('Lỗi xóa khỏi danh sách yêu thích');
@@ -47,9 +47,7 @@ const WishList = () => {
 
     return (
         <div className="container max-w-7xl mx-auto p-4">
-            <Title level={2} className="mb-6">
-                Danh sách phòng yêu thích
-            </Title>
+            <h1 className="text-2xl font-bold mb-6">Danh sách phòng yêu thích</h1>
             <List
                 grid={{
                     gutter: 16,

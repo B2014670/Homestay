@@ -53,22 +53,6 @@ export const apiGetAllSector = () => new Promise(async (resolve, reject) => {
 //     }
 // })
 
-export const apiPostOrderRoom = (payload) => new Promise(async (resolve, reject) => {
-    try {
-        console.log(payload)
-        const response = await axiosConfig({
-            method: 'post',
-            url: '/user/orderRoom',
-            params: payload
-        })
-        resolve(response)
-    } catch (error) {
-        reject(error)
-    }
-})
-
-
-
 export const apiGetInfoRoom = (payload) => new Promise(async (resolve, reject) => {
     try {
         // console.log(payload)
@@ -89,35 +73,6 @@ export const apiGetRoomWithSector = (payload) => new Promise(async (resolve, rej
         const response = await axiosConfig({
             method: 'post',
             url: '/user/getRoomWithSector',
-            data: payload,
-        })
-        resolve(response)
-    } catch (error) {
-        reject(error)
-    }
-})
-
-export const apiCancleRoom = (payload) => new Promise(async (resolve, reject) => {
-    try {
-        // console.log(payload)
-        const response = await axiosConfig({
-            method: 'post',
-            url: '/user/cancleOrderRoom',
-            data: payload,
-        })
-        resolve(response)
-    } catch (error) {
-        reject(error)
-    }
-})
-
-
-export const apiUpdatePaypalOrder = (payload) => new Promise(async (resolve, reject) => {
-    try {
-        // console.log(payload)
-        const response = await axiosConfig({
-            method: 'post',
-            url: '/user/updatePaypalOrder',
             data: payload,
         })
         resolve(response)
@@ -201,6 +156,57 @@ export const apiDeleteWishlist = (payload) => new Promise(async (resolve, reject
         const response = await axiosConfig({
             method: 'delete',
             url: '/user/wishlist',
+            data: payload,
+        });
+        resolve(response);
+    } catch (error) {
+        reject(error);
+    }
+});
+
+export const apiGetAllComment = (roomId) => new Promise(async (resolve, reject) => {
+    try {
+        const response = await axiosConfig({
+            method: 'get',
+            url: `/user/comments/room/${roomId}`,
+        });
+        resolve(response);
+    } catch (error) {
+        reject(error);
+    }
+});
+
+export const apiAddComment = (payload) => new Promise(async (resolve, reject) => {
+    try {
+        const response = await axiosConfig({
+            method: 'post',
+            url: `/user/comments`,
+            data: payload,
+        });
+        resolve(response);
+    } catch (error) {
+        reject(error);
+    }
+});
+
+export const apiUpdateComment = (payload) => new Promise(async (resolve, reject) => {
+    try {
+        const response = await axiosConfig({
+            method: 'put',
+            url: `/user/comments`,
+            data: payload,
+        });
+        resolve(response);
+    } catch (error) {
+        reject(error);
+    }
+});
+
+export const apiDeleteComment = (payload) => new Promise(async (resolve, reject) => {
+    try {
+        const response = await axiosConfig({
+            method: 'delete',
+            url: `/user/comments`,
             data: payload,
         });
         resolve(response);

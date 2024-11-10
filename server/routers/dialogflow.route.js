@@ -507,7 +507,7 @@ router.post("", async (req, res) => {
       // console.log(parameters)
       const idOrder = parameters.EnIdOrder;
       // console.log(idOrder)
-      const data = await dialogflow.cancleOrderRoomByChatBot({
+      const data = await dialogflow.cancelOrderRoomByChatBot({
         idOrder: idOrder,
       });
       console.log(data.status);
@@ -627,7 +627,7 @@ router.post("", async (req, res) => {
   if (intent === "inCheckPhongTrong") {
     checkRoomDate();
   }
-  if (intent === "InCancleOrder - yes") {
+  if (intent === "InCancelOrder - yes") {
     canleOrderRoom();
   }
   if (intent === "inTraCuuDonDatPhong") {

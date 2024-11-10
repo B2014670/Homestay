@@ -29,14 +29,8 @@ class UserService {
     return user;
   }
 
-  async check(filter) {
-    const projection = { order: 0, refreshToken: 0 };
-    const cursor = await this.User.find(filter, { projection });
-    return await cursor.toArray();
-  }
-
-  async getUserOrder(filter) {
-    const projection = { refreshToken: 0 };
+  async check(filter, projection = null) {
+    // const projection = { order: 0, refreshToken: 0 };
     const cursor = await this.User.find(filter, { projection });
     return await cursor.toArray();
   }
@@ -151,11 +145,11 @@ class UserService {
       }
 
       const token = crypto.randomBytes(20).toString("hex");
-      const expiration = Date.now() + 15*60*1000; // 15 minute
+      const expiration = Date.now() + 15 * 60 * 1000; // 15 minute
 
       await this.User.updateOne(
         { email },
-        { $set: { reset_password_token: token, reset_password_expires: expiration } } 
+        { $set: { reset_password_token: token, reset_password_expires: expiration } }
       );
 
       return token; // Return the token to send via email
@@ -188,7 +182,7 @@ class UserService {
         }
       );
 
-      return true; 
+      return true;
     } catch (error) {
       console.error("Error resetting password:", error);
       throw error; // Rethrow the error for further handling
@@ -214,6 +208,28 @@ class UserService {
     }
   }
 
+  async DeleteUserById(payload) {
+    console.log('Deleting user with id:', payload.idAdmin);
+    if (!ObjectId.isValid(payload.idAdmin)) {
+      return null; // hoặc xử lý lỗi tương ứng
+    }
+    try {
+      const result = await this.User.findOneAndDelete({
+        _id: new ObjectId(payload.idAdmin)
+      });
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // ORDER STARTING
+  async getUserOrder(filter) {
+    const projection = { refreshToken: 0 };
+    const cursor = await this.User.find(filter, { projection });
+    return await cursor.toArray();
+  }
+
   async OrderRoomUser(payload) {
     const idUser = payload.info.idUser;
 
@@ -230,19 +246,295 @@ class UserService {
     return result;
   }
 
-  async CancleOrderRoomUser(payload) {
-    const idUser = payload.idUser;
-    const idOrder = payload.idOrder;
-    console.log(payload);
+  // async getAllOrderOfUser(payload) {
+  //   const result = await this.User.aggregate([
+  //     {
+  //       $match: { _id: ObjectId.isValid(payload.userId) ? new ObjectId(payload.userId) : null }
+  //     },
+  //     {
+  //       $unwind: { path: '$order', preserveNullAndEmptyArrays: true }
+  //     },
+  //     {
+  //       $match: { order: { $ne: null } }  // Ensures that `order` is not null after unwinding
+  //     },
+  //     {
+  //       $match: { orders: { $ne: [] } }  // Ensures `orders` is not an empty array after grouping
+  //     },
+  //     {
+  //       $addFields: {
+  //         'order.idRoom': { $toObjectId: "$order.idRoom" }
+  //       }
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: 'rooms',
+  //         localField: 'order.idRoom',
+  //         foreignField: '_id',
+  //         as: 'roomDetails',
+  //       }
+  //     },
+  //     {
+  //       $unwind: { path: '$roomDetails', preserveNullAndEmptyArrays: true }
+  //     },
+  //     {
+  //       $addFields: {
+  //         "roomDetails.idSectorRoom": { $toObjectId: "$roomDetails.idSectorRoom" }
+  //       }
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: 'sectors',
+  //         localField: 'roomDetails.idSectorRoom',
+  //         foreignField: '_id',
+  //         as: 'roomDetails.sectorDetails'
+  //       }
+  //     },
+  //     {
+  //       $unwind: { path: '$roomDetails.sectorDetails', preserveNullAndEmptyArrays: true }
+  //     },
+  //     {
+  //       $addFields: {
+  //         'order.room': '$roomDetails'
+  //       }
+  //     },
+  //     {
+  //       $unwind: { path: '$roomDetails.cmtRoom', preserveNullAndEmptyArrays: true }
+  //     },
+  //     {
+  //       // Filter out deleted comments for the room's comment array
+  //       $addFields: {
+  //         'order.room.cmtRoom': {
+  //           $filter: {
+  //             input: '$roomDetails.cmtRoom',
+  //             as: 'comment',
+  //             cond: {
+  //               $and: [
+  //                 { $eq: ['$$comment.idOrder', '$order.idOrder'] },  // Match idOrder
+  //                 { $eq: ['$$comment.isDeleted', false] }  // Only non-deleted comments
+  //               ]
+  //             }
+  //           }
+  //         }
+  //       }
+  //     },
+  //     {
+  //       $group: {
+  //         _id: '$_id',
+  //         name: { $first: "$name" },
+  //         phone: { $first: "$phone" },
+  //         email: { $first: "$email" },
+  //         address: { $first: "$address" },
+  //         img: { $first: "$img" },
+  //         orders: { $push: '$order' }
+  //       }
+  //     },
+  //   ]).toArray();
+
+  //   return result;
+  // }
+  async getAllOrderOfUser(payload) {
+    const result = await this.User.aggregate([
+      {
+        $match: { _id: ObjectId.isValid(payload.userId) ? new ObjectId(payload.userId) : null }
+      },
+      {
+        $unwind: { path: '$order', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $match: { order: { $ne: null } }
+      },
+      {
+        $match: { orders: { $ne: [] } }
+      },
+      {
+        $addFields: {
+          'order.idRoom': { $toObjectId: "$order.idRoom" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: 'order.idRoom',
+          foreignField: '_id',
+          as: 'roomDetails',
+        }
+      },
+      {
+        $unwind: { path: '$roomDetails', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $addFields: {
+          "roomDetails.idSectorRoom": { $toObjectId: "$roomDetails.idSectorRoom" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'sectors',
+          localField: 'roomDetails.idSectorRoom',
+          foreignField: '_id',
+          as: 'roomDetails.sectorDetails'
+        }
+      },
+      {
+        $unwind: { path: '$roomDetails.sectorDetails', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $addFields: {
+          'order.room': '$roomDetails'
+        }
+      },
+      {
+        // Filter out deleted comments for the room's comment array
+        $addFields: {
+          'order.room.cmtRoom': {
+            $filter: {
+              input: '$roomDetails.cmtRoom',  // Reference the correct cmtRoom array (from roomDetails)
+              as: 'comment',
+              cond: {
+                $and: [
+                  { $eq: ['$$comment.idOrder', '$order.idOrder'] },  // Match idOrder from the comment and order
+                  { $eq: ['$$comment.isDeleted', false] }  // Only include non-deleted comments
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id',
+          name: { $first: "$name" },
+          phone: { $first: "$phone" },
+          email: { $first: "$email" },
+          address: { $first: "$address" },
+          img: { $first: "$img" },
+          orders: { $push: '$order' }
+        }
+      },
+    ]).toArray();
+
+    return result;
+  }
+
+  async getAllOrderOfUserById(payload) {
+    const result = await this.User.aggregate([
+      {
+        $match: { _id: ObjectId.isValid(payload.userId) ? new ObjectId(payload.userId) : null }
+      },
+      {
+        $unwind: { path: '$order', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $match: { order: { $ne: null } }
+      },
+      {
+        $match: { 'order.idOrder': payload.idOrder }
+      },
+      {
+        $addFields: {
+          'order.idRoom': { $toObjectId: "$order.idRoom" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: 'order.idRoom',
+          foreignField: '_id',
+          as: 'roomDetails',
+        }
+      },
+      {
+        $unwind: { path: '$roomDetails', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $addFields: {
+          "roomDetails.idSectorRoom": { $toObjectId: "$roomDetails.idSectorRoom" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'sectors',
+          localField: 'roomDetails.idSectorRoom',
+          foreignField: '_id',
+          as: 'roomDetails.sectorDetails'
+        }
+      },
+      {
+        $unwind: { path: '$roomDetails.sectorDetails', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $addFields: {
+          'order.room': '$roomDetails'
+        }
+      },
+      {
+        // Filter out deleted comments for the room's comment array
+        $addFields: {
+          'order.room.cmtRoom': {
+            $filter: {
+              input: '$roomDetails.cmtRoom',  // Reference the correct cmtRoom array (from roomDetails)
+              as: 'comment',
+              cond: {
+                $and: [
+                  { $eq: ['$$comment.idOrder', '$order.idOrder'] },  // Match idOrder from the comment and order
+                  { $eq: ['$$comment.isDeleted', false] }  // Only include non-deleted comments
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id',
+          name: { $first: "$name" },
+          phone: { $first: "$phone" },
+          email: { $first: "$email" },
+          address: { $first: "$address" },
+          img: { $first: "$img" },
+          orders: { $push: '$order' } // Collect all the filtered orders into an array
+        }
+      }
+    ]).toArray();
+
+    return result;
+  }
+
+
+  async verifyOrderSuccess(userId, orderId) {
+    try {
+      const userObjectId = new ObjectId(userId);
+      const user = await this.User.findOne({
+        _id: userObjectId,
+        order: {
+          $elemMatch: {
+            idOrder: orderId,
+            pay: "true",
+            statusOrder: "3"
+          }
+        }
+      });
+      return !!user;
+    } catch (error) {
+      console.error("Verification failed:", error.message);
+      return false;
+    }
+  }
+
+
+  async CancelOrderRoomUser(payload) {
+    const { idUser, idOrder } = payload;
+
     const result = await this.User.findOneAndUpdate(
       {
         _id: ObjectId.isValid(idUser) ? new ObjectId(idUser) : null,
         "order.idOrder": idOrder,
+        "order.statusOrder": "1",
       },
       {
         $set: { "order.$.statusOrder": "10" },
       },
-      { returnDocument: "after" }
+      { returnDocument: "after", projection: { order: { $elemMatch: { idOrder: idOrder } } } }
     );
 
     return result;
@@ -261,6 +553,19 @@ class UserService {
       console.error(error);
       throw new Error("Có lỗi xảy ra khi cập nhật trạng thái thanh toán.");
     }
+  }
+
+  async updateRefundStatus(userId, orderId, status) {
+    const result = await this.User.updateOne(
+      {
+        _id: ObjectId.isValid(userId) ? new ObjectId(userId) : null,
+        "order.idOrder": orderId,
+      },
+      {
+        $set: { "order.$.refundStatus": status },  // Update refund status
+      }
+    );
+    return result;
   }
 
   async ConfirmOrder(payload) {
@@ -326,7 +631,7 @@ class UserService {
     }
   }
 
-  async CancleOrderRoomByChatBot(payload) {
+  async CancelOrderRoomByChatBot(payload) {
     const idOrder = payload.idOrder;
 
     // Tìm order dựa trên idOrder
@@ -390,21 +695,6 @@ class UserService {
       // Xử lý lỗi ở đây
       console.error('Lỗi khi tìm kiếm order:', error);
       return null;
-    }
-  }
-
-  async DeleteUserById(payload) {
-    console.log('Deleting user with id:', payload.idAdmin);
-    if (!ObjectId.isValid(payload.idAdmin)) {
-      return null; // hoặc xử lý lỗi tương ứng
-    }
-    try {
-      const result = await this.User.findOneAndDelete({
-        _id: new ObjectId(payload.idAdmin)
-      });
-      return result;
-    } catch (error) {
-      console.log(error);
     }
   }
 

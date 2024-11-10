@@ -1,0 +1,18 @@
+.box_login{
+    /* box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; */
+    box-shadow: rgba(0, 0, 0, 0.56) 0px 22px 70px 4px;
+    width: 35%;
+    margin: 10px 20px;
+    
+}
+.login_background{
+    height: 90vh;
+    background-image: url(https://th.bing.com/th/id/OIP.emM_rlan3PP_J96bfBlD6wHaEo?rs=1&pid=ImgDetMain);
+}
+.button_submit {
+    background-color:RGB(82, 196, 26) ;  
+}
+.button_submit:hover {
+    background-color:RGB(82, 196, 26) ; 
+    color: white; 
+}

@@ -3,6 +3,7 @@ const UserService = require("../services/user/user.service");
 const MongoDB = require("../utils/mongodb.util");
 const RoomService = require("../services/room/room.service");
 const SectorService = require("../services/sector/sector.service");
+const RefundService = require("../services/payment/refund.service");
 const WishlistService = require("../services/wishlist/wishlist.service");
 const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require('uuid');
@@ -359,9 +360,9 @@ exports.forgotPassword = async (req, res, next) => {
     const userService = new UserService(MongoDB.client);
 
     if (email) {
-      registeredUser = await userService.check({ "email": email });
+      registeredUser = await userService.check({ "email": email }, { order: 0, refreshToken: 0 });
     } else if (phone) {
-      registeredUser = await userService.check({ "phone": phone });
+      registeredUser = await userService.check({ "phone": phone }, { order: 0, refreshToken: 0 });
     }
 
     if (!registeredUser || !registeredUser[0]) {
@@ -421,7 +422,7 @@ exports.changePassword = async (req, res, next) => {
       return res.status(200).json({ err: 1, msg: "Thông tin không được để trống!" });
     }
     const userService = new UserService(MongoDB.client);
-    const registeredUser = await userService.check({ "phone": phone });
+    const registeredUser = await userService.check({ "phone": phone }, { order: 0, refreshToken: 0 });
     // console.log(registeredUser[0])
     if (!registeredUser[0]) {
       return res.status(200).json({
@@ -464,7 +465,7 @@ exports.infoUser = async (req, res, next) => {
   // console.log(req)
   try {
     const userService = new UserService(MongoDB.client);
-    const infoUser = await userService.check({ "phone": req.body.phone })
+    const infoUser = await userService.check({ "phone": req.body.phone }, { order: 0, refreshToken: 0 })
     // console.log(infoUser)
     return res.send(infoUser[0])
   } catch (error) {
@@ -536,7 +537,11 @@ exports.orderRoom = async (req, res, next) => {
     dateInput: req.query.infoOrder.dateInput,
     totalMoney: req.query.infoOrder.totalMoney,
     pay: req.query.infoOrder.pay,
+    paymentMethod: req.query.infoOrder.paymentMethod,
+    transactionId: req.query.infoOrder.transactionId || null,
+    deposit: req.query.infoOrder.deposit || 0,
     statusOrder: req.query.infoOrder.statusOrder,
+    extraServices: req.query.infoOrder.extraServices || null,
     // discount: req.query.infoOrder.discount,  // New field: discount
     // tax: req.query.infoOrder.tax,  // New field: tax
     // totalAfterDiscount: req.query.infoOrder.totalAfterDiscount,  // New field: total after discount
@@ -592,26 +597,47 @@ exports.getRoomWithSector = async (req, res, next) => {
   }
 };
 
-exports.cancleOrderRoom = async (req, res, next) => {
-  const idUser = req.body.idUser;
-  const idOrder = req.body.idOrder;
-  // console.log(req.body.dateInput)
-  // console.log(req.body)
+exports.cancelOrderRoom = async (req, res, next) => {
   const payload = {
-    idUser: idUser,
-    idOrder: idOrder,
-    dateOrderRoom: req.body.dateInput,
-    idRoom: req.body.idRoom,
+    idUser: req.body.idUser,
+    idOrder: req.body.idOrder,
   }
   try {
     const roomService = new RoomService(MongoDB.client);
     const userService = new UserService(MongoDB.client);
-    const result1 = await userService.CancleOrderRoomUser(payload)
-    const result2 = await roomService.deleteDateRoom(payload)
-    return res.send(result1)
+    const refundService = new RefundService(MongoDB.client);
+
+    // Step 1: Cancel the user's order
+    const orderResult = await userService.CancelOrderRoomUser(payload)
+    if (!orderResult) {
+      return res.status(400).json({
+        err: -1,
+        msg: 'Không tìm thấy đơn hàng hoặc không thể cập nhật!',
+      });
+    }
+
+    // Step 2: Delete the room booking dates
+    const roomResult = await roomService.deleteDateRoom(orderResult.order[0])
+
+    // Step 3: If there is a transaction ID, perform the refund
+    if (orderResult.order[0].transactionId) {
+      const refundResult = await refundService.refundTransaction(orderResult.order[0].transactionId);
+      if (refundResult.status === 'COMPLETED') {
+        // Update refund status
+        await userService.updateRefundStatus(orderResult.idUser, orderResult.order[0].idOrder, "true");
+      } else {
+        await userService.updateRefundStatus(orderResult.idUser, orderResult.order[0].idOrder, "false");
+      }
+    }
+
+    return res.status(200).json({
+      err: 0,
+      msg: 'Đã cập nhật!',
+      data: orderResult
+    });
   } catch (error) {
-    // console.log(error)
-    return next(new ApiError(500, "Xảy ra lỗi trong truy xuat phòng !"));
+    console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong hủy phòng !"));
   }
 };
 
@@ -675,7 +701,7 @@ exports.createWishlist = async (req, res, next) => {
   try {
     const wishlistService = new WishlistService(MongoDB.client);
     const result = await wishlistService.createWishlist(req.body);
-    
+
     if (!result.success) {
       return res.status(400).json({
         err: -1,
@@ -697,7 +723,7 @@ exports.getUserWishlist = async (req, res, next) => {
     const { userId } = req.params;
     const wishlistService = new WishlistService(MongoDB.client);
     const items = await wishlistService.getWishlistByUserId(userId);
-    
+
     return res.status(200).json({
       err: 0, msg: "Lấy danh sách yêu thích thành công",
       data: items,
@@ -712,7 +738,7 @@ exports.getUserWishlistRooms = async (req, res, next) => {
     const { userId } = req.params;
     const wishlistService = new WishlistService(MongoDB.client);
     const items = await wishlistService.getWishlistRoomsByUserId(userId);
-    
+
     return res.status(200).json({
       err: 0, msg: "Lấy danh sách phòng yêu thích thành công",
       data: items,
@@ -739,7 +765,7 @@ exports.deleteWishlist = async (req, res, next) => {
   try {
     const wishlistService = new WishlistService(MongoDB.client);
     const result = await wishlistService.deleteWishlist(req.body);
-    
+
     if (!result) {
       return res.status(400).json({
         err: -1,
@@ -755,13 +781,253 @@ exports.deleteWishlist = async (req, res, next) => {
   }
 }
 
+exports.createComment = async (req, res, next) => {
+  const idv4 = uuidv4();
+  const { idUser, idOrder, idRoom, rating, text } = req.body;
+
+  const infoComment = {
+    idComment: idv4,
+    idUser,
+    idOrder,
+    idRoom,
+    rating,
+    text,
+    createdDate: new Date(),
+    updatedDate: null,
+    isDeleted: false,
+  };
+
+  try {
+    const userService = new UserService(MongoDB.client);
+    const roomService = new RoomService(MongoDB.client);
+
+    const isSuccess = await userService.verifyOrderSuccess(idUser, idOrder);
+
+    if (!isSuccess) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không tìm thấy đơn hàng hoàn thành!",
+      });
+    }
+
+    const result = await roomService.addComment(infoComment);
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Đơn hàng này đã được bình luận trước đó.",
+      });
+    }
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Bình luận đã được thêm thành công!",
+      data:
+      {
+        idComment: idv4,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình thêm bình luận."));
+  }
+}
+
+exports.updateComment = async (req, res, next) => {
+  const { idUser, idComment, rating, text } = req.body;
+
+  try {
+    const roomService = new RoomService(MongoDB.client);
+
+    const comment = await roomService.getCommentsById(idComment);
+
+    if (!comment) {
+      return res.status(404).json({
+        err: -1,
+        msg: "Không tìm thấy bình luận.",
+      });
+    }
+
+    if (comment?.idUser.toString() !== idUser) {
+      return res.status(403).json({
+        err: -1,
+        msg: "Bạn không có quyền cập nhật bình luận này.",
+      });
+    }
+
+    const result = await roomService.updateComment({
+      idRoom: comment.idRoom,
+      idComment: comment.idComment,
+      rating,
+      text
+    });
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Bình luận đã được cập nhật trước đó.",
+      });
+    }
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Bình luận đã được cập nhật thành công!",
+    });
+  } catch (err) {
+    console.error(err);
+    return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình cập nhật bình luận."));
+  }
+}
+
+exports.softDeleteComment = async (req, res, next) => {
+  const { idUser, idComment } = req.body;
+
+  try {
+    const roomService = new RoomService(MongoDB.client);
+
+    const comment = await roomService.getCommentsById(idComment);
+
+    if (!comment) {
+      return res.status(404).json({
+        err: -1,
+        msg: "Không tìm thấy bình luận.",
+      });
+    }
+
+    if (comment.idUser.toString() !== idUser) {
+      return res.status(403).json({
+        err: -1,
+        msg: "Bạn không có quyền xoá bình luận này.",
+      });
+    }
+
+    const result = await roomService.deleteComment({ 
+      idRoom: comment.idRoom, 
+      idComment 
+    });
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Bình luận không thể xóa.",
+      });
+    }
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Bình luận đã được đánh dấu là đã xóa thành công!",
+    });
+  } catch (err) {
+    console.error(err);
+    return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình đánh dấu xóa bình luận."));
+  }
+};
+
+exports.getAllCommentOfUser = async (req, res, next) => {
+  const { userId } = req.params;
+  try {
+    const userService = new UserService(MongoDB.client);
+    const roomService = new RoomService(MongoDB.client);
+
+    const result = await userService.getInfoUser({ _id: ObjectId.isValid(userId) ? new ObjectId(userId) : null });
+
+    if (!result) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không tìm thấy người dùng!",
+      });
+    }
+    const comments = await roomService.getCommentsByUser(userId);
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Danh sách bình luận của người dùng.",
+      data: comments
+    });
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình lấy bình luận của người dùng."));
+  }
+}
+
+exports.getAllCommentOfRoom = async (req, res, next) => {
+  const { roomId } = req.params;
+  try {
+    const roomService = new RoomService(MongoDB.client);
+
+    const comments = await roomService.getCommentsByRoom(roomId);
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Danh sách bình luận",
+      data: comments
+    });
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình lấy bình luận."));
+  }
+}
+
+exports.getOneComment = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const roomService = new RoomService(MongoDB.client);
+
+    const comment = await roomService.getCommentsById(id);
 
 
 
+    return res.status(200).json({
+      err: 0,
+      msg: "Dữ liệu bình luận",
+      data: comment
+    });
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình lấy bình luận."));
+  }
+}
 
+exports.getAllOrderOfUser = async (req, res, next) => {
 
+  try {
+    const userService = new UserService(MongoDB.client);
+    const result = await userService.getAllOrderOfUser(req.params);
 
+    if (!result) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không tìm thấy lịch sử đặt phòng nào!",
+      });
+    }
+    return res.status(200).json({
+      err: 0, msg: "Truy xuất lịch sử đặt phòng thành công!",
+      data: result,
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi xoá yêu thích của người dùng."));
 
+  }
+}
 
+exports.getAllOrderOfUserById = async (req, res, next) => {
 
+  try {
+    const userService = new UserService(MongoDB.client);
+    const result = await userService.getAllOrderOfUserById(req.params);
 
+    if (!result) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không tìm thấy lịch sử đặt phòng nào!",
+      });
+    }
+    return res.status(200).json({
+      err: 0, msg: "Truy xuất lịch sử đặt phòng thành công!",
+      data: result,
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi xoá yêu thích của người dùng."));
+
+  }
+}

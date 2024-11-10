@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { apiGetAllSector, apiGetAllRoom, apiSearchRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist } from "../services";
+import { apiGetAllSector, apiSearchRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist } from "../services";
 import '../layouts/containers.css'
 import { FaStar, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { Pagination, Input, Select, Slider, DatePicker, Carousel } from 'antd';
 import icons from "../utils/icons";
 import { path } from "../utils/constant";
 import useAuthStore from '../stores/authStore';
+
+import RoomCard from "../components/RoomCard";
 
 dayjs.extend(customParseFormat);
 const dateFormat = "DD/MM/YYYY";
@@ -35,7 +37,7 @@ const Rooms = () => {
     : [];
   const [disabledDateData, setDisabledDateData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [totalRooms, setTotalRooms] = useState(0);
 
 
@@ -79,7 +81,6 @@ const Rooms = () => {
     };
     const response = await apiSearchRoom(searchParams);
 
-    // const data = await apiGetAllRoom();
     setRooms(response.data.paginatedRooms);
     setTotalRooms(response.data.totalRooms);
   };
@@ -212,7 +213,7 @@ const Rooms = () => {
             </label>
             <Input
               prefix={<CiSearch className="ml-2" size={24} />}
-              placeholder="Nhập nơi cần tìm ..."
+              placeholder="Nhập tên phòng ..."
               value={searchPlace}
               onChange={handleChangePlace}
               className="w-full h-[40px] px-4 py-2 rounded-md focus:outline-none"
@@ -351,67 +352,15 @@ const Rooms = () => {
 
           {/* Room List */}
           <div className="w-full md:w-3/4">
-
             <div className="space-y-4">
               {filterRoom.map(room => (
-                <div key={room._id} className="bg-white overflow-hidden shadow rounded-lg flex">
-                  <div className="md:w-1/3 w-full h-[200px] relative"> {/* Add relative here */}
-                    <Carousel autoplay autoplaySpeed={10000} arrows infinite={false}>
-                      {room.imgRoom.map((img, index) => (
-                        <div key={index}>
-                          <img className="w-full object-cover h-[200px]" src={img.secure_url} alt={room.name} />
-                        </div>
-                      ))}
-                    </Carousel>
-
-                    {isLoggedIn && (
-                      <button
-                        className="absolute top-2 right-2 text-red-500 hover:text-red-700  bg-white rounded-full p-2 focus:outline-none z-10"
-                        onClick={() => handleWishlistToggle(room._id)}
-                      >
-                        {wishlists.some(item => item.roomId === room._id) ? (
-                          <FaHeart size={20} />
-                        ) : (
-                          <FaRegHeart size={20} className="text-black" />
-                        )}
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="md:w-2/3 w-full flex flex-col justify-between">
-                    <div className="mx-4">
-                      <h3 className="text-lg font-medium text-gray-900">{room.nameRoom}</h3>
-                      <p className="mt-1 text-sm text-gray-500">{room.sectorDetails.nameSector}</p>
-                      <p className="mt-1 text-sm text-gray-500">{room.loaiRoom}</p>
-                      <div className="mt-2 flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar
-                            key={i}
-                            className={`h-5 w-5 ${i < Math.floor(room.danhgiaRoom) ? 'text-yellow-400' : 'text-gray-300'}`}
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-gray-500">{room.cmtRoom.length} nhận xét</span>
-                      </div>
-                    </div>
-                    <div className="mx-4 flex items-center justify-between">
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-500">giá chỉ từ</p>
-                        <p className="text-2xl font-bold text-orange-700 font-sans">
-                          {room.giaRoom.toLocaleString()} VND
-                        </p>
-                        <p className="text-sm text-gray-500">cho 1 đêm</p>
-                      </div>
-                      <button
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        onClick={() => {
-                          window.open(`/${path.DETAILROOM}/${room._id}`, '_blank');
-                        }}
-                      >
-                        Xem
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <RoomCard
+                  key={room._id}
+                  room={room}
+                  isLoggedIn={isLoggedIn}
+                  handleWishlistToggle={handleWishlistToggle}
+                  wishlists={wishlists}
+                />
               ))}
             </div>
 

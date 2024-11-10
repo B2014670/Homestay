@@ -293,32 +293,6 @@ export default function AccountPage() {
       key: '2',
       label: (
         <span>
-          <HistoryOutlined />
-          Lịch sử đặt chỗ
-        </span>
-      ),
-      children: (
-        <List
-          itemLayout="horizontal"
-          dataSource={mockBookings}
-          renderItem={(item) => (
-            <List.Item>
-              <List.Item.Meta
-                title={item.homestay}
-                description={`Check-in: ${item.checkIn} | Check-out: ${item.checkOut}`}
-              />
-              <Tag color={item.status === 'Completed' ? 'green' : item.status === 'Upcoming' ? 'blue' : 'red'}>
-                {item.status}
-              </Tag>
-            </List.Item>
-          )}
-        />
-      ),
-    },
-    {
-      key: '3',
-      label: (
-        <span>
           <MessageOutlined />
           Trò chuyện với quản trị viên
         </span>

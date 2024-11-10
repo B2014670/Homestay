@@ -39,7 +39,7 @@ router.post("/infoRoom", users.getInfoRoom);
 
 router.post("/getRoomWithSector", users.getRoomWithSector);
 
-router.post("/cancleOrderRoom", users.cancleOrderRoom);
+router.post("/cancelOrderRoom", users.cancelOrderRoom);
 
 router.post("/updatePaypalOrder", users.updatePaypalOrder);
 
@@ -58,5 +58,21 @@ router.get('/wishlist/:userId/room', users.getUserWishlistRooms);
 router.put('/wishlist/:id', users.updateWishlist);
 
 router.delete('/wishlist', users.deleteWishlist);
+
+router.get("/:userId/orders", users.getAllOrderOfUser);
+
+router.get("/:userId/orders/:idOrder", users.getAllOrderOfUserById);
+
+router.get("/:userId/comments", users.getAllCommentOfUser);
+
+router.get("/comments/room/:roomId", users.getAllCommentOfRoom);
+
+router.get("/comments/:id", users.getOneComment);
+
+router.post("/comments", users.createComment);
+
+router.put("/comments", users.updateComment);
+
+router.delete("/comments", users.softDeleteComment);
 
 module.exports = router;

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Form, Card, Carousel, Typography, Descriptions, Rate, Button, DatePicker, message, Tag, Divider, Image, Radio, Space } from 'antd';
-import { UserOutlined, EnvironmentOutlined, DollarOutlined, LoginOutlined } from '@ant-design/icons';
+import { Form, Card, Typography, Descriptions, Rate, Button, DatePicker, message, Tag, Divider, Image, Radio, Space, Checkbox } from 'antd';
+import { UserOutlined, EnvironmentOutlined, DollarOutlined, LoginOutlined, CoffeeOutlined } from '@ant-design/icons';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-import CommentList from '../components/CommentList';
-import Editor from '../components/Editor';
+import CommentViewer from '../components/CommentViewer';
+import BreakfastBooking from '../components/BreakfastBooking';
 import useAuthStore from '../stores/authStore';
-import { apiGetRoomWithSector, apiPostOrderRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist } from '../services';
+import { apiGetRoomWithSector, apiPostOrderRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist, apiGetAllComment } from '../services';
 import { path } from '../utils/constant';
 
 dayjs.extend(customParseFormat);
@@ -26,14 +26,15 @@ const DetailRoom = () => {
   const location = useLocation();
 
   const [homestayData, setHomestayData] = useState(null);
+  const [comments, setComments] = useState([]);
   const [disabledDateData, setDisabledDateData] = useState([]);
+  const [pay, setPay] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('paypal');
   const [selectedDateRange, setSelectedDateRange] = useState([]);
-  const [comments, setComments] = useState([]);
-  const [value, setValue] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [deposit, setDeposit] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isBreakfastIncluded, setIsBreakfastIncluded] = useState(false);
 
   const [formData, setFormData] = useState({
     idUser: user ? user._id : null,
@@ -42,13 +43,18 @@ const DetailRoom = () => {
     idRoom: id,
     dateInput: [],
     totalMoney: totalAmount,
-    pay: paymentMethod,
+    pay: pay,
+    paymentMethod: paymentMethod,
+    transactionId: null,
+    deposit: deposit,
     statusOrder: 1,
+    extraServices:[]
   });
 
   useEffect(() => {
     if (id) {
       fetchRoom();
+      fetchComment();
     }
   }, [id]);
 
@@ -96,6 +102,19 @@ const DetailRoom = () => {
     }
   };
 
+  const fetchComment = async () => {
+    try {
+      const response = await apiGetAllComment(id);
+      if (response?.data) {
+        setComments(response.data.data);
+      } else {
+        console.error('Không có dữ liệu nào được trả về từ API');
+      }
+    } catch (error) {
+      console.error('Error fetching comment:', error);
+    }
+  };
+
   const fetchUserWishlist = async (userId) => {
     try {
       const response = await apiGetUserWishlist(userId);
@@ -116,7 +135,9 @@ const DetailRoom = () => {
     const dateArray = getDatesBetween(dates[0], dates[1]);
     const isOverlap = dateArray.some((date) => disabledDateData.includes(date));
     if (isOverlap) {
-      swal("Thông báo !", "Vui lòng không chọn những ngày đã vô hiệu hóa trước đó !", "warning");
+      resetDateSelection();
+      swal("Thông báo !", "Vui lòng không chọn những ngày đã được đặt trước đó !", "warning");
+      return;
     }
 
     if (homestayData) {
@@ -157,42 +178,45 @@ const DetailRoom = () => {
   };
 
   const handlePaymentMethodChange = (e) => {
-    setPaymentMethod(e.target.value);
-    setFormData({ ...formData, pay: e.target.value });
-  };
+    const selectedMethod = e.target.value;
+    let updatedDeposit = 0;
+    let updatedPay = true;
 
-  const handleBooking = async () => {
-    const datainput = {
-      // Room: location.state.detailData,
-      infoOrder: formData,
-    };
-    console.log(formData);
-    // const response = await apiPostOrderRoom(datainput);
-    // if (response.status === 200)
-    //   swal("Thành Công !", " Đặt phòng thành công !", "success").then((value) => {
-    //     window.location.reload();
-    //   });
-  };
-
-  const handleCommentChange = (e) => setValue(e.target.value);
-
-  const handleCommentSubmit = () => {
-    if (!value) {
-      message.error('Please enter a comment');
-      return;
+    if (selectedMethod === "paypal deposit") {
+      updatedDeposit = formData.totalMoney * 0.5; // Calculate a 50% deposit
+    } else if (selectedMethod === 'at counter') {
+      updatedPay = false;
     }
-    setSubmitting(true);
-    setTimeout(() => {
-      const newComment = {
-        author: 'User',
-        content: value,
-        datetime: new Date().toLocaleString(),
-      };
-      setComments([...comments, newComment]);
-      setValue('');
-      setSubmitting(false);
-      message.success('Comment added successfully!');
-    }, 1000);
+
+    setPaymentMethod(selectedMethod);
+    setDeposit(updatedDeposit);
+    setPay(updatedPay);
+    setFormData({
+      ...formData,
+      paymentMethod: selectedMethod,
+      deposit: updatedDeposit,
+      pay: updatedPay,
+    });
+  };
+
+  const handleBooking = async (transactionId = null) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      transactionId: transactionId || prevFormData.transactionId,
+    }));
+
+    const dataInput = {
+      infoOrder: {
+        ...formData,
+        transactionId: transactionId || formData.transactionId,
+      },
+    };
+    console.log(dataInput.infoOrder);
+    const response = await apiPostOrderRoom(dataInput);
+    if (response.status === 200)
+      swal("Thành Công !", " Đặt phòng thành công !", "success").then((value) => {
+        fetchRoom();
+      });
   };
 
   const handleWishlistToggle = async () => {
@@ -205,7 +229,7 @@ const DetailRoom = () => {
       // Remove room from wishlist
       try {
         await apiDeleteWishlist({ roomId: id, userId: user._id });
-        setIsWishlisted(false);
+        setIsWishlisted(!isWishlisted);
         message.success('Đã xóa khỏi danh sách yêu thích');
       } catch (error) {
         message.error('Lỗi xóa khỏi danh sách yêu thích');
@@ -214,7 +238,7 @@ const DetailRoom = () => {
       // Add room to wishlist
       try {
         await apiCreateWishlist({ roomId: id, userId: user._id });
-        setIsWishlisted(true);
+        setIsWishlisted(!isWishlisted);
         message.success('Đã thêm vào danh sách yêu thích');
       } catch (error) {
         message.error('Lỗi thêm vào danh sách yêu thích');
@@ -227,7 +251,7 @@ const DetailRoom = () => {
       <Card className="shadow-lg rounded-lg overflow-hidden">
         <div className="flex flex-col lg:flex-row">
           {/* Left Section - Room Details */}
-          <div className="lg:w-2/3 lg:pr-8 relative">
+          <div className="lg:w-3/4 lg:pr-8 relative">
             {homestayData ? (
               <>
                 <Title level={2} className="mb-4 text-2xl font-semibold text-gray-900">
@@ -290,13 +314,13 @@ const DetailRoom = () => {
 
                 <Divider />
 
+                <Title level={4}>Chi tiết phòng</Title>
                 <Descriptions
-                  className="w-full px-4 md:px-6 lg:px-8"
-                  title="Room Details"
+                  className="w-full"
                   bordered
                   column={{ xs: 1, sm: 1, md: 2, lg: 2 }}
                 >
-                  <Descriptions.Item label="Rating" span={2}>
+                  <Descriptions.Item label="Rating" span={1}>
                     <Rate disabled defaultValue={homestayData.danhgiaRoom} />
                   </Descriptions.Item>
 
@@ -306,13 +330,13 @@ const DetailRoom = () => {
                     </Tag>
                   </Descriptions.Item>
 
-                  <Descriptions.Item label="Khu vực" span={2}>
+                  <Descriptions.Item label="Khu vực" span={1}>
                     <Tag icon={<EnvironmentOutlined />} color="orange">
                       {homestayData.sectorDetails.nameSector}
                     </Tag>
-                    <span>
+                    <h5>
                       {homestayData.sectorDetails.addressSector}, {homestayData.sectorDetails.discSector}
-                    </span>
+                    </h5>
                   </Descriptions.Item>
 
                   <Descriptions.Item label="Giá">
@@ -321,22 +345,15 @@ const DetailRoom = () => {
                     </Tag>
                   </Descriptions.Item>
                 </Descriptions>
-
                 <Divider />
+
                 <Title level={4}>Mô tả</Title>
                 <Paragraph>{homestayData.discRoom}</Paragraph>
                 <Divider />
+
                 {/* Comments Section */}
                 <Title level={4} className="mb-4">Bình luận</Title>
-                <div className="comment-section">
-                  {comments.length > 0 && <CommentList comments={comments} />}
-                  <Editor
-                    onSubmit={handleCommentSubmit}
-                    submitting={submitting}
-                    value={value}
-                    onChange={handleCommentChange}
-                  />
-                </div>
+                <CommentViewer comments={comments} />
               </>
             ) : (
               <div>Loading room details...</div>
@@ -345,9 +362,9 @@ const DetailRoom = () => {
 
 
           {/* Right Section - Booking */}
-          <div className="mt-8 md:mt-0 md:w-1/3 pl-0 md:pl-8 border-l">
-            <Card title="Đặt phòng" className="sticky top-8">
-              <Form layout="vertical" style={{ maxWidth: 500 }} onFinish={handleBooking}>
+          <div className="lg:w-1/3 mx-auto lg:mt-0 bg-gray-100 rounded-lg shadow-md">
+            <Card title="Đặt phòng">
+              <Form layout="vertical" style={{ maxWidth: 500 }} >
                 <Form.Item
                   label="Nhập ngày nhận và trả phòng :"
                   name="dateOrder"
@@ -355,45 +372,100 @@ const DetailRoom = () => {
                 >
                   <RangePicker
                     disabledDate={disabledDate}
+                    value={selectedDateRange}
                     placeholder={['Ngày Đi', 'Ngày Về']}
                     format={dateFormat}
                     onChange={handleDateChange}
                     className="w-full"
                   />
                 </Form.Item>
-                <Descriptions column={1} className="mb-4">
-                  <Descriptions.Item label="Số đêm">
-                    {selectedDateRange.length === 2 ? selectedDateRange[1].diff(selectedDateRange[0], 'day') : 0}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Giá phòng/đêm">
-                    {homestayData?.giaRoom.toLocaleString()} VND
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Tổng tiền">
-                    {totalAmount.toLocaleString()} VND
-                  </Descriptions.Item>
-                </Descriptions>
 
-                <Radio.Group onChange={handlePaymentMethodChange} value={paymentMethod}>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Giá phòng/đêm:</span>
+                    <span className="font-medium text-lg">{homestayData?.giaRoom.toLocaleString()} VND</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Số đêm:</span>
+                    <span className="font-medium">x{selectedDateRange.length === 2 ? selectedDateRange[1].diff(selectedDateRange[0], 'day') : 0}</span>
+                  </div>
+
+                  <Form.Item
+                    label="Dịch vụ đi kèm:"
+                    name="isBreakfast"
+                    valuePropName="checked"
+                    initialValue={isBreakfastIncluded}
+                  >
+                    <Checkbox
+                      checked={isBreakfastIncluded}
+                      onChange={() => {
+                        setIsBreakfastIncluded(!isBreakfastIncluded);
+                      }}
+                    >
+                      <CoffeeOutlined className="mr-2 font-semibold" /> Đặt Bữa Sáng
+                    </Checkbox>
+                  </Form.Item>
+
+                  {isBreakfastIncluded && (
+                    <BreakfastBooking
+                      onBookingChange={(bookingData) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          extraServices: [bookingData]
+                        }));
+                        setTotalAmount((prev) => prev + bookingData.totalServiceCost);
+                      }}
+                      loaiRoom={homestayData?.loaiRoom}
+                      selectedDateRange={selectedDateRange}
+                    />
+                  )}
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tổng tiền:</span>
+                    <span className="font-medium text-xl">{totalAmount.toLocaleString()} VND</span>
+                  </div>
+
+                  {paymentMethod === 'paypal deposit' && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Đặt cọc:</span>
+                      <span className="font-medium text-xl"> {(totalAmount * 0.5).toLocaleString()} VND</span>
+                    </div>
+                  )}
+                </div>
+
+                <Radio.Group onChange={handlePaymentMethodChange} value={paymentMethod} className='mb-4'>
                   <Space direction="vertical">
                     <Radio value={'paypal'}>Thanh toán qua tài khoản ngân hàng.</Radio>
-                    <Radio value={'cod'}>
-                      Nhận phòng và thanh toán tại quầy.
-                    </Radio>
+                    <Radio value={'paypal deposit'}>Đặt cọc.</Radio>
+                    <Radio value={'at counter'}>Nhận phòng và thanh toán tại quầy.</Radio>
                   </Space>
                 </Radio.Group>
+
                 {isLoggedIn ? (
-                  paymentMethod == 'paypal' ? (
+                  paymentMethod == 'at counter' ? (
+                    <Button
+                      disabled={totalAmount <= 0}
+                      className={`text-xl py-5 font-bold bg-[#0070BA] text-white transition duration-300 ${totalAmount <= 0 ? 'opacity-50' : 'opacity-100'}`}
+                      type="submit"
+                      block
+                      onClick={() => handleBooking()}
+                    >
+                      Đặt phòng
+                    </Button>
+                  ) : (
                     <PayPalButtons
                       style={{ layout: 'horizontal', label: 'paypal', color: 'blue', tagline: false }}
                       disabled={totalAmount <= 0}
-                      forceReRender={[totalAmount]}
+                      forceReRender={[deposit, totalAmount]}
                       fundingSource={undefined}
                       createOrder={(data, actions) => {
+                        const amountToCharge = paymentMethod === 'paypal deposit' ? deposit : totalAmount;
                         return actions.order.create({
                           purchase_units: [
                             {
                               amount: {
-                                value: (totalAmount / 24000).toFixed(2),
+                                value: (amountToCharge / 24000).toFixed(2),
                               },
                             },
                           ],
@@ -401,22 +473,10 @@ const DetailRoom = () => {
                       }}
                       onApprove={(data, actions) => {
                         return actions.order.capture().then(async (details) => {
-                          const transactionId = details.id; // PayPal transaction ID
-                          console.log("Transaction completed. ID:", transactionId);
-                          handleBooking();
+                          await handleBooking(details.id);// This is the transaction ID (orderId)
                         });
                       }}
                     />
-                  ) : (
-                    <Button
-                      disabled={totalAmount <= 0}
-                      className={`text-xl py-5 font-bold bg-[#0070BA] text-white transition duration-300 ${totalAmount <= 0 ? 'opacity-50' : 'opacity-100'}`}
-                      type="submit"
-                      block
-                      onClick={handleBooking}
-                    >
-                      Đặt phòng
-                    </Button>
                   )
 
                 ) : (
