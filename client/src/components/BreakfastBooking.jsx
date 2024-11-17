@@ -47,7 +47,7 @@ function BreakfastBooking({ onBookingChange, loaiRoom, selectedDateRange }) {
     if (!selectedDateRange[0] || !selectedDateRange[1]) {
       return false;
     }
-    return current.isBefore(selectedDateRange[0], 'day') || current.isAfter(selectedDateRange[1], 'day');
+    return current.isBefore(selectedDateRange[0], 'day') || current.isSame(selectedDateRange[0], 'day') || current.isAfter(selectedDateRange[1], 'day');
   };
 
   return (

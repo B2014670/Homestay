@@ -127,7 +127,7 @@ const Sector = () => {
   };
 
   return (
-    <div className="p-5">
+    <div className="p-5 w-full">
       {showAddSectorPopup && (
         <AddSectorForm
           setShowAddSectorPopup={setShowAddSectorPopup}

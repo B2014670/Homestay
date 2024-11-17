@@ -1,48 +1,133 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Tabs, Form, Input, Button, List, Tag, Card, message, Avatar, Upload } from 'antd'
 import { UserOutlined, LockOutlined, HistoryOutlined, MessageOutlined, UploadOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, DeleteOutlined } from '@ant-design/icons'
 import { apiInfoUser, apiUpdateInfoUser, apiChangePassword } from '../services'
+import {
+  apiCreateConversation,
+  apiAddMessage,
+  apiGetConversationsForUser,
+  apiGetMessagesForConversation,
+  apiEndConversation,
+  apiUpdateAdmin,
+  apiGetConversationsForAdmin,
+  apiGetAdmins
+} from '../services'
 import axios from 'axios';
 import io from 'socket.io-client';
 import useAuthStore from '../stores/authStore';
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
+dayjs.extend(customParseFormat);
 
 const { TabPane } = Tabs
 
-// Mock data for demonstration
-const mockBookings = [
-  { id: 1, homestay: 'Cozy Cabin', checkIn: '2023-10-15', checkOut: '2023-10-20', status: 'Completed' },
-  { id: 2, homestay: 'Beach House', checkIn: '2023-11-20', checkOut: '2023-11-25', status: 'Upcoming' },
-  { id: 3, homestay: 'Mountain Retreat', checkIn: '2023-12-05', checkOut: '2023-12-10', status: 'Cancelled' },
-]
-
 export default function AccountPage() {
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, user, setUser } = useAuthStore();
   const [userInfo, setUserInfo] = useState({});
+  const [conversation, setConversation] = useState({})
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [form] = Form.useForm();
   const [socket, setSocket] = useState(null);
+  const [form] = Form.useForm();
+  const endOfMessagesRef = useRef(null)
 
-  // useEffect(() => {
-  //   if (isLoggedIn) {
-  //     // Connect to the socket server
-  //     const newSocket = io(import.meta.env.VITE_REACT_APP_SERVER);
-  //     setSocket(newSocket);
+  useEffect(() => {
+    if (isLoggedIn) {
+      const newSocket = io(import.meta.env.VITE_REACT_APP_SERVER);
+      setSocket(newSocket);
 
-  //     // Listen for messages from the server
-  //     newSocket.on('receiveMessage', (message) => {
-  //       setMessages((prevMessages) => [...prevMessages, message]);
-  //     });
+      return () => {
+        newSocket.disconnect();
+        setSocket(null);
+      };
+    }
+  }, [isLoggedIn]);
 
-  //     // Clean up the socket connection when the component unmounts
-  //     return () => {
-  //       newSocket.off('receiveMessage');
-  //       newSocket.disconnect(); // Disconnect when the component is unmounted
-  //     };
-  //   }
-  // }, []);
+  useEffect(() => {
+    if (socket && user?._id) {
+      socket.emit('addUser', user._id);
 
+      socket.on('getUsers', (users) => {
+        console.log('Active users:', users);
+      });
+
+      socket?.on('getMessage', data => {
+        setMessages(prevMessages => [...prevMessages, data]);
+      });
+
+      return () => {
+        socket.off('getUsers');
+      };
+    }
+  }, [socket, user?._id]);
+
+  useEffect(() => {
+    // Scroll to the last message when messages change
+    if (endOfMessagesRef.current) {
+      endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const fetchConversationsAndMessages = async () => {
+      try {
+        const responseConversation = await apiGetConversationsForUser(user?._id);
+        let conversationData;
+
+        if (!responseConversation?.data) {
+          const newConversation = await apiCreateConversation({ customerId: user?._id });
+          conversationData = newConversation.data;
+        } else {
+          conversationData = responseConversation.data;
+        }
+
+        setConversation(conversationData);
+
+        // Fetch messages for the current conversation
+        const responseMessages = await apiGetMessagesForConversation(conversationData._id);
+        setMessages(responseMessages.data);
+
+      } catch (error) {
+        console.error("Error fetching conversations or messages:", error);
+      }
+    };
+
+    fetchConversationsAndMessages();
+  }, [user?._id])
+
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    socket?.emit('sendMessage', {
+      conversationId: conversation?._id,
+      senderId: user?._id,
+      role: 'user',
+      text: newMessage,
+    });
+
+    setNewMessage('');
+    // try {
+    //     // Save the message via API
+    //     const response = await apiAddMessage({
+    //         conversationId: messages.conversation._id,
+    //         senderId: user._id,
+    //         role: 'user',
+    //         text: message,
+    //     });
+
+    //     if (response.status === 200) { 
+    //         setMessage(''); 
+    //     } else {
+    //         console.error("Failed to add message:", response);
+    //     }
+    // } catch (error) {
+    //     console.error("Message sending failed:", error);
+    // }
+
+  };
+
+  // TAB 1
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
@@ -70,7 +155,9 @@ export default function AccountPage() {
       const response = await apiUpdateInfoUser({ idUser: userInfo._id, img: image, ...values });
       if (response.status === 200) {
         setUserInfo({ ...userInfo, ...values });
+        setUser({ ...userInfo, ...values });
         message.success('Hồ sơ được cập nhật thành công');
+        // form.resetFields();
       } else {
         message.error('Không thể cập nhật hồ sơ: ' + response.data.message);
       }
@@ -81,7 +168,7 @@ export default function AccountPage() {
 
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith('image/');
-    const isLt2M = file.size / 1024 / 1024 < 200; // File size must be less than 200MB
+    const isLt2M = file.size / 1024 / 1024 < 20; // File size must be less than 20MB
 
     if (!isImage) {
       message.error('You can only upload image files!');
@@ -111,6 +198,15 @@ export default function AccountPage() {
               delete_token: response.data.delete_token,
             }
           });
+          setUser({
+            ...userInfo,
+            img: {
+              url: response.data.secure_url,
+              public_id: response.data.public_id,
+              signature: response.data.signature,
+              delete_token: response.data.delete_token,
+            }
+          });
           message.success('Hình ảnh được tải lên thành công!');
         } else {
           message.error('Tải hình ảnh lên không thành công!');
@@ -128,6 +224,10 @@ export default function AccountPage() {
       });
       if (response.status === 200) {
         setUserInfo({
+          ...userInfo,
+          img: {}
+        });
+        setUser({
           ...userInfo,
           img: {}
         });
@@ -154,7 +254,7 @@ export default function AccountPage() {
         newPassword: values.newPassword,
       });
       if (response.data.err === 0) {
-        message.success('Password changed successfully');
+        message.success('Đỗi mật khẩu thành công');
         form.resetFields(['currentPassword', 'newPassword', 'confirmPassword']);
       } else {
         message.error(response.data.msg);
@@ -163,29 +263,6 @@ export default function AccountPage() {
       message.error(error.message);
     }
   }
-
-  const handleSendMessage = () => {
-    if (newMessage.trim() && socket && userInfo) {
-      const messageData = {
-        id: `${socket.id}${Math.random()}`,
-        socketID: socket.id,
-        idUser: userInfo._id,
-        name: userInfo.name,
-        sender: 'User',
-        content: newMessage,
-        timestamp: new Date().toLocaleString(), // Add timestamp for local display
-      };
-
-      // Emit the message to the server
-      socket.emit('sendMessage', messageData);
-
-      // Add the message locally
-      setMessages((prevMessages) => [...prevMessages, messageData]);
-
-      // Clear input field
-      setNewMessage('');
-    }
-  };
 
   const tabItems = [
     {
@@ -199,7 +276,7 @@ export default function AccountPage() {
       children: (
         <div className="space-y-8">
           <Card title="Thông tin cá nhân">
-            <div className="flex items-center space-x-4 mb-6">
+            <div className="flex items-center space-x-4 mb-4">
               <div className="relative inline-block group">
                 {/* Avatar component */}
                 <Avatar
@@ -221,8 +298,10 @@ export default function AccountPage() {
               <Upload
                 name="avatar"
                 customRequest={({ file, onSuccess }) => {
-                  uploadImage(file);
-                  onSuccess("ok"); // Manually trigger success
+                  uploadImage(file).then(() => onSuccess("ok")).catch((err) => {
+                    console.error(err);
+                    message.error('Image upload failed. Please try again.');
+                  });
                 }}
                 accept="image/*"
                 beforeUpload={beforeUpload}
@@ -235,7 +314,7 @@ export default function AccountPage() {
             </div>
             <Form form={form} layout="vertical" onFinish={handleUpdateProfile} initialValues={userInfo}>
               <Form.Item name="name" label="Tên" rules={[{ required: true }]}>
-                <Input prefix={<UserOutlined />} value={userInfo.name} onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })} />
+                <Input prefix={<UserOutlined />} value={userInfo.name} />
               </Form.Item>
               <Form.Item name="address" label="Địa chỉ" rules={[{ required: true }]}>
                 <Input prefix={<EnvironmentOutlined />} />
@@ -298,28 +377,37 @@ export default function AccountPage() {
         </span>
       ),
       children: (
-        <div className="flex flex-col h-[400px]">
-          <div className="flex-grow overflow-y-auto mb-4 space-y-4">
-            {messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.sender === 'User' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs p-3 rounded-lg ${msg.sender === 'User' ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                  <p className="font-semibold">{msg.sender}</p>
-                  <p>{msg.content}</p>
-                  <p className="text-xs text-gray-500">{msg.timestamp}</p>
-                </div>
+        <div className="flex flex-col h-[300px]">
+          <div className="flex-grow overflow-y-auto space-y-4">
+            {messages?.length === 0 ? (
+              <div className='text-center text-lg font-semibold mt-24'>
+                Không có tin nhắn nào
               </div>
-            ))}
+            ) : (
+              <>
+                {messages?.map((msg, index) => (
+                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-black'}`}>
+                      <p>{typeof msg.message === 'string' ? msg.message : JSON.stringify(msg.message)}</p>
+                      <p className="text-xs opacity-50">{dayjs(msg.timestamp).format('HH:mm DD/MM/YYYY')}</p>
+                    </div>
+                  </div>
+                ))}
+                {/* Place the ref to the last element */}
+                <div ref={endOfMessagesRef} />
+              </>
+            )}
           </div>
           <div className="flex">
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onPressEnter={handleSendMessage}
-              placeholder="Type your message..."
+              onPressEnter={sendMessage}
+              placeholder="Nhập tin nhắn của bạn..."
               className="flex-grow"
             />
-            <Button onClick={handleSendMessage} type="primary" className="ml-2">
-              Send
+            <Button onClick={sendMessage} type="primary" className="ml-2">
+              Gửi
             </Button>
           </div>
         </div>
@@ -328,7 +416,7 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="w-full max-w-4xl p-6 my-6 bg-white rounded-lg shadow-md">
+    <div className="w-full max-w-4xl p-4 my-2 bg-red-50 rounded-lg shadow-md">
       <Tabs defaultActiveKey="1" items={tabItems} />
     </div>
   )

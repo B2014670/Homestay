@@ -10,7 +10,6 @@ import {
 } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import './SideMenu.css';
 
 const SideMenu = () => {
   const navigate = useNavigate();
@@ -28,38 +27,31 @@ const SideMenu = () => {
     { label: 'Quản Lý Khu Vực', icon: <MenuFoldOutlined />, key: '/sectors', value: 4 },
     { label: 'Quản Lý Phòng', icon: <HomeOutlined />, key: '/rooms', value: 5 },
   ];
-  // let menuItems
-  // if(isAdmin){
-  //   const filteredMenuItems = adminMenuItems.filter(item => isAdmin.includes(item.value.toString()));
+  let menuItems
+  if (isAdmin) {
+    const filteredMenuItems = adminMenuItems.filter(item => isAdmin.includes(item.value.toString()));
 
-  // // Kết hợp thẻ mặc định với các thẻ được lọc dựa trên quyền admin
-  //  menuItems = [...defaultMenuItem, ...filteredMenuItems];
-  // }
-
-
-  // const filteredMenuItems = Array.isArray(isAdmin) && isAdmin !== null ? adminMenuItems.filter(item => isAdmin.includes(item.value.toString())) : [];
-  // Kết hợp thẻ mặc định với các thẻ được lọc dựa trên quyền admin
-  const filteredMenuItems = adminMenuItems;
-  const menuItems = [...defaultMenuItem, ...filteredMenuItems];
+    // Kết hợp thẻ mặc định với các thẻ được lọc dựa trên quyền admin
+    menuItems = [...defaultMenuItem, ...filteredMenuItems];
+  }
 
   return (
-    <div className='SideMenu h-full'>
-      <div className='flex justify-center items-center'>
+    // fixed
+    <div className="flex flex-col h-screen">
+      <div className="flex justify-center items-center py-4">
         <img
-          src={"https://cdn-icons-png.flaticon.com/512/6820/6820955.png"}
-          alt='Logo'
-          style={{ width: '170px', height: '100px', cursor: 'pointer' }}
+          src="./logo3.png"
+          alt="Logo"
+          className="w-40 h-24 cursor-pointer"
           onClick={() => navigate('/')}
         />
       </div>
       <Menu
-        className='hg'
-        onClick={(item) => {
-          navigate(item.key);
-        }}
-        theme='dark'
+        className="sticky top-0 z-10"
+        onClick={(item) => navigate(item.key)}
+        theme="dark"
         items={menuItems}
-      ></Menu>
+      />
     </div>
   );
 };

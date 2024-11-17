@@ -19,9 +19,9 @@ class AdminService {
     return admin;
   }
 
-  async check(filter) {
-    // console.log( filter.email);
-    const cursor = await this.Admin.find(filter);
+  async check(filter, projection = null) {
+    const projectionFields = projection || '';
+    const cursor = await this.Admin.find(filter, { projection: projectionFields });
     return await cursor.toArray();
   }
   async checkById(payload) {
@@ -63,7 +63,7 @@ class AdminService {
   async EditAdmin(payload) {
     // Create a filter based on _id
     const filter = { _id: new ObjectId(payload._id) };
-    
+
     // Remove _id and properties with empty string or empty array from payload
     const updateData = Object.entries(payload).reduce((acc, [key, value]) => {
       if (key !== "_id" && value !== "" && !Array.isArray(value) || (Array.isArray(value) && value.length > 0)) {
@@ -71,17 +71,22 @@ class AdminService {
       }
       return acc;
     }, {});
-    
+
     // Perform the update
     const result = await this.Admin.findOneAndUpdate(
       filter,
       { $set: updateData },
       { returnDocument: "after", upsert: true }
     );
-  
+
     return result;
   }
-  
+
+  async getPhoneByAdminId(adminId) {
+    const admin = await this.Admin.findOne({ _id: new ObjectId(adminId) });
+    return admin ? admin.phone : null;
+  }
+
 }
 
 module.exports = AdminService;

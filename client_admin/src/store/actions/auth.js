@@ -3,24 +3,23 @@ import actionTypes from './actionTypes';
 
 import { apiAdminRegister, apiAdminLogin } from '../../api';
 import swal from 'sweetalert';
-import { useNavigate } from 'react-router-dom';
 export const register = (payload) => async (dispatch) => {
     try {
         const response = await apiAdminRegister(payload)
         // console.log(response)
-        if(response?.data.err === 0) 
-        {
+        if (response?.data.err === 0) {
             dispatch({
                 type: actionTypes.REGISTER_SUCCESS,
-                data:{ token: response.data.data.token,
-                      User : {
-                        phone : response.data.data.phone,
-                        name : response.data.data.name,
-                      }
+                data: {
+                    token: response.data.data.token,
+                    User: {
+                        phone: response.data.data.phone,
+                        name: response.data.data.name,
                     }
-                
+                }
+
             })
-        }else{
+        } else {
             dispatch({
                 type: actionTypes.REGISTER_FAIL,
                 data: response.data.msg
@@ -28,48 +27,44 @@ export const register = (payload) => async (dispatch) => {
         }
 
     } catch (error) {
-       dispatch({
-        type: actionTypes.REGISTER_FAIL,
-        data : null,
-       }) 
+        dispatch({
+            type: actionTypes.REGISTER_FAIL,
+            data: null,
+        })
     }
 }
 
 export const login = (payload, navigate) => async (dispatch) => {
 
     try {
-        // const navigate = useNavigate()
         const response = await apiAdminLogin(payload)
-        // console.log(response)
-        if(response?.data.err === 0) 
-        {  
-            //  console.log(response.data.admin.isAdmin)
+        if (response?.data.err === 0) {
             dispatch({
                 type: actionTypes.LOGIN_SUCCESS,
-                data:{ phone: response.data.admin.phone,
-                    password : response.data.admin.password,
+                data: {
+                    phone: response.data.admin.phone,
                     isAdmin: response.data.admin.isAdmin,
-                    username : response.data.admin.username,
+                    username: response.data.admin.userName,
                 }
             })
-            swal("Thành Công ! " , response.data.msg, 'success')
+            swal("Thành Công ! ", response.data.msg, 'success')
             navigate('../')
-        }else{
+        } else {
             dispatch({
                 type: actionTypes.LOGIN_FAIL,
                 data: response.data.msg
             })
-            swal("Thông báo ! " , response.data.msg, 'warning')
+            swal("Thông báo ! ", response.data.msg, 'warning')
         }
 
     } catch (error) {
-       dispatch({
-        type: actionTypes.LOGIN_FAIL,
-        data : null,
-       }) 
+        dispatch({
+            type: actionTypes.LOGIN_FAIL,
+            data: null,
+        })
     }
 }
 
 export const logout = () => ({
-    type : actionTypes.LOGOUT
+    type: actionTypes.LOGOUT
 })

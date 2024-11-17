@@ -50,7 +50,7 @@ const Login = () => {
 
     return (
         <div className="sm:mx-0 w-full md:w-1/2 lg:w-1/3 py-4 sm:px-2 md:px-4">
-            <div className="bg-gray-50 border border-gray-300 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="bg-gray-100 border border-gray-300 py-8 px-4 shadow sm:rounded-lg sm:px-10">
                 <h2 className="mb-6 text-center text-3xl font-bold text-gray-900">Đăng nhập</h2>
                 <Formik
                     initialValues={{ phone: '', password: '' }}
@@ -135,7 +135,7 @@ const Login = () => {
                             <div className="w-full border-t border-gray-300" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-gray-500">Đăng nhập với</span>
+                            <span className="px-2 bg-white text-gray-500 rounded-md">Đăng nhập với</span>
                         </div>
                     </div>
 

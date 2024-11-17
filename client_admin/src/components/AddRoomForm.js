@@ -51,14 +51,32 @@ const AddRoomForm = (props) => {
   const uploadImage = async (e) => {
     const formdata = new FormData();
     formdata.append("file", e);
-    formdata.append("upload_preset", "btj12veg");
+    formdata.append("upload_preset", "we6hizdj");
     await axios
-      .post("https://api.cloudinary.com/v1_1/doqqlyjb2/image/upload", formdata)
+      .post("https://api.cloudinary.com/v1_1/dwcrfnnov/image/upload", formdata)
       .then((response) => {
         // console.log(response.data);
-        setSelectedFile([...selectedFile, response.data]);
+        // setSelectedFile([...selectedFile, response.data]);
+        setSelectedFile([...selectedFile, {
+          url: response.data.url,
+          secure_url: response.data.secure_url,
+          public_id: response.data.public_id,
+          signature: response.data.signature,
+          delete_token: response.data.delete_token,
+        }]);
+
+
+
         // setFormData({...formData,imgRoom : selectedFile});
-        formData.imgRoom.push(response.data);
+        // formData.imgRoom.push(response.data);
+        formData.imgRoom.push({
+          url: response.data.url,
+          secure_url: response.data.secure_url,
+          public_id: response.data.public_id,
+          signature: response.data.signature,
+          delete_token: response.data.delete_token,
+        });
+
         // console.log(formData);
       })
       .catch((err) => {
@@ -91,7 +109,7 @@ const AddRoomForm = (props) => {
     const result = await apiAddRoom(formData);
     console.log(result)
     if (result.status === 200) {
-      swal("Thông báo !", "Thêm phòng mới thành công  !", "success").then(value =>  window.location.reload())
+      swal("Thông báo !", "Thêm phòng mới thành công  !", "success").then(value => window.location.reload())
       props.setShowAddRoomPopup.bind("", false);
     } else {
       swal(
@@ -169,9 +187,9 @@ const AddRoomForm = (props) => {
                 />
               </Form.Item>
               <Form.Item label="Loại Phòng : "
-              rules={[
-                { required: true, message: "Vui lòng nhập thông tin !" },
-              ]}>
+                rules={[
+                  { required: true, message: "Vui lòng nhập thông tin !" },
+                ]}>
                 <div className="flex row w-[200px]">
                   <Select
                     name="loaiRoom"
@@ -188,7 +206,7 @@ const AddRoomForm = (props) => {
                 </div>
               </Form.Item>
               <Form.Item
-             
+
                 label="Khu vực phòng : "
                 rules={[{ required: true, message: 'Vui lòng nhập thông tin!' }]}
               >
@@ -196,8 +214,8 @@ const AddRoomForm = (props) => {
                   <Select
                     name="idSectorRoom"
                     placeholder="Chọn khu vực"
-                    onChange={(option , label) => {
-                        console.log(option, label)
+                    onChange={(option, label) => {
+                      console.log(option, label)
                       setKhuvucId(option);
                       setFormData({ ...formData, idSectorRoom: option });
                     }}

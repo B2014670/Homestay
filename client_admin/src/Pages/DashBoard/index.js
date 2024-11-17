@@ -1,30 +1,15 @@
+import React, { useEffect, useState } from 'react';
+import { Card, Space, Statistic, Table, Typography, Input } from 'antd';
+import { Bar } from 'react-chartjs-2';
+import dayjs from 'dayjs';
 import {
-  //   DollarCircleOutlined,
+  ShoppingCartOutlined,
   HomeOutlined,
   MenuFoldOutlined,
-  ShoppingCartOutlined,
-  //   ShoppingOutlined,
   UserOutlined,
-  //   MoneyCollectOutlined,
-} from "@ant-design/icons";
-import {
-  // Avatar,
-  Card,
-  Space,
-  Statistic,
-  Table,
-  Typography,
-} from "antd";
-import React, { useEffect, useState } from "react";
-import { LuCircleDollarSign } from "react-icons/lu";
-import { LiaCommentsDollarSolid } from "react-icons/lia";
-import {
-  getOrders,
-  getRevenue,
-  apiGetAllUser,
-  apiGetInfoRoom,
-} from "../../api";
-import * as api from "../../api";
+} from '@ant-design/icons';
+import { LuCircleDollarSign } from 'react-icons/lu';
+import { LiaCommentsDollarSolid } from 'react-icons/lia';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -33,295 +18,159 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
+} from 'chart.js';
+import * as api from '../../api';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+const { Title: AntTitle } = Typography;
 
 const DashBoard = () => {
-  const [orders, setOrders] = useState(0);
-  const [orderComplete, setOrderComplete] = useState(0);
-  const [inventor, setInventor] = useState(0);
-  const [customer, setcustomer] = useState(0);
-  const [revenue, setRevenue] = useState(0);
-  const [totalMoney, setTotalMoney] = useState(0);
+  const [stats, setStats] = useState({
+    orders: 0,
+    orderComplete: 0,
+    inventor: 0,
+    customer: 0,
+    revenue: 0,
+    totalMoney: 0,
+  });
 
-  const getAllSector = async () => {
-    const result = await api.apiGetAllSector();
-    // console.log(result.data)
-    const lengthdata = result.data.length;
-    // console.log(lengthdata)
-    setInventor(lengthdata);
-    return lengthdata;
-  };
-  const getAllRoom = async () => {
-    const result = await api.apiGetAllRoom();
-    // console.log(result.data)
-    const lengthdata = result.data.length;
-    // console.log(lengthdata)
-    setRevenue(lengthdata);
-    return lengthdata;
-  };
-  const getAllUser = async () => {
-    const result = await api.apiGetAllUser();
-    // console.log(result.data);
-    const lengthdata = result.data.length;
-    // console.log(lengthdata)
-    setcustomer(lengthdata);
-    return lengthdata;
-  };
-  const getAllOrderComplete = async () => {
-    const result = await api.apiGetAllUserOrder();
-    // console.log(result.data);
-    let totalOrdersWithStatusTen = 0;
-
-    result.data.users.forEach((user) => {
-      // console.log(user)
-      // Lọc các order có statusOrder bằng 10 và đếm
-      const ordersWithStatusTen = user.order.filter(
-        (order) => order.statusOrder === "3"
-      ).length;
-      totalOrdersWithStatusTen += ordersWithStatusTen;
-    });
-
-    // console.log(`Tổng số order có statusOrder bằng 10 là: ${totalOrdersWithStatusTen}`);
-    setOrderComplete(totalOrdersWithStatusTen); // Cập nhật state với số lượng order mới
-    // return totalOrdersWithStatusTen; // Trả về tổng số lượng order có statusOrder bằng 10
-  };
-  const getAllOrder = async () => {
-    const result = await api.apiGetAllUserOrder();
-    // console.log(result.data);
-    let totalOrdersWithStatusTen = 0;
-
-    result.data.users.forEach((user) => {
-      const ordersWithStatusTen = user.order.length;
-      totalOrdersWithStatusTen += ordersWithStatusTen;
-    });
-
-    // console.log(`Tổng số order có statusOrder bằng 10 là: ${totalOrdersWithStatusTen}`);
-    setOrders(totalOrdersWithStatusTen); // Cập nhật state với số lượng order mới
-    // return totalOrdersWithStatusTen; // Trả về tổng số lượng order có statusOrder bằng 10
-  };
-  const getAllOrderTotalMoney = async () => {
-    const result = await api.apiGetAllUserOrder();
-    let totalOrdersWithStatusThree = 0;
-    let totalMoney = 0;
-
-    result.data.users.forEach((user) => {
-      // Lọc các order có statusOrder bằng 3 và đếm
-      const ordersWithStatusThree = user.order.filter(
-        (order) => order.statusOrder === "3"
-      );
-      totalOrdersWithStatusThree += ordersWithStatusThree.length;
-
-      // Tính tổng totalMoney của các order có statusOrder bằng 3
-      // Chuyển đổi chuỗi số tiền thành số thực (double) trước khi cộng
-      const moneyForStatusThree = ordersWithStatusThree.reduce(
-        (sum, order) => sum + parseFloat(order.totalMoney),
-        0
-      );
-      totalMoney += moneyForStatusThree;
-    });
-    // console.log(`Tổng số order có statusOrder bằng 10 là: ${totalOrdersWithStatusTen}`);
-    setTotalMoney(totalMoney); // Cập nhật state với số lượng order mới
-    // return totalOrdersWithStatusTen; // Trả về tổng số lượng order có statusOrder bằng 10
-  };
   useEffect(() => {
-    getAllSector();
-    getAllRoom();
-    getAllUser();
-    getAllOrderComplete();
-    getAllOrder();
-    getAllOrderTotalMoney();
+    const fetchData = async () => {
+      try {
+        const [sectors, rooms, users, orders] = await Promise.all([
+          api.apiGetAllSector(),
+          api.apiGetAllRoom(),
+          api.apiGetAllUser(),
+          api.apiGetAllUserOrder(),
+        ]);
+
+        const orderComplete = orders.data.users.reduce((acc, user) =>
+          acc + user.order.filter(order => order.statusOrder === "3").length, 0);
+
+        const totalOrders = orders.data.users.reduce((acc, user) => acc + user.order.length, 0);
+
+        const totalMoney = orders.data.users.reduce((acc, user) =>
+          acc + user.order.filter(order => order.statusOrder === "3")
+            .reduce((sum, order) => sum + parseFloat(order.totalMoney), 0), 0);
+
+        setStats({
+          orders: totalOrders,
+          orderComplete,
+          inventor: sectors.data.length,
+          customer: users.data.length,
+          revenue: rooms.data.length,
+          totalMoney,
+        });
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
-    <div className="ml-5">
-      <Space size={20} direction="vertical">
-        {/* <div className="flex justify-center items-center">
-       <Typography.Title level={3}> DashBoard</Typography.Title>
-       </div> */}
-        <Space direction="horizontal">
-          <DashBoardCard
-            icon={
-              <ShoppingCartOutlined
-                style={{
-                  color: "green",
-                  backgroundColor: "rgba(0,255,0,0.25)",
-                  borderRadius: 20,
-                  fontSize: 24,
-                  padding: 8,
-                }}
-              />
-            }
-            title={"Tổng Đơn Đặt phòng"}
-            value={orders}
-          ></DashBoardCard>
-          <DashBoardCard
-            icon={
-              <LiaCommentsDollarSolid
-                style={{
-                  color: "RGB(255, 178, 43)",
-                  backgroundColor: "RGB(255, 216, 150)",
-                  borderRadius: 20,
-                  fontSize: 38,
-                  padding: 8,
-                }}
-              />
-            }
-            title={"Đơn Hoàn Thành"}
-            value={orderComplete}
-          ></DashBoardCard>
-
-          <DashBoardCard
-            icon={
-              <LuCircleDollarSign
-                // size={24}
-                style={{
-                  color: "RGB(255, 178, 43)",
-                  backgroundColor: "RGB(255, 216, 150)",
-                  borderRadius: 20,
-                  fontSize: 38,
-                  padding: 8,
-                }}
-              />
-            }
-            title={"Tổng Thu Nhập"}
-            value={`${totalMoney.toLocaleString("vi-VN")} vnđ`}
-          ></DashBoardCard>
-          <DashBoardCard
-            icon={
-              <MenuFoldOutlined
-                style={{
-                  color: "purplr",
-                  backgroundColor: "rgba(0,255,255,0.25)",
-                  borderRadius: 20,
-                  fontSize: 24,
-                  padding: 8,
-                }}
-              />
-            }
-            title={"Khu Vực"}
-            value={inventor}
-          ></DashBoardCard>
-
-          <DashBoardCard
-            icon={
-              <HomeOutlined
-                style={{
-                  color: "blue",
-                  backgroundColor: "rgba(0,0,255,0.25)",
-                  borderRadius: 20,
-                  fontSize: 24,
-                  padding: 8,
-                }}
-              />
-            }
-            title={"Phòng"}
-            value={revenue}
-          ></DashBoardCard>
-          <DashBoardCard
-            icon={
-              <UserOutlined
-                style={{
-                  color: "red",
-                  backgroundColor: "rgba(255,0,0,0.25)",
-                  borderRadius: 20,
-                  fontSize: 24,
-                  padding: 8,
-                }}
-              />
-            }
-            title={"Khách Hàng"}
-            value={customer}
-          ></DashBoardCard>
-        </Space>
-        <Space>
-          <RecentOrder></RecentOrder>
-          <DashBoardChart></DashBoardChart>
-        </Space>
-        {/* <Space>
-          <RecentOrder></RecentOrder>
-          <DashBoardChart></DashBoardChart>
-        </Space> */}
-      </Space>
+    <div className="px-6 bg-gray-100">
+      <AntTitle level={4} className="">Dashboard</AntTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+        <DashBoardCard
+          icon={<ShoppingCartOutlined className="text-green-500 text-2xl" />}
+          title="Tổng Đơn Đặt phòng"
+          value={stats.orders}
+        />
+        <DashBoardCard
+          icon={<LiaCommentsDollarSolid className="text-yellow-500 text-2xl" />}
+          title="Đơn Hoàn Thành"
+          value={stats.orderComplete}
+        />
+        <DashBoardCard
+          icon={<LuCircleDollarSign className="text-yellow-500 text-2xl" />}
+          title="Tổng Thu Nhập"
+          value={`${stats.totalMoney.toLocaleString("vi-VN")} vnđ`}
+        />
+        <DashBoardCard
+          icon={<MenuFoldOutlined className="text-purple-500 text-2xl" />}
+          title="Khu Vực"
+          value={stats.inventor}
+        />
+        <DashBoardCard
+          icon={<HomeOutlined className="text-blue-500 text-2xl" />}
+          title="Phòng"
+          value={stats.revenue}
+        />
+        <DashBoardCard
+          icon={<UserOutlined className="text-red-500 text-2xl" />}
+          title="Khách Hàng"
+          value={stats.customer}
+        />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+        <RecentOrder />
+        <DashBoardChart />
+      </div>
     </div>
   );
 };
 
-const DashBoardCard = ({ title, value, icon }) => {
-  return (
-    <div>
-      <Space direction="horizontal">
-        <Card>
-          <Space>
-            {icon}
-            <Statistic title={title} value={value}></Statistic>
-          </Space>
-        </Card>
-      </Space>
+const DashBoardCard = ({ title, value, icon }) => (
+  <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
+    <div className="flex items-center">
+      <div className="mr-2 rounded-full bg-gray-100">{icon}</div>
+      <Statistic title={title} value={value} />
     </div>
-  );
-};
+  </Card>
+);
 
 const RecentOrder = () => {
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    apiGetAllUser().then(async (res) => {
-      const users = res.data.users;
-      const roomData = await Promise.all(
-        users.flatMap((user) =>
-          user.order
-            .filter((order) => order.statusOrder === "3")
-            .map(async (order) => {
-              // console.log(order)
-              const roomName = await apiGetInfoRoom({ idRoom: order.idRoom });
-              // console.log(roomName) // Lấy tên phòng từ idRoom
-              return {
-                key: order.idRoom,
-                roomName: roomName.data[0].nameRoom,
-                giaRoom: roomName.data[0].giaRoom,
-                daysBooked: order.dateInput.length, // Tổng số ngày được đặt
-                totalRevenue: parseFloat(order.totalMoney), // Tổng doanh thu
-              };
-            })
-        )
-      );
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await api.apiGetAllUser();
+        const roomData = await Promise.all(
+          res.data.users.flatMap(user =>
+            user.order
+              .filter(order => order.statusOrder === "3")
+              .map(async order => {
+                const roomInfo = await api.apiGetInfoRoom({ idRoom: order.idRoom });
+                const daysBooked = dayjs(order.dateInput[1], "DD/MM/YYYY").diff(
+                  dayjs(order.dateInput[0], "DD/MM/YYYY"),
+                  "day");
+                return {
+                  key: order.idRoom,
+                  roomName: roomInfo.data[0].nameRoom,
+                  giaRoom: roomInfo.data[0].giaRoom,
+                  daysBooked: daysBooked,
+                  totalRevenue: parseFloat(order.totalMoney),
+                };
+              })
+          )
+        );
 
-      // Tính toán tổng số ngày và doanh thu cho mỗi phòng
-      const aggregatedData = roomData.reduce((acc, room) => {
-        if (!acc[room.key]) {
-          acc[room.key] = { ...room, count: 1 };
-        } else {
-          acc[room.key].daysBooked += room.daysBooked;
-          acc[room.key].totalRevenue += room.totalRevenue;
-          acc[room.key].count += 1;
-        }
-        return acc;
-      }, {});
+        const aggregatedData = Object.values(roomData.reduce((acc, room) => {
+          if (!acc[room.key]) {
+            acc[room.key] = { ...room, count: 1 };
+          } else {
+            acc[room.key].daysBooked += room.daysBooked;
+            acc[room.key].totalRevenue += room.totalRevenue;
+            acc[room.key].count += 1;
+          }
+          return acc;
+        }, {}));
 
-      // Chuyển đổi đối tượng thành mảng cho dataSource
-      const formattedData = Object.values(aggregatedData).map((item) => ({
-        idRoom: item.key,
-        roomName: item.roomName,
-        giaRoom: item.giaRoom,
-        daysBooked: item.daysBooked,
-        totalRevenue: item.totalRevenue,
-      }));
+        setDataSource(aggregatedData);
+      } catch (error) {
+        console.error("Error fetching recent order data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setDataSource(formattedData);
-      setLoading(false);
-    });
+    fetchData();
   }, []);
 
   const columns = [
@@ -340,123 +189,86 @@ const RecentOrder = () => {
     {
       title: "Đơn giá phòng",
       dataIndex: "giaRoom",
-      key: "daysBooked",
+      key: "giaRoom",
       align: "center",
       render: (text) => `${text.toLocaleString()} VND`,
     },
     {
       title: "Tổng doanh thu",
       dataIndex: "totalRevenue",
-      render: (text) => `${text.toLocaleString()} VND`,
+      key: "totalRevenue",
       align: "right",
+      render: (text) => `${text.toLocaleString()} VND`,
     },
   ];
 
   return (
-    <div>
-      {/* <Typography.Text>Danh Sách Phòng Đã Đặt</Typography.Text>
+    <Card title="Danh Thu Các Phòng" className="shadow-md">
       <Table
         columns={columns}
-        rowKey={"idRoom"}
-        loading={loading}
         dataSource={dataSource}
+        loading={loading}
         pagination={false}
-      /> */}
-      <Card
-        title="Danh Thu Các Phòng"
-        style={{ width: "650px", height: "480px" }}
-      >
-        <Table
-          columns={columns}
-          rowKey="idRoom"
-          loading={loading}
-          dataSource={dataSource}
-          pagination={false}
-          scroll={{ y: 300 }} // Điều chỉnh giá trị y tùy theo kích thước bạn muốn
-        />
-      </Card>
-    </div>
+        scroll={{ y: 300 }}
+        className="overflow-x-auto"
+      />
+    </Card>
   );
 };
 
-
 const DashBoardChart = () => {
   const [monthlyRevenue, setMonthlyRevenue] = useState({});
-  const [year, setYear] = useState(new Date().getFullYear()); // State mới để lưu trữ năm
+  const [year, setYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const result = await api.apiGetAllUser();
-      const orders = result.data.users.flatMap((user) => user.order);
-      const completedOrders = orders.filter(
-        (order) => order.statusOrder === "3"
-      );
+      try {
+        const result = await api.apiGetAllUser();
+        const orders = result.data.users.flatMap(user => user.order);
+        const completedOrders = orders.filter(order => order.statusOrder === "3");
 
-      // Tạo một mảng chứa tên của tất cả các tháng trong năm
-      const months = Array.from({ length: 12 }, (_, i) => {
-        return new Date(0, i).toLocaleString("vi-VN", { month: "short" });
-      });
+        const months = Array.from({ length: 12 }, (_, i) =>
+          new Date(0, i).toLocaleString("vi-VN", { month: "short" }));
 
-      // Khởi tạo đối tượng với tất cả các tháng và giá trị mặc định là 0
-      const initialRevenueByMonth = months.reduce((acc, month) => {
-        acc[month] = 0;
-        return acc;
-      }, {});
+        const initialRevenueByMonth = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
 
-      // Cập nhật doanh thu cho các tháng có dữ liệu và nằm trong năm được chọn
-      completedOrders.forEach((order) => {
-        const dateParts =
-          order.dateInput[order.dateInput.length - 1].split("/");
-        const date = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
-        if (date.getFullYear() === year) { // Kiểm tra nếu đơn hàng nằm trong năm được chọn
-          const month = date.toLocaleString("vi-VN", { month: "short" });
-          initialRevenueByMonth[month] += parseFloat(order.totalMoney);
-        }
-      });
+        completedOrders.forEach(order => {
+          const [day, month, orderYear] = order.dateInput[order.dateInput.length - 1].split("/");
+          if (parseInt(orderYear) === year) {
+            const monthName = new Date(year, parseInt(month) - 1).toLocaleString("vi-VN", { month: "short" });
+            initialRevenueByMonth[monthName] += parseFloat(order.totalMoney);
+          }
+        });
 
-      setMonthlyRevenue(initialRevenueByMonth);
+        setMonthlyRevenue(initialRevenueByMonth);
+      } catch (error) {
+        console.error("Error fetching order data for chart:", error);
+      }
     };
 
     fetchOrders();
-  }, [year]); // Thêm year vào dependency array để refetch khi năm thay đổi
-
-  const handleYearChange = (e) => {
-    setYear(Number(e.target.value)); // Cập nhật năm khi người dùng nhập vào
-  };
+  }, [year]);
 
   const data = {
-    labels: Object.keys(monthlyRevenue).sort(
-      (a, b) => new Date(a) - new Date(b)
-    ),
-    datasets: [
-      {
-        label: "Doanh thu",
-        data: Object.values(monthlyRevenue),
-        backgroundColor: "rgba(255, 0, 0, 1)", // Màu đỏ cho tất cả các cột
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1.5,
-      },
-    ],
+    labels: Object.keys(monthlyRevenue),
+    datasets: [{
+      label: 'Doanh thu',
+      data: Object.values(monthlyRevenue),
+      backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      borderColor: 'rgb(255, 99, 132)',
+      borderWidth: 1
+    }]
   };
 
   const options = {
-    scales: {
-      x: {
-        ticks: {
-          autoSkip: false, // Không tự động bỏ qua nhãn
-        },
-      },
-      y: {
-        beginAtZero: true,
-      },
-    },
+    responsive: true,
     plugins: {
       legend: {
-        display: false,
+        position: 'top',
       },
       title: {
         display: true,
-        text: "Biểu đồ doanh thu theo tháng",
+        text: 'Biểu đồ doanh thu theo tháng',
       },
     },
   };
@@ -464,24 +276,19 @@ const DashBoardChart = () => {
   return (
     <Card
       title={
-        <>
-          Biểu Đồ Doanh Thu Trong Năm
-          <input
+        <div className="flex justify-between items-center">
+          <span>Biểu Đồ Doanh Thu Trong Năm</span>
+          <Input
             type="number"
-            className="border "
             value={year}
-            onChange={handleYearChange}
-            style={{ marginLeft: '10px',  width:'60px' }} // Thêm input để nhập năm
+            onChange={(e) => setYear(Number(e.target.value))}
+            style={{ width: 100 }}
           />
-        </>
+        </div>
       }
-      style={{ width: "550px", height: "480px" }}
+      className="shadow-md"
     >
-      <Bar
-        data={data}
-        options={options}
-        style={{ width: "100%", height: "100%" }}
-      />
+      <Bar options={options} data={data} />
     </Card>
   );
 };

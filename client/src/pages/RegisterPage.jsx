@@ -8,7 +8,6 @@ import { path } from '../utils/constant';
 
 const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
-    const [userData, setUserData] = useState(null);
     const { isLoading, register } = useAuthStore();
 
     const validationSchema = Yup.object({
@@ -33,7 +32,7 @@ const Register = () => {
 
     return (
         <div className="sm:mx-0 w-full md:w-1/2 lg:w-1/3 py-4 sm:px-2 md:px-4">
-            <div className="bg-gray-50 border border-gray-300 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="bg-gray-100 border border-gray-300 py-8 px-4 shadow sm:rounded-lg sm:px-10">
                 <h2 className="mb-6 text-center text-3xl font-bold text-gray-900">Đăng Ký</h2>
                 <Formik
                     initialValues={{ name: '', phone: '', email: '', address: '', password: '' }}

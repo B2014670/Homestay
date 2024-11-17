@@ -74,7 +74,6 @@ class RoomService {
   }
 
   async searchRoom(queryParams) {
-    console.log(queryParams);
     const { place, dateRange, roomType, sector, page = 1, limit = 10 } = queryParams;
     const query = {};
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Tag, Button, Modal, Form, Input, Rate, message, Spin, Typography, Tooltip, Carousel } from 'antd'
-import { StarOutlined, CopyOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { Table, Tag, Button, Modal, Form, Input, Rate, message, Spin, Typography, Tooltip, Carousel, Card, Divider, List, Avatar, Space } from 'antd'
+import { StarOutlined, CopyOutlined, DeleteOutlined, EditOutlined, CalendarOutlined, CoffeeOutlined, SearchOutlined } from '@ant-design/icons'
 import { apiHistoryOrder, apiCancelRoom, apiAddComment, apiUpdateComment, apiDeleteComment } from '../services'
 import useAuthStore from '../stores/authStore'
 import dayjs from "dayjs"
@@ -10,7 +10,7 @@ dayjs.extend(customParseFormat)
 const dateFormat = "DD/MM/YYYY"
 
 const { TextArea } = Input
-const { Text } = Typography
+const { Text, Paragraph } = Typography
 
 export default function BookingHistory() {
     const { user } = useAuthStore()
@@ -26,6 +26,8 @@ export default function BookingHistory() {
 
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(5)
+    const [searchText, setSearchText] = useState('')
+    const [searchedColumn, setSearchedColumn] = useState('')
 
     useEffect(() => {
         fetchBookingHistory()
@@ -155,15 +157,72 @@ export default function BookingHistory() {
         setPageSize(pageSize)
     }
 
+    const getColumnSearchProps = (dataIndex) => ({
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+            <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search ${dataIndex}`}
+                    value={selectedKeys[0]}
+                    onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                        type="primary"
+                        onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                        icon={<SearchOutlined />}
+                        size="small"
+                        style={{ width: 90 }}
+                    >
+                        Search
+                    </Button>
+                    <Button onClick={() => handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+                        Reset
+                    </Button>
+                </Space>
+            </div>
+        ),
+        filterIcon: (filtered) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        onFilter: (value, record) =>
+            record[dataIndex] ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()) : '',
+        onFilterDropdownOpenChange: (visible) => {
+            if (visible) {
+                setTimeout(() => searchInput.select(), 100)
+            }
+        },
+        render: (text) =>
+            searchedColumn === dataIndex ? (
+                <Tooltip title={text}>
+                    {text.toString().length > 10 ? `${text.toString().slice(0, 10)}...` : text}
+                </Tooltip>
+            ) : (
+                text
+            ),
+    })
+
+    const handleSearch = (selectedKeys, confirm, dataIndex) => {
+        confirm()
+        setSearchText(selectedKeys[0])
+        setSearchedColumn(dataIndex)
+    }
+
+    const handleReset = (clearFilters) => {
+        clearFilters()
+        setSearchText('')
+        setSearchedColumn(dataIndex)
+    }
+
     const columns = [
         {
             title: 'Mã đơn hàng',
             dataIndex: 'idOrder',
             key: 'idOrder',
+            ...getColumnSearchProps('idOrder'),
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title={text}>
-                        {text.slice(0, 10)}...
+                        {text.slice(0, 5)}...
                     </Tooltip>
                     <Button
                         icon={<CopyOutlined />}
@@ -175,25 +234,36 @@ export default function BookingHistory() {
             ),
         },
         {
-            title: 'Check-in',
+            title: 'Tên phòng',
             dataIndex: ['dateInput', 0],
             key: 'checkIn',
+            render: (_, record) => record.room?.nameRoom || 'Không có dữ liệu',
+        },
+        
+        {
+            title: 'Ngày nhận',
+            dataIndex: ['dateInput', 0],
+            key: 'checkIn',
+            sorter: (a, b) => dayjs(a.dateInput[0], dateFormat).unix() - dayjs(b.dateInput[0], dateFormat).unix(),
         },
         {
-            title: 'Check-out',
+            title: 'Ngày trả',
             dataIndex: ['dateInput', 1],
             key: 'checkOut',
+            sorter: (a, b) => dayjs(a.dateInput[1], dateFormat).unix() - dayjs(b.dateInput[1], dateFormat).unix(),
         },
         {
             title: 'Tổng tiền',
             dataIndex: 'totalMoney',
             key: 'totalMoney',
+            sorter: (a, b) => parseInt(a.totalMoney) - parseInt(b.totalMoney),
             render: (text) => `${parseInt(text).toLocaleString()} VND`,
         },
         {
             title: 'Đặt cọc',
             dataIndex: 'deposit',
             key: 'deposit',
+            sorter: (a, b) => parseInt(a.deposit) - parseInt(b.deposit),
             render: (text) => {
                 const depositAmount = parseInt(text)
                 return isNaN(depositAmount) ? '0 VND' : `${depositAmount.toLocaleString()} VND`
@@ -203,22 +273,40 @@ export default function BookingHistory() {
             title: 'Phương thức',
             dataIndex: 'paymentMethod',
             key: 'paymentMethod',
+            filters: [
+                { text: 'Paypal', value: 'paypal' },
+                { text: 'At Counter', value: 'at counter' },
+                { text: 'Deposit', value: 'paypal deposit' },
+            ],
+            onFilter: (value, record) => {
+                return (record.paymentMethod || 'at counter') === value;
+            },
             render: (text) => text ?? 'at counter'
         },
         {
             title: 'Trạng thái',
-            key: 'statusOrder',
             dataIndex: 'statusOrder',
+            key: 'statusOrder',
+            filters: [
+                { text: 'Đang xử lý', value: '1' },
+                { text: 'Xác nhận', value: '2' },
+                { text: 'Hoàn thành', value: '3' },
+                { text: 'Đã hủy', value: '10' },
+            ],
+            onFilter: (value, record) => {
+                // Corrected to compare with statusOrder instead of paymentMethod
+                return record.statusOrder === value;
+            },
             render: (status) => {
                 const statusMap = {
-                    '1': { color: 'orange', text: 'Processing' },
-                    '2': { color: 'green', text: 'Confirmed' },
-                    '3': { color: 'geekblue', text: 'Completed' },
-                    default: { color: 'volcano', text: 'Canceled' },
-                }
+                    '1': { color: 'orange', text: 'Đang xử lý' },
+                    '2': { color: 'green', text: 'Xác nhận' },
+                    '3': { color: 'geekblue', text: 'Hoàn thành' },
+                    '10': { color: 'volcano', text: 'Đã hủy' },
+                };
 
-                const { color, text } = statusMap[status] || statusMap.default
-                return <Tag color={color}>{text}</Tag>
+                const { color, text } = statusMap[status] || { color: 'default', text: 'Unknown' };
+                return <Tag color={color}>{text}</Tag>;
             }
         },
         {
@@ -230,9 +318,9 @@ export default function BookingHistory() {
                     <div className="flex space-x-2">
                         <Button
                             disabled={record.statusOrder != 3}
-                            icon={<StarOutlined />}
+                            icon={hasRated ? <StarOutlined /> : ''}
                             onClick={() => { hasRated ? showCommentModal(record) : showModal(record); }}
-                            className={`${hasRated ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} min-w-[110px] hover:opacity-80 px-4 py-2 rounded-lg transition duration-150 ease-in-out`}
+                            className={`${hasRated ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} min-w-[80px] hover:opacity-80 px-4 py-2 rounded-lg transition duration-150 ease-in-out`}
                         >
                             {hasRated ? 'Xem' : 'Đánh giá'}
                         </Button>
@@ -253,65 +341,101 @@ export default function BookingHistory() {
 
     const expandedRowRender = (record) => {
         return (
-            <div className="container bg-white overflow-hidden shadow-lg rounded-lg flex flex-col md:flex-row p-4 mb-4">
-                {/* Image Carousel */}
-                <div className="md:w-[500px] w-full h-[200px]">
-                    <Carousel
-                        autoplay
-                        autoplaySpeed={10000}
-                        arrows
-                        infinite={false}
-                        className="w-full"
-                    >
-                        {record.room.imgRoom.length > 0 ? (
-                            record.room.imgRoom.map((img, index) => (
-                                <div key={index} className="w-full h-[200px]">
-                                    <img
-                                        className="object-cover w-full h-full"
-                                        src={img.secure_url}
-                                        alt={record.room.nameRoom}
-                                    />
+            <Card className="overflow-hidden shadow-lg rounded-lg mb-4">
+                <div className="flex flex-col lg:flex-row">
+                    <div className="lg:w-[500px] w-[250px] h-[250px] lg:h-auto">
+                        <Carousel
+                            autoplay
+                            autoplaySpeed={5000}
+                            arrows={true}
+                            dots={true}
+                            infinite
+                            className="w-full h-full"
+                        >
+                            {record.room.imgRoom.length > 0 ? (
+                                record.room.imgRoom.map((img, index) => (
+                                    <div key={index} className="h-[250px]">
+                                        <img
+                                            className="object-cover w-full h-full"
+                                            src={img.secure_url}
+                                            alt={`${record.room.nameRoom} - Image ${index + 1}`}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                    <span className="text-gray-500">Không có hình ảnh</span>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                <span className="text-gray-500">No Image Available</span>
+                            )}
+                        </Carousel>
+                    </div>
+
+                    <div className="lg:w-2/3 p-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                            <div>
+                                <h2 className="text-2xl font-bold text-primary mb-2">{record.room.nameRoom}</h2>
+                                <Tag color="blue">{record.room.sectorDetails.nameSector}</Tag>
+                                <Tag color="green">{record.room.loaiRoom}</Tag>
                             </div>
+                            <div className="mt-2 md:mt-0 text-right">
+                                <Rate disabled defaultValue={record.room.danhgiaRoom} allowHalf className="text-yellow-400" />
+                            </div>
+                        </div>
+
+
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <div className="mb-4 md:mb-0">
+                                <h3 className="text-lg font-semibold mb-2">Mô tả phòng</h3>
+                                <Paragraph
+                                    className="text-gray-600"
+                                    ellipsis={{ rows: 3, expandable: true, symbol: 'Xem thêm' }}
+                                >
+                                    {record.room.discRoom}
+                                </Paragraph>
+                            </div>
+                            <div className="text-right min-w-[250px]">
+                                <p className="text-3xl font-bold text-primary">
+                                    {parseInt(record.room.giaRoom).toLocaleString()} VND
+                                </p>
+                                <p className="text-sm text-gray-500">Đã bao gồm thuế và phí</p>
+                                <Button type="primary" icon={<CalendarOutlined />} className="mt-2">
+                                    Xem chỗ trống
+                                </Button>
+                            </div>
+                        </div>
+
+                        {record.extraServices && record.extraServices.length > 0 && (
+                            <>
+                                <Divider orientation="left">Dịch vụ bổ sung</Divider>
+                                <List
+                                    itemLayout="horizontal"
+                                    dataSource={record.extraServices}
+                                    renderItem={(service, index) => (
+                                        <List.Item>
+                                            <List.Item.Meta
+                                                avatar={<Avatar icon={<CoffeeOutlined />} />}
+                                                title={<span className="font-semibold">{service.serviceType}</span>}
+                                                description={
+                                                    <div>
+                                                        <p>Số khách: {service.guests}</p>
+                                                        <p>Ngày sử dụng: {service.dates.join(", ")}</p>
+                                                        <p>Giá mỗi đơn vị: {parseInt(service.pricePerUnit).toLocaleString()} VND</p>
+                                                    </div>
+                                                }
+                                            />
+                                            <div className="text-right">
+                                                <p className="font-bold">
+                                                    Giá dịch vụ: {parseInt(service.totalServiceCost).toLocaleString()} VND
+                                                </p>
+                                            </div>
+                                        </List.Item>
+                                    )}
+                                />
+                            </>
                         )}
-                    </Carousel>
-                </div>
-
-                {/* Room Details */}
-                <div className="flex-1 pl-4 mt-4 md:mt-0">
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="mb-1">
-                            <h2 className="text-xl font-bold text-black mb-1">{record.room.nameRoom}</h2>
-                            <p className="text-sm text-gray-500">{record.room.sectorDetails.nameSector}</p>
-                            <p className="text-sm text-gray-500">{record.room.loaiRoom}</p>
-                        </div>
-                        <div className="mb-1 text-right">
-                            {/* Rating */}
-                            <Rate disabled defaultValue={record.room.danhgiaRoom} allowHalf className="text-yellow-400" />
-                            <span className="block text-gray-600 text-sm mt-1">{record.room.cmtRoom.length} đánh giá</span>
-                        </div>
-                    </div>
-
-                    {/* Price and Rating Section */}
-                    <div className="flex justify-between items-center mt-4">
-                        <div className="text-left">
-                            <p className="text-sm text-gray-500">{record.room.discRoom}</p>
-                        </div>
-
-                        <div className="text-right">
-                            <p className="text-2xl font-bold text-black">
-                                VND {parseInt(record.room.giaRoom).toLocaleString()}
-                            </p>
-                            <p className="text-sm text-gray-500">Đã bao gồm thuế và phí</p>
-                            <Button type="primary" className="mt-2">Xem chỗ trống</Button>
-                        </div>
                     </div>
                 </div>
-            </div>
+            </Card>
         );
     };
 
@@ -355,44 +479,15 @@ export default function BookingHistory() {
                     />
 
                     <Modal
-                        title="Để lại đánh giá"
-                        open={isModalVisible}
-                        onCancel={handleCancel}
-                        footer={null}
-                        className='z-100'
-                    >
-                        <Form form={form} layout="vertical" onFinish={onFinish} className='z-100'>
-                            <Form.Item
-                                name="rating"
-                                label="Số sao"
-                                rules={[{ required: true, message: 'Xin vui lòng chọn mức độ hài lòng!' }]}
-                            >
-                                <Rate />
-                            </Form.Item>
-                            <Form.Item
-                                name="text"
-                                label="Bình luận"
-                                rules={[{ required: true, message: 'Vui lòng để lại bình luận!' }]}
-                            >
-                                <TextArea rows={4} />
-                            </Form.Item>
-                            <Form.Item>
-                                <Button type="primary" htmlType="submit" className="w-full bg-blue-500 hover:bg-blue-600">
-                                    Gửi phản hồi
-                                </Button>
-                            </Form.Item>
-                        </Form>
-                    </Modal>
-
-                    <Modal
                         title="Xem đánh giá"
                         open={isCommentModalVisible}
                         onCancel={handleCancelCommentModal}
                         footer={null}
                         className='z-0'
+                        zIndex={10}
                     >
                         {selectedOrder && selectedOrder.room?.cmtRoom
-                            .filter((comment) => comment.idOrder === selectedOrder.idOrder && !comment.isDeleted)
+                            // .filter((comment) => comment.idOrder === selectedOrder.idOrder && !comment.isDeleted)
                             .map((comment, index) => (
                                 <div key={index} className="mb-4 border-b pb-4 z-0" >
                                     <div>
@@ -420,17 +515,39 @@ export default function BookingHistory() {
                                             disabled={comment.updatedDate}
                                         >
                                             Cập nhật
-                                        </Button>
-                                        {/* <Button
-                                            icon={<DeleteOutlined />}
-                                            danger
-                                            onClick={() => handleDeleteComment(comment)}
-                                        >
-                                            Xóa
-                                        </Button> */}
+                                        </Button>                                        
                                     </div>
                                 </div>
                             ))}
+                    </Modal>
+                    <Modal
+                        title="Để lại đánh giá"
+                        open={isModalVisible}
+                        onCancel={handleCancel}
+                        footer={null}
+                        className='z-100'
+                    >
+                        <Form form={form} layout="vertical" onFinish={onFinish} className='z-100'>
+                            <Form.Item
+                                name="rating"
+                                label="Số sao"
+                                rules={[{ required: true, message: 'Xin vui lòng chọn mức độ hài lòng!' }]}
+                            >
+                                <Rate />
+                            </Form.Item>
+                            <Form.Item
+                                name="text"
+                                label="Bình luận"
+                                rules={[{ required: true, message: 'Vui lòng để lại bình luận!' }]}
+                            >
+                                <TextArea rows={4} />
+                            </Form.Item>
+                            <Form.Item>
+                                <Button type="primary" htmlType="submit" className="w-full bg-blue-500 hover:bg-blue-600">
+                                    Gửi đánh giá
+                                </Button>
+                            </Form.Item>
+                        </Form>
                     </Modal>
                 </>
             ) : (

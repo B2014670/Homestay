@@ -1,5 +1,6 @@
 const express = require("express");
 const users = require("../controllers/user.controller");
+const chat = require("../controllers/chat.controller");
 const forgotPasswordLimiter = require('../middleware/forgotPasswordLimiter');
 
 
@@ -74,5 +75,19 @@ router.post("/comments", users.createComment);
 router.put("/comments", users.updateComment);
 
 router.delete("/comments", users.softDeleteComment);
+
+router.post("/conversation", chat.createConversation);
+
+router.post("/conversation/message", chat.addMessage);
+
+router.get("/:userId/conversation", chat.findConversationByCustomer);
+
+router.get("/conversation/:conversationId/message", chat.getMessagesForConversation)
+
+router.delete("/conversation/:conversationId", chat.endConversation);
+
+router.put("/conversation/update-admin", chat.updateAdmin);
+
+router.get('/admins/:adminId/conversations', chat.getConversationsForAdmin);
 
 module.exports = router;

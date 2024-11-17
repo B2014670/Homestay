@@ -318,13 +318,13 @@ const DetailRoom = () => {
                 <Descriptions
                   className="w-full"
                   bordered
-                  column={{ xs: 1, sm: 1, md: 2, lg: 2 }}
+                  column={{  sm: 1, md: 2, lg: 2 }}
                 >
-                  <Descriptions.Item label="Rating" span={1}>
+                  <Descriptions.Item label="Rating" >
                     <Rate disabled defaultValue={homestayData.danhgiaRoom} />
-                  </Descriptions.Item>
+                  </Descriptions.Item>                                
 
-                  <Descriptions.Item label="Loại phòng">
+                  <Descriptions.Item label="Loại phòng" span={2}>
                     <Tag icon={<UserOutlined />} color="blue">
                       {homestayData.loaiRoom}
                     </Tag>

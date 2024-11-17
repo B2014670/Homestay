@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Space, Table, Typography, Button, Input, Popconfirm} from 'antd'
+import { Space, Table, Typography, Button, Input, Popconfirm } from 'antd'
 import { apiGetAllUser, apiDeleteCustomer } from '../../api'
-import { SearchOutlined,  DeleteOutlined, } from '@ant-design/icons';
+import { SearchOutlined, DeleteOutlined, } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import swal from "sweetalert";
 
@@ -132,9 +132,9 @@ const Customer = () => {
 
     <div className='p-5'>
       <Space size={20} direction='vertical'>
-        
+
         <div className='flex items-center justify-center'>
-        <Typography.Title level={3}>QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG</Typography.Title>
+          <Typography.Title level={3}>QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG</Typography.Title>
         </div>
 
 
@@ -157,20 +157,20 @@ const Customer = () => {
             {
               title: 'Email',
               dataIndex: 'email',
-              key:'email',
+              key: 'email',
               sorter: (a, b) => a.email.localeCompare(b.email),
               sortDirections: ['ascend', 'descend'],
             },
             {
               title: 'Số điện thoại',
               dataIndex: 'phone',
-              key:'phone',
-             
+              key: 'phone',
+
             },
             {
               title: 'Địa chỉ',
               dataIndex: 'address',
-              key:'address',
+              key: 'address',
               ...getColumnSearchProps('address'),
               sorter: (a, b) => a.address.length - b.address.length,
               sortDirections: ['descend', 'ascend'],
@@ -178,46 +178,46 @@ const Customer = () => {
               //   return <span>{a.address},{a.city}</span>
               // }
             },
-            {
-              title: 'Xử lí',
-              dataIndex: 'address',
-              render: (_, record) => {
-                return (
-                  <div className="flex">
-                 
-                    <Popconfirm
-                      okType="danger"
-                      //  okButtonProps={{ style: {  backgroundColor: 'red'  }}}
-                      title="Bạn có chắc chắn muốn xóa không?"
-                      onConfirm={async () => {
-                        console.log(record);
-                        const result = await apiDeleteCustomer({ _id: record._id });
-                        console.log(result);
-                        if (result.data.status === 1) {
-                          swal("Thành Công !", "Xóa thông tin khách hàng thành công !", "success").then((value) => {
-                            window.location.reload();
-                          });;
-                        } else {
-                          swal("Thông báo !","Xóa thông tin khách hàng không thành công !" , "warning");
-                        }
-                      }}
-                      onCancel={() => {
-                        console.log("Hủy bỏ thao tác xóa");
-                      }}
-                      okText="Có"
-                      cancelText="Không"
-                    >
-                      <DeleteOutlined
-                        className="m-1 flex items-center justify-center"
-                        style={{ fontSize: "20px", color: "red" }}
-                      />
-                    </Popconfirm>
-                  </div>
-                );
-              }
-            }
+            // {
+            //   title: 'Xử lí',
+            //   dataIndex: 'address',
+            //   render: (_, record) => {
+            //     return (
+            //       <div className="flex">
+
+            //         <Popconfirm
+            //           okType="danger"
+            //           //  okButtonProps={{ style: {  backgroundColor: 'red'  }}}
+            //           title="Bạn có chắc chắn muốn xóa không?"
+            //           onConfirm={async () => {
+            //             console.log(record);
+            //             const result = await apiDeleteCustomer({ _id: record._id });
+            //             console.log(result);
+            //             if (result.data.status === 1) {
+            //               swal("Thành Công !", "Xóa thông tin khách hàng thành công !", "success").then((value) => {
+            //                 window.location.reload();
+            //               });;
+            //             } else {
+            //               swal("Thông báo !", "Xóa thông tin khách hàng không thành công !", "warning");
+            //             }
+            //           }}
+            //           onCancel={() => {
+            //             console.log("Hủy bỏ thao tác xóa");
+            //           }}
+            //           okText="Có"
+            //           cancelText="Không"
+            //         >
+            //           <DeleteOutlined
+            //             className="m-1 flex items-center justify-center"
+            //             style={{ fontSize: "20px", color: "red" }}
+            //           />
+            //         </Popconfirm>
+            //       </div>
+            //     );
+            //   }
+            // }
           ]
-        }
+          }
           dataSource={dataSource}
           pagination={{
             pageSize: 6

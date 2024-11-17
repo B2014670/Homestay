@@ -4,7 +4,6 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { apiGetAllSector, apiSearchRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist } from "../services";
 import '../layouts/containers.css'
-import { FaStar, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { Pagination, Input, Select, Slider, DatePicker, Carousel } from 'antd';
 import icons from "../utils/icons";
 import { path } from "../utils/constant";
@@ -50,6 +49,9 @@ const Rooms = () => {
   // Data and filtering states
   const [rooms, setRooms] = useState([]);
   const [filterRoom, setFilterRoom] = useState(rooms);
+
+  // Sorting state
+  const [sortOrder, setSortOrder] = useState('asc');
 
   // Formatter function for currency
   const formatter = (value) => `${value.toLocaleString()} vnđ`;
@@ -136,6 +138,16 @@ const Rooms = () => {
     setSelectedTypeRoom(value);
   };
 
+  useEffect(() => {
+    let sortedRooms = [...rooms];
+    if (sortOrder === 'asc') {
+      sortedRooms.sort((a, b) => a.giaRoom - b.giaRoom);
+    } else if (sortOrder === 'desc') {
+      sortedRooms.sort((a, b) => b.giaRoom - a.giaRoom);
+    }
+    setFilterRoom(sortedRooms);
+  }, [rooms, sortOrder]);
+
   const handleChangePlace = (e) => {
     setSearchPlace(e.target.value);
   };
@@ -203,10 +215,10 @@ const Rooms = () => {
 
   return (
     <div className="w-full">
-      <div className="w-full max-w-screen-xl mx-auto px-1 py-8">
+      <div className="w-full max-w-screen-xl mx-auto px-1 py-8 pt-4">
 
-        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 gap-4 p-4 mb-4 bg-slate-500 rounded-md w-full h-auto items-center">
-          {/* Search Input */}
+        {/* Search Input */}
+        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 gap-4 p-4 mb-2 bg-slate-500 rounded-md w-full h-auto items-center">
           <div className="col-span-1 md:col-span-3 lg:col-span-2">
             <label className="text-white mb-1" htmlFor="searchPlace">
               Tên phòng
@@ -300,6 +312,25 @@ const Rooms = () => {
           </div>
         </div>
 
+        {/* Sorts */}
+        <div className="flex justify-end items-center">
+          <div className="w-full h-[40px] lg:w-auto">
+            <Select
+              placeholder="Chọn thứ tự"
+              value={sortOrder}
+              onChange={(value) => {
+                setSortOrder(value);
+                getdataRooms(); // Fetch rooms with the new sort order
+              }}
+              className="w-full h-[40px] rounded-md"
+              options={[
+                { label: "Giá tăng dần", value: "asc" },
+                { label: "Giá giảm dần", value: "desc" },
+              ]}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters */}
           <div className="w-full md:w-1/4">
@@ -351,35 +382,44 @@ const Rooms = () => {
           </div>
 
           {/* Room List */}
-          <div className="w-full md:w-3/4">
-            <div className="space-y-4">
-              {filterRoom.map(room => (
-                <RoomCard
-                  key={room._id}
-                  room={room}
-                  isLoggedIn={isLoggedIn}
-                  handleWishlistToggle={handleWishlistToggle}
-                  wishlists={wishlists}
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalRooms > pageSize ?
-              <>
-                <div className="pagination flex justify-center mt-6">
-                  <Pagination
-                    current={currentPage}
-                    pageSize={pageSize}
-                    total={totalRooms} // total number of rooms
-                    onChange={handlePageChange} // handle page change
-                    showSizeChanger={false} // Disable page size changer if not needed
-                    className="pagination" // Optionally add custom Tailwind classes for styling
+          {filterRoom ? (
+            <div className="w-full md:w-3/4">
+              <div className="space-y-4">
+                {filterRoom.map(room => (
+                  <RoomCard
+                    key={room._id}
+                    room={room}
+                    isLoggedIn={isLoggedIn}
+                    handleWishlistToggle={handleWishlistToggle}
+                    wishlists={wishlists}
+                    navigate={navigate}
                   />
-                </div>
-              </> : <></>
-            }
-          </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalRooms > pageSize ?
+                <>
+                  <div className="pagination flex justify-center mt-6">
+                    <Pagination
+                      current={currentPage}
+                      pageSize={pageSize}
+                      total={totalRooms} // total number of rooms
+                      onChange={handlePageChange} // handle page change
+                      showSizeChanger={false} // Disable page size changer if not needed
+                      className="pagination" // Optionally add custom Tailwind classes for styling
+                    />
+                  </div>
+                </> : <></>
+              }
+            </div>
+          ) : (
+            <p className="text-center text-gray-600 text-lg font-medium">
+              Không có phòng phù hợp
+            </p>
+          )}
+
+
         </div>
       </div>
     </div>

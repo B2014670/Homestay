@@ -45,7 +45,7 @@ exports.register = async (req, res, next) => {
     if (registered) {
       return res.status(400).json({
         err: -1,
-        msg: "Tài khoản đã được tạo trước đó !"
+        msg: "Số điện thoại đã tạo tài khoản trước đó !"
       })
     }
 
@@ -406,12 +406,12 @@ exports.resetPassword = async (req, res, next) => {
 
     return res.status(200).json({
       err: 0,
-      msg: "Mật khẩu đã được thay đổi thành công!"
+      msg: "Mật khẩu đã được đặt lại thành công!"
     });
 
   } catch (error) {
     console.log(error);
-    return next(new ApiError(500, "Xảy ra lỗi trong quá trình thay đổi mật khẩu!"));
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình đặt lại mật khẩu!"));
   }
 };
 
@@ -496,7 +496,6 @@ exports.updateInfoUser = async (req, res, next) => {
 // // START ROOM
 exports.searchRoom = async (req, res, next) => {
 
-  // console.log(req.body);
   try {
     const roomService = new RoomService(MongoDB.client);
     const { totalRooms, paginatedRooms } = await roomService.searchRoom(req.body);

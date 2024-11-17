@@ -1,48 +1,44 @@
-import "./App.css";
 import React, { useEffect, useState } from "react";
 import AppHeader from "./components/AppHeader";
-// import AppFooter from "./components/AppFooter";
 import SideMenu from "./components/SideMenu";
 import PageContent from "./components/PageContent";
-// import { Space } from "antd";
 import { useNavigate } from 'react-router-dom';
-import { useSelector,useDispatch} from 'react-redux'
+import { useSelector } from 'react-redux'
 import { Layout } from "antd";
-import "./App.css";
-const { Sider } = Layout; //Header, Content, Footer, 
+
+const { Sider } = Layout;
 function App() {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { IsLoggedIn ,  } = useSelector(state => state.auth) //nameUser
+  const { IsLoggedIn } = useSelector(state => state.auth)
+
   useEffect(() => {
-    // Kiểm tra trạng thái đăng nhập từ localStorage
-    // Nếu trạng thái đăng nhập không tồn tại hoặc là 'false', chuyển hướng đến trang đăng nhập
     if (!IsLoggedIn || IsLoggedIn === 'false') {
-      navigate('/login'); // Thay '/login' bằng đường dẫn của trang đăng nhập của bạn
-    }
+      navigate('/login');     
+    } 
     if (IsLoggedIn === 'true') {
-      navigate('/'); // Thay '/login' bằng đường dẫn của trang đăng nhập của bạn
+      navigate('/'); 
     }
-  }, [navigate]);
+  }, [IsLoggedIn, navigate]);
 
   return (
-    <div className=" App ">
+    <div className="">
       <Layout
-        // style={{
-        //   minHeight: "100vh",
-        // }}
+        className="bg-[#001529]"
       >
-        <Sider
-          collapsible
-          collapsed={collapsed}
-          onCollapse={(value) => setCollapsed(value)}
-        >
-          <div className="" />
-          <SideMenu></SideMenu>
-        </Sider>
-        <Layout>
-          <AppHeader></AppHeader>
-          <PageContent></PageContent>
+        {IsLoggedIn && (
+          <Sider
+            className="top-0 left-0 z-10 bg-[#001529]"
+            collapsible
+            collapsed={collapsed}
+            onCollapse={(value) => setCollapsed(value)}
+          >
+            <SideMenu />
+          </Sider>
+        )}
+        <Layout className={`ml-${collapsed ? 20 : 52}`}>
+          <AppHeader />
+          <PageContent />
         </Layout>
       </Layout>
     </div>

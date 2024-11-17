@@ -167,7 +167,7 @@ class UserService {
       });
 
       if (!user) {
-        throw new Error("Token is invalid or has expired");
+        return false;
       }
 
       const hashedNewPassword = hashpwd(newPassword);

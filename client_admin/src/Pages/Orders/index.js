@@ -268,7 +268,7 @@ const Orders = () => {
               },
             },
             {
-              title: "Ngày bắt đầu",
+              title: "Ngày đặt",
               dataIndex: "dateInput",
               sorter: (a, b) => {
                 const dateA = a.dateInput[0].split('/').reverse().join('');
@@ -397,7 +397,7 @@ const Orders = () => {
           ]}
           dataSource={data}
           pagination={{
-            pageSize: 6,
+            pageSize: 4,
           }}
         ></Table>
       </Space>

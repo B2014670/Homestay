@@ -107,8 +107,8 @@ const useAuthStore = create((set) => ({
                 swal('Thông Báo !', response.data.msg, 'warning')
             }
         } catch (error) {
-            swal("Error!", "An unexpected error when register!", "error");
-            console.log(error);
+            swal("Error!", error.response.data.msg || error.message ||"An unexpected error when register!", "error");
+            console.log(error.response.data.msg || error.message || error);
         }
     },
 
@@ -131,6 +131,11 @@ const useAuthStore = create((set) => ({
             console.warn('PayPal signout request failed, redirecting directly.');
         }
     },
+    setUser: (userData) => {
+        set({
+            user: userData,
+        });
+    }
 }));
 
 export default useAuthStore;

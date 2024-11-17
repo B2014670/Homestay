@@ -1,5 +1,5 @@
-const cloud_name = "doqqlyjb2";
-const upload_preset = "btj12veg";
+const cloud_name = "dwcrfnnov";
+const upload_preset = "we6hizdj";
 
 const uploadImageToCloudinary = async (file) => {
    const uploadData = new FormData();

@@ -28,30 +28,6 @@ export const apiAdminLogin = (payload) => new Promise(async(resolve, reject)=>{
     }
 })
 
-export const getOrders = () => {
-  return (
-    fetch('https://dummyjson.com/carts/1')
-      .then(res => res.json())
-  )
-}
-
-export const getRevenue = () => {
-  return (
-    fetch('https://dummyjson.com/carts')
-      .then(res => res.json())
-
-  )
-}
-export const getInventory = () => {
-  return (fetch('https://dummyjson.com/products')
-  .then(res => res.json()))
-}
-export const getCustomer = () => {
-  return fetch('https://dummyjson.com/users')
-  .then(res => res.json())
-}
-
-
 export const apiGetAllSector = () => new Promise(async(resolve, reject)=>{
     try {
         

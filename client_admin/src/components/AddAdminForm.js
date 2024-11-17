@@ -69,10 +69,10 @@ const AddAdminForm = (props) => {
   const uploadImage = async (e) => {
     const form = new FormData();
     form.append("file", e);
-    form.append("upload_preset", "btj12veg");
+    form.append("upload_preset", "we6hizdj");
     // eslint-disable-next-line no-undef
     await axios
-      .post("https://api.cloudinary.com/v1_1/doqqlyjb2/image/upload", form)
+      .post("https://api.cloudinary.com/v1_1/dwcrfnnov/image/upload", form)
       .then((response) => {
         // console.log(response.data);
         setImageFile(response.data.secure_url);

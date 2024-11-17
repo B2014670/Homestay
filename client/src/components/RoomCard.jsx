@@ -1,10 +1,15 @@
 // RoomCard.js
 import React from 'react';
 import { Carousel, Rate, Button } from 'antd';
-import { FaHeart, FaRegHeart, FaStar } from 'react-icons/fa';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { path } from '../utils/constant';
 
-const RoomCard = ({ room, isLoggedIn, handleWishlistToggle, wishlists }) => {
+const RoomCard = ({ room, isLoggedIn, handleWishlistToggle, wishlists, navigate }) => {
     const isWishlisted = wishlists.some(item => item.roomId === room._id);
+
+    const handleClick = () => {
+        navigate(`/${path.DETAILROOM}/${room._id}`);
+    };
 
     return (
         <div className="bg-white overflow-hidden shadow-lg rounded-lg flex flex-col md:flex-row p-4 mb-4">
@@ -58,10 +63,8 @@ const RoomCard = ({ room, isLoggedIn, handleWishlistToggle, wishlists }) => {
 
                 {/* Price and Rating Section */}
                 <div className="flex justify-between items-center mt-4">
-                    <div className="text-left">
+                    <div className="text-left max-w-[400px]">
                         <p className="text-sm text-gray-500">{room.discRoom}</p>
-
-
                     </div>
 
                     <div className="text-right">
@@ -69,7 +72,7 @@ const RoomCard = ({ room, isLoggedIn, handleWishlistToggle, wishlists }) => {
                             VND {parseInt(room.giaRoom).toLocaleString()}
                         </p>
                         <p className="text-sm text-gray-500">Đã bao gồm thuế và phí</p>
-                        <Button type="primary" className="mt-2">Xem chỗ trống</Button>
+                        <Button type="primary" className="mt-2" onClick={handleClick}>Xem chỗ trống</Button>
                     </div>
                 </div>
             </div>

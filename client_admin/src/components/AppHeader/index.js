@@ -1,62 +1,91 @@
-import React from "react";
-import { Badge, Button, Image, Space, Typography } from "antd";
-import { MailOutlined, BellFilled } from "@ant-design/icons";
+import React, { useEffect, useState} from "react";
+import { Badge, Button, Space, Typography } from "antd";
+import { BellFilled, LogoutOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
-import * as actions from '../../store/actions'
+import * as actions from '../../store/actions';
 import { useNavigate } from "react-router-dom";
 import swal from "sweetalert";
-const AppHeader = () => {
-  const { IsLoggedIn , nameUser } = useSelector(state => state.auth)
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  return (
-    <div className="AppHeader ">
-      <Space className="ml-5">
-        {/* <Image
-          className="rounded-full"
-          src="https://i.pinimg.com/736x/c1/bd/1b/c1bd1b17381d4cb949dc9f41e9617bc8.jpg"
-          width={40}
-        ></Image> */}
-         <div className='logo-container'>
-        <img src={"https://cdn-icons-png.flaticon.com/512/6820/6820955.png"} alt='Logo'   style={{ width: '120px', height: '100px' }}  />
-      </div> 
-      </Space>
-      <Space><Typography.Title>HOMESTAY ADMIN DASHBOARD</Typography.Title></Space>
-      <Space className="mr-5">
-        
+import io from "socket.io-client";
 
-        {/* <Badge count={10}>
-          <MailOutlined style={{ fontSize: 24 }} />
-        </Badge>
-        <Badge count={20}>
-          <BellFilled style={{ fontSize: 24 }} />
-        </Badge> */}
-       {IsLoggedIn ?  <Button
-        type="danger"
-        className="bg-red-500 ml-5"
-        onClick={()=>{
-          dispatch(actions.logout())
-          swal({
-            title: "Bạn có chắc chắn?",
-            text: "Sau khi nhấn OK, bạn sẽ được chuyển đến trang đăng nhập.",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-          })
-          .then((willDelete) => {
-            if (willDelete) {
-             navigate('./login')
-            }
-          });
-          
-          // window.location.reload();
-        }}
-        >
-          Đăng Xuất
-        </Button> :" "}
-      </Space>
-      
-    </div>
+const { Title } = Typography;
+
+const AppHeader = () => {
+  const { IsLoggedIn, nameUser, phoneUser } = useSelector(state => state.auth);
+  const [socket, setSocket] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Only connect socket if logged in
+    if (IsLoggedIn) {
+      const newSocket = io("http://localhost:5000");
+      setSocket(newSocket);
+
+      // Emit admin online status
+      newSocket.emit("adminOnline", phoneUser);
+
+      // Listen for updates on online admins
+      newSocket.on('updateOnlineAdmins', (admins) => {
+        console.log('Online admins:', admins);
+      });
+
+      // Cleanup on component unmount or logout
+      return () => {
+        newSocket.emit("adminOffline", phoneUser);
+        newSocket.disconnect();
+      };
+    }
+  }, [IsLoggedIn, phoneUser]);
+
+  const handleLogout = () => {
+    swal({
+      title: "Bạn có chắc chắn?",
+      text: "Sau khi nhấn OK, bạn sẽ được chuyển đến trang đăng nhập.",
+      icon: "warning",
+      buttons: ["Hủy", "OK"],
+      dangerMode: true,
+    }).then((willLogout) => {
+      if (willLogout) {
+        if (socket) {
+          // socket.emit("adminOffline", phoneUser);
+          socket.disconnect();
+        }
+        dispatch(actions.logout());
+        navigate('./login');
+      }
+    });
+  };
+
+  return (
+    <header className="bg-white shadow-md mb-4 sticky top-0 z-10">
+      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
+        <Space className="flex items-center">
+          <div>
+            <img src="/logo3.png" alt="Logo" className="w-[120px] h-[80px] object-contain" />
+          </div>
+          <Title level={4} className="m-0 hidden sm:block">HOMESTAY ADMIN DASHBOARD</Title>
+        </Space>
+        <Space className="flex items-center">
+          <Badge count={1} className="cursor-pointer">
+            <BellFilled style={{ fontSize: 24 }} className="text-gray-600" />
+          </Badge>
+          {IsLoggedIn && (
+            <Space size="small" className="ml-4">
+              <span className="hidden sm:inline text-gray-700">{nameUser}</span>
+              <Button
+                type="primary"
+                danger
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+                className="flex items-center bg-red-500 hover:bg-red-600"
+              >
+                <span className="hidden sm:inline">Đăng Xuất</span>
+              </Button>
+            </Space>
+          )}
+        </Space>
+      </div>
+    </header>
   );
 };
 

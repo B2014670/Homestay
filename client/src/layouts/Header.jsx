@@ -99,7 +99,7 @@ const Header = () => {
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden lg:flex items-center space-x-4">
+                <div className="hidden lg:flex lg:pr-10 items-center space-x-4">
                     <div className="justify-center">
                         <ul className="flex items-center justify-center gap-4 font-medium">
                             {[
@@ -138,11 +138,11 @@ const Header = () => {
                             </button>
                         </>
                     ) : (
-                        <>                            
-                            <Dropdown menu={{ items: menuItems }}  trigger={['click']} placement="bottomRight">
+                        <>
+                            <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
                                 <Avatar
-                                    src={user?.avatarUrl}
-                                    icon={!user?.avatarUrl && <UserOutlined />}
+                                    src={user?.img?.url}
+                                    icon={!user?.img?.url && <UserOutlined />}
                                     size="large"
                                     className="cursor-pointer bg-gray-200 text-gray-600 hover:bg-gray-300 hover:shadow-md transition-all duration-300 ease-in-out"
                                 />
@@ -211,13 +211,23 @@ const Header = () => {
                             <>
                                 <li>
                                     <Link
+                                        to={path.WISHLIST}
+                                        onClick={toggleMenu}
+                                        className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                                    >
+                                        Yêu thích
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         to={path.ORDERROOM}
                                         onClick={toggleMenu}
                                         className="block font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500"
                                     >
                                         Đơn Đặt Phòng
                                     </Link>
-                                </li><li>
+                                </li>
+                                <li>
                                     <Link
                                         to={path.ACCOUNT}
                                         onClick={toggleMenu}
