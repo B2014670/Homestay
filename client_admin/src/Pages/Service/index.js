@@ -7,8 +7,9 @@ import {
   Button,
   Popconfirm,
   message,
+  Select,
 } from "antd";
-import { apiGetAllSector, apiEditSector, apiDeleteSector } from "../../api";
+import { apiGetAllExtraService, apiEditExtraService, apiDeleteExtraService } from "../../api";
 
 import {
   EditOutlined,
@@ -20,33 +21,34 @@ import {
 } from "@ant-design/icons";
 import swal from "sweetalert";
 import Highlighter from "react-highlight-words";
-import AddSectorForm from "../../components/AddSectorForm";
+import AddServiceForm from "../../components/AddServiceForm";
 
 const { Title: AntTitle } = Typography;
-const Sector = () => {
+const Service = () => {
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState([]);
-  const [showAddSectorPopup, setShowAddSectorPopup] = useState(false);
+  const [showAddServicePopup, setShowAddServicePopup] = useState(false);
   const [searchText, setSearchText] = useState("");
   const searchInput = useRef();
   const [editingRow, setEditingRow] = useState(null);
   const [editData, setEditData] = useState({
-    idSector: "",
-    nameSector: "",
-    discSector: "",
-    addressSector: "",
+    id: "",
+    name: "",
+    description: "",
+    price: "",
+    status: "",
   });
 
-  const getSector = () => {
+  const getService = () => {
     setLoading(true);
-    apiGetAllSector().then((res) => {
-      setDataSource(res.data.sectors);
+    apiGetAllExtraService().then((res) => {
+      setDataSource(res.data.extraServices.data);
       setLoading(false);
     });
   }
 
   useEffect(() => {
-    getSector();
+    getService();
   }, []);
 
   const getColumnSearchProps = (dataIndex) => {
@@ -110,40 +112,39 @@ const Sector = () => {
   };
 
   const handleSaveClick = async (record) => {
-    setEditData({ ...editData, idSector: record._id });
-    console.log(editData);
-    // Gọi apiEditSector sau khi đã cập nhật editData
-    const result = await apiEditSector(editData);
+    setEditData({ ...editData });
+    // Gọi apiEditExtraService sau khi đã cập nhật editData
+    const result = await apiEditExtraService(editData);
     if (result.status === 200) {
-      swal("Thành Công !", "Thông báo cập nhật thông tin khu vực thành công !", "success").then((value) => { setEditingRow(null); setEditData(); getSector()});
+      swal("Thành Công !", "Thông báo cập nhật thông tin khu vực thành công !", "success").then((value) => { setEditingRow(null); setEditData(); getService() });
     }
   };
 
   const handleEditClick = (record) => {
-    setEditData({ ...editData, idSector: record._id });
+    setEditData({ ...editData, id: record._id });
     setEditingRow(record._id);
   };
 
   return (
     <div className="m-5">
 
-      <AddSectorForm
-        isVisible={showAddSectorPopup}
-        setShowAddSectorPopup={setShowAddSectorPopup}
-        onClose={() => setShowAddSectorPopup(false)}
-        onSuccess={() => getSector()}
-      ></AddSectorForm>
+      <AddServiceForm
+        isVisible={showAddServicePopup}
+        setShowAddSectorPopup={setShowAddServicePopup}
+        onClose={() => setShowAddServicePopup(false)}
+        onSuccess={() => getService()}
+      />
 
       <Space size={0} direction="vertical" className="w-full">
         <div className="flex justify-between">
-          <AntTitle level={4} className="text-2xl font-semibold mb-4">QUẢN LÝ KHU VỰC</AntTitle>
+          <AntTitle level={4} className="text-2xl font-semibold mb-4">QUẢN LÝ DỊCH VỤ</AntTitle>
           <Button
             className="bg-primary border text-green"
             size={40}
             icon={<PlusOutlined />}
-            onClick={() => setShowAddSectorPopup(true)}
+            onClick={() => setShowAddServicePopup(true)}
           >
-            Thêm Khu Vực
+            Thêm Dịch Vụ
           </Button>
         </div>
         <Table
@@ -155,10 +156,10 @@ const Sector = () => {
           dataSource={dataSource}
           columns={[
             {
-              title: "Tên khu vực",
-              dataIndex: "nameSector",
-              ...getColumnSearchProps("nameSector"),
-              sorter: (a, b) => a.nameSector.localeCompare(b.nameSector),
+              title: "Tên dịch vụ",
+              dataIndex: "name",
+              ...getColumnSearchProps("name"),
+              sorter: (a, b) => a.name.localeCompare(b.name),
               render: (text, record) => {
                 if (record._id === editingRow) {
                   return (
@@ -167,7 +168,7 @@ const Sector = () => {
                       onChange={(e) => {
                         setEditData({
                           ...editData,
-                          nameSector: e.target.value,
+                          name: e.target.value,
                         });
                       }}
                     />
@@ -177,11 +178,11 @@ const Sector = () => {
               },
             },
             {
-              title: "Đặt điểm khu vực ",
-              dataIndex: "discSector",
+              title: "Mô tả",
+              dataIndex: "description",
               width: "500px",
-              ...getColumnSearchProps("discSector"),
-              sorter: (a, b) => a.discSector.localeCompare(b.discSector),
+              ...getColumnSearchProps("description"),
+              sorter: (a, b) => a.description.localeCompare(b.description),
               render: (text, record) => {
                 if (record._id === editingRow) {
                   return (
@@ -192,7 +193,7 @@ const Sector = () => {
 
                           setEditData({
                             ...editData,
-                            discSector: e.target.value,
+                            description: e.target.value,
                           });
                         } else {
                           console.log("Event or target is undefined");
@@ -205,10 +206,10 @@ const Sector = () => {
               },
             },
             {
-              title: "Vị trí",
-              dataIndex: "addressSector",
-              ...getColumnSearchProps("addressSector"),
-              sorter: (a, b) => a.addressSector.localeCompare(b.addressSector),
+              title: "Giá",
+              dataIndex: "price",
+              ...getColumnSearchProps("price"),
+              sorter: (a, b) => a.price.localeCompare(b.price),
               render: (text, record) => {
                 if (record._id === editingRow) {
                   return (
@@ -218,7 +219,7 @@ const Sector = () => {
 
                         setEditData({
                           ...editData,
-                          addressSector: e.target.value,
+                          price: e.target.value,
                         });
                       }}
                     />
@@ -228,11 +229,33 @@ const Sector = () => {
               },
             },
             {
-              title: "Số lượng phòng",
-              dataIndex: "totalRoomInSector",
-              align: "center",
-              render: (text, record) => {
-                return <span>{text}</span>;
+              title: "Trạng thái",
+              dataIndex: "status",
+              filters: [
+                { text: "Hoạt động", value: 1 },
+                { text: "Tạm ngưng", value: 0 },
+              ],
+              onFilter: (value, record) => record.status === value,
+              render: (value, record) => {
+                if (record._id === editingRow) {
+                  return (
+                    <Select
+                      defaultValue={value}
+                      style={{ width: 120 }}
+                      onChange={(newValue) => {
+                        setEditData({
+                          ...editData,
+                          status: newValue, // Update status directly
+                        });
+                      }}
+                      options={[
+                        { label: "Hoạt động", value: 1 },
+                        { label: "Tạm ngưng", value: 0 },
+                      ]}
+                    />
+                  );
+                }
+                return value === 1 ? "Hoạt động" : "Tạm ngưng";
               },
             },
             {
@@ -262,7 +285,6 @@ const Sector = () => {
                       className="m-1 flex items-center justify-center"
                       style={{ fontSize: "20px", color: "green" }}
                       onClick={() => {
-                        // console.log(record._id);
                         handleEditClick(record);
                       }}
                     >
@@ -274,12 +296,12 @@ const Sector = () => {
                       title="Bạn có chắc chắn muốn xóa không?"
                       onConfirm={async () => {
                         // console.log(record);
-                        const result = await apiDeleteSector({ "idSector": record._id });
+                        const result = await apiDeleteExtraService({ "id": record._id });
                         console.log(result)
                         if (result.data.status === 0) {
                           swal("Thành Công !", "Xóa khu vực thành công !", "success").then((value) => {
-                            getSector()
-                          });;
+                            getService()
+                          });
                         } else {
                           message.error("Có lỗi xảy ra!");
                         }
@@ -307,4 +329,4 @@ const Sector = () => {
   );
 };
 
-export default Sector;
+export default Service;

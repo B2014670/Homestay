@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Space, Table, Typography, Button, Input, Popconfirm } from 'antd'
-import { apiGetAllUser, apiDeleteCustomer } from '../../api'
-import { SearchOutlined, DeleteOutlined, } from '@ant-design/icons';
+import { Space, Table, Typography, Button, Input, Avatar } from 'antd'
+import { apiGetAllUser } from '../../api'
+import { SearchOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
-import swal from "sweetalert";
+
+const { Title: AntTitle } = Typography;
 
 const Customer = () => {
   const [loading, setLoading] = useState(false)
@@ -129,104 +130,63 @@ const Customer = () => {
 
 
   return (
-
-    <div className='p-5'>
-      <Space size={20} direction='vertical'>
-
-        <div className='flex items-center justify-center'>
-          <Typography.Title level={3}>QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG</Typography.Title>
+    <div className="m-5">
+      <Space size={0} direction="vertical" className='w-full'>
+        <AntTitle level={4} className="text-2xl font-semibold mb-4">QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG</AntTitle>
+        {/* Responsive Table */}
+        <div className="overflow-x-auto">
+          <Table
+            loading={loading}
+            rowKey="_id"
+            columns={[
+              {
+                title: 'Họ và tên',
+                dataIndex: 'name',
+                key: 'name',
+                ...getColumnSearchProps('name'),
+              },
+              {
+                title: "Ảnh",
+                dataIndex: "img",
+                align: "center",
+                render: (img) => <Avatar src={img.url?? "https://th.bing.com/th/id/R.cf89e8e6daa9dabc8174c303e4d53d3a?rik=BcjJH68FR0CVvg&pid=ImgRaw&r=0"} />
+              },
+              {
+                title: 'Tên tài khoản',
+                dataIndex: 'phone',
+                key: 'phone',
+                ...getColumnSearchProps('phone'),
+              },
+              {
+                title: 'Email',
+                dataIndex: 'email',
+                key: 'email',
+                sorter: (a, b) => a.email.localeCompare(b.email),
+                sortDirections: ['ascend', 'descend'],
+              },
+              {
+                title: 'Số điện thoại',
+                dataIndex: 'phone',
+                key: 'phone',
+              },
+              {
+                title: 'Địa chỉ',
+                dataIndex: 'address',
+                key: 'address',
+                ...getColumnSearchProps('address'),
+                sorter: (a, b) => a.address.length - b.address.length,
+                sortDirections: ['descend', 'ascend'],
+              },
+            ]}
+            dataSource={dataSource}
+            pagination={{
+              pageSize: 8,
+            }}
+          />
         </div>
-
-
-        <Table
-          loading={loading}
-          rowKey="_id"
-          columns={[
-            {
-              title: 'Họ và tên',
-              dataIndex: 'name',
-              key: 'name',
-              ...getColumnSearchProps('name'),
-            },
-            {
-              title: 'Tên tài khoản',
-              dataIndex: 'phone',
-              key: 'phone',
-              ...getColumnSearchProps('phone'),
-            },
-            {
-              title: 'Email',
-              dataIndex: 'email',
-              key: 'email',
-              sorter: (a, b) => a.email.localeCompare(b.email),
-              sortDirections: ['ascend', 'descend'],
-            },
-            {
-              title: 'Số điện thoại',
-              dataIndex: 'phone',
-              key: 'phone',
-
-            },
-            {
-              title: 'Địa chỉ',
-              dataIndex: 'address',
-              key: 'address',
-              ...getColumnSearchProps('address'),
-              sorter: (a, b) => a.address.length - b.address.length,
-              sortDirections: ['descend', 'ascend'],
-              // render : (a)=>{
-              //   return <span>{a.address},{a.city}</span>
-              // }
-            },
-            // {
-            //   title: 'Xử lí',
-            //   dataIndex: 'address',
-            //   render: (_, record) => {
-            //     return (
-            //       <div className="flex">
-
-            //         <Popconfirm
-            //           okType="danger"
-            //           //  okButtonProps={{ style: {  backgroundColor: 'red'  }}}
-            //           title="Bạn có chắc chắn muốn xóa không?"
-            //           onConfirm={async () => {
-            //             console.log(record);
-            //             const result = await apiDeleteCustomer({ _id: record._id });
-            //             console.log(result);
-            //             if (result.data.status === 1) {
-            //               swal("Thành Công !", "Xóa thông tin khách hàng thành công !", "success").then((value) => {
-            //                 window.location.reload();
-            //               });;
-            //             } else {
-            //               swal("Thông báo !", "Xóa thông tin khách hàng không thành công !", "warning");
-            //             }
-            //           }}
-            //           onCancel={() => {
-            //             console.log("Hủy bỏ thao tác xóa");
-            //           }}
-            //           okText="Có"
-            //           cancelText="Không"
-            //         >
-            //           <DeleteOutlined
-            //             className="m-1 flex items-center justify-center"
-            //             style={{ fontSize: "20px", color: "red" }}
-            //           />
-            //         </Popconfirm>
-            //       </div>
-            //     );
-            //   }
-            // }
-          ]
-          }
-          dataSource={dataSource}
-          pagination={{
-            pageSize: 6
-          }}
-
-        ></Table>
       </Space>
     </div>
-  )
-}
+  );
+};
 
 export default Customer

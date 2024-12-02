@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Avatar, Button, Rate, Space, Table, Typography, Input ,Select} from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Avatar, Button, Rate, Space, Table, Typography, Input, Select, Tooltip, message } from "antd";
+import { SearchOutlined, CopyOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 
 import {
@@ -19,16 +19,23 @@ import {
   CheckCircleOutlined,
 } from "@ant-design/icons";
 import swal from "sweetalert";
+
+const { Title: AntTitle } = Typography;
+
 const Orders = () => {
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState([]);
   const [data, setData] = useState([]);
-  useEffect(() => {
+
+  const getOrders = (data) => {
     setLoading(true);
     apiGetAllUser().then((res) => {
       setDataSource(res.data.users);
       setLoading(false);
     });
+  }
+  useEffect(() => {
+    getOrders();
   }, []);
 
   useEffect(() => {
@@ -48,7 +55,7 @@ const Orders = () => {
         return 0;
       });
       setData(allOrder);
-      
+
     }
   }, [dataSource]);
   // console.log(data)
@@ -63,7 +70,7 @@ const Orders = () => {
         icon: "success",
         button: "OK",
       }).then(() => {
-        window.location.reload();
+        getOrders();
       });
     }
   };
@@ -77,7 +84,7 @@ const Orders = () => {
         icon: "success",
         button: "OK",
       }).then(() => {
-        window.location.reload();
+        getOrders();
       });
     }
   };
@@ -92,7 +99,7 @@ const Orders = () => {
         icon: "success",
         button: "OK",
       }).then(() => {
-        window.location.reload();
+        getOrders();
       });
     }
   };
@@ -119,7 +126,7 @@ const Orders = () => {
     fetchRooms();
     // const roomIds = ["65b377dfdc9b573d146614dd","65deda99215212200ab94206"];
     roomIds.forEach((id) => getApiGetInfo(id));
-  }, [data,dataSource]);
+  }, [data, dataSource]);
 
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
@@ -238,14 +245,34 @@ const Orders = () => {
 
   return (
     <div className="p-5">
-      <Space size={20} direction="vertical">
-        <div className="flex justify-center items-center">
-        <Typography.Title level={3}>QUẢN LÝ ĐẶT PHÒNG</Typography.Title>
+      <Space size={0} direction="vertical" className="w-full">
+        <div className="flex">
+          <AntTitle level={4} className="text-2xl font-semibold mb-4">QUẢN LÝ ĐẶT PHÒNG</AntTitle>
         </div>
         <Table
           loading={loading}
           rowKey="idOrder"
           columns={[
+            {
+              title: "Mã Đơn",
+              dataIndex: "idOrder",
+              width: "150px",
+              sorter: (a, b) => a.idOrder.localeCompare(b.idOrder),
+              // render: (value) => <span>{value}</span>,
+              render: (text) => (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Tooltip title={text}>
+                    {text.slice(0, 5)}...
+                  </Tooltip>
+                  <Button
+                    icon={<CopyOutlined />}
+                    size="small"
+                    style={{ marginLeft: '8px' }}
+                    onClick={() => navigator.clipboard.writeText(text).then(() => message.success('Đã sao chép vào bảng nhớ tạm!'))}
+                  />
+                </div>
+              ),
+            },
             {
               title: "Người sử dụng",
               dataIndex: "userInput",
@@ -285,14 +312,6 @@ const Orders = () => {
             //   render: (value) => <span>{value.length}</span>,
             //   align: 'center',
             // },
-             {
-              title: "Mã Đơn đặt",
-              dataIndex: "idOrder",
-              width: "150px",
-              sorter: (a, b) => a.idOrder.localeCompare(b.idOrder),
-              render: (value) => <span>{value}</span>,
-              // align: 'center',
-            },
             {
               title: "Trạng thái",
               dataIndex: "statusOrder",
@@ -357,8 +376,8 @@ const Orders = () => {
                     >
                       Xác Nhận
                     </Button>
-                  ) : 
-                  <span>Đã xác nhận</span>
+                  ) :
+                    <span>Đã xác nhận</span>
                   }
                 </span>
               ),
@@ -397,7 +416,7 @@ const Orders = () => {
           ]}
           dataSource={data}
           pagination={{
-            pageSize: 4,
+            pageSize: 8,
           }}
         ></Table>
       </Space>

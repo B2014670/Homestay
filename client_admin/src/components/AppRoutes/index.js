@@ -8,6 +8,9 @@ import Room from '../../Pages/Room'
 import Sector from '../../Pages/Sector'
 import Login from '../../Pages/Login'
 import NhanVien from '../../Pages/NhanVien'
+import Service from '../../Pages/Service'
+import Comment from '../../Pages/Comment'
+
 const AppRoutes = () => {
   return (
    
@@ -18,7 +21,9 @@ const AppRoutes = () => {
             <Route path="/sectors" element={<Sector/>}></Route>
             <Route path="/rooms" element={<Room/>}></Route>
             <Route path="/login" element={<Login/>}></Route>
-            <Route path="/nhanvien" element={<NhanVien/>}></Route>
+            <Route path="/staffs" element={<NhanVien/>}></Route>
+            <Route path="/services" element={<Service/>}></Route>
+            <Route path="/comments" element={<Comment/>}></Route>
         </Routes>
    
   )

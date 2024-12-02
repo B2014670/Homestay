@@ -43,8 +43,12 @@ async function autoDeleteExpiredOrders() {
 
 function scheduleAutoDeleteExpiredOrders() {
     cron.schedule('0 0 * * *', async () => { // Midnight
-        console.log("Running scheduled task: autoDeleteExpiredOrders");
-        await autoDeleteExpiredOrders();
+        try {
+            await autoDeleteExpiredOrders();
+            console.log("Expired orders deleted successfully.");
+        } catch (error) {
+            console.error("Error while deleting expired orders:", error);
+        }
     });
 }
 

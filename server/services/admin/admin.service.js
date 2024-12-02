@@ -70,7 +70,7 @@ class AdminService {
         acc[key] = value;
       }
       return acc;
-    }, {});
+    }, {});                                                                                                                                                                                                                                                    
 
     // Perform the update
     const result = await this.Admin.findOneAndUpdate(

@@ -218,7 +218,7 @@ const Rooms = () => {
       <div className="w-full max-w-screen-xl mx-auto px-1 py-8 pt-4">
 
         {/* Search Input */}
-        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 gap-4 p-4 mb-2 bg-slate-500 rounded-md w-full h-auto items-center">
+        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 gap-4 p-4 mb-2 bg-slate-600 rounded-md w-full h-auto items-center">
           <div className="col-span-1 md:col-span-3 lg:col-span-2">
             <label className="text-white mb-1" htmlFor="searchPlace">
               Tên phòng

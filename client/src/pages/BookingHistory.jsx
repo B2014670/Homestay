@@ -215,7 +215,7 @@ export default function BookingHistory() {
 
     const columns = [
         {
-            title: 'Mã đơn hàng',
+            title: 'Mã đơn',
             dataIndex: 'idOrder',
             key: 'idOrder',
             ...getColumnSearchProps('idOrder'),
@@ -239,7 +239,7 @@ export default function BookingHistory() {
             key: 'checkIn',
             render: (_, record) => record.room?.nameRoom || 'Không có dữ liệu',
         },
-        
+
         {
             title: 'Ngày nhận',
             dataIndex: ['dateInput', 0],
@@ -275,13 +275,17 @@ export default function BookingHistory() {
             key: 'paymentMethod',
             filters: [
                 { text: 'Paypal', value: 'paypal' },
-                { text: 'At Counter', value: 'at counter' },
-                { text: 'Deposit', value: 'paypal deposit' },
+                { text: 'Tại quầy', value: 'at counter' },
+                { text: 'Đặt cọc', value: 'paypal deposit' },
             ],
             onFilter: (value, record) => {
                 return (record.paymentMethod || 'at counter') === value;
             },
-            render: (text) => text ?? 'at counter'
+            render: (text) =>
+                text === 'at counter'
+                    ? "tại quầy"
+                    : (text === 'paypal' ? 'paypal' : 'paypal deposit')
+            // text ?? 'at counter'
         },
         {
             title: 'Trạng thái',
@@ -515,7 +519,7 @@ export default function BookingHistory() {
                                             disabled={comment.updatedDate}
                                         >
                                             Cập nhật
-                                        </Button>                                        
+                                        </Button>
                                     </div>
                                 </div>
                             ))}

@@ -2,32 +2,31 @@ import React, { useEffect, useState, useRef } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
 import { PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
-import { apiAddSector } from "../api";
+import { apiAddExtraService } from "../api";
 import swal from "sweetalert";
 
-import { Button, Form, Input, InputNumber, Select, Upload, Modal } from "antd";
+import { Button, Form, Input, InputNumber, Select, Modal } from "antd";
 const { TextArea } = Input;
 
-const AddSectorForm = ({ isVisible, onClose, onSuccess }) => {
-  const [nameSector, setNameSector] = useState("");
-  const [addressSector, setAddressSector] = useState(0);
-  const [discSector, setDiscSector] = useState("");
-
+const AddServiceForm = ({ isVisible, onClose, onSuccess }) => {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState(0);
 
   const [formData, setFormData] = useState({
-    nameSector: nameSector,
-    discSector: discSector,
-    addressSector: addressSector,
+    name: name,
+    description: description,
+    price: price,
   });
 
   const submitForm = async () => {
     // console.log(loi)
-    console.log(formData);
+    // console.log(formData);
 
-    const result = await apiAddSector(formData);
+    const result = await apiAddExtraService(formData);
     // console.log(result)
-    if (result.status === 200) {
-      swal("Thông báo !", "Thêm khu vực mới thành công  !", "success");
+    if (result.status === 201) {
+      swal("Thông báo !", "Thêm dịch vụ mới thành công  !", "success");
       onClose();
       onSuccess();
     } else {
@@ -43,7 +42,7 @@ const AddSectorForm = ({ isVisible, onClose, onSuccess }) => {
     <div>
       <Modal
         open={isVisible}
-        title="Thêm khu vực"
+        title="Thêm dịch vụ"
         onCancel={onClose}
         footer={null}
         width={600}
@@ -63,8 +62,8 @@ const AddSectorForm = ({ isVisible, onClose, onSuccess }) => {
         >
           <div className="col">
             <Form.Item
-              name="nameSector"
-              label="Tên khu vực : "
+              name="name"
+              label="Tên dịch vụ : "
               className=""
               rules={[
                 { required: true, message: "Vui lòng nhập thông tin !" },
@@ -73,15 +72,15 @@ const AddSectorForm = ({ isVisible, onClose, onSuccess }) => {
               <Input
                 className="w-[400px]"
                 onChange={(e) => {
-                  setNameSector(e.target.value);
-                  setFormData({ ...formData, nameSector: e.target.value });
+                  setName(e.target.value);
+                  setFormData({ ...formData, name: e.target.value });
                 }}
                 placeholder="tên khu vực ..."
               />
             </Form.Item>
             <Form.Item
-              name="discSector"
-              label="Đặc điểm : "
+              name="description"
+              label="Mô tả: "
               rules={[
                 { required: true, message: "Vui lòng nhập thông tin !" },
               ]}
@@ -91,33 +90,38 @@ const AddSectorForm = ({ isVisible, onClose, onSuccess }) => {
                 showCount
                 maxLength={200}
                 onChange={(e) => {
-                  setDiscSector(e.target.value);
-                  setFormData({ ...formData, discSector: e.target.value });
+                  setDescription(e.target.value);
+                  setFormData({ ...formData, description: e.target.value });
                 }}
                 placeholder="Đặc điểm ..."
               />
             </Form.Item>
             <Form.Item
-              name="addressSector"
-              label="Vị trí   : "
+              label="Giá : "
+              name="price"
               rules={[
                 { required: true, message: "Vui lòng nhập thông tin !" },
+                {
+                  required: true,
+                  message: "Vui lòng nhập số tiền 100000!",
+                  type: "number",
+                  min: 10000,
+                },
               ]}
             >
-              <TextArea
-                style={{ height: 70, width: 400, resize: "none" }}
-                showCount
-                maxLength={200}
+              <InputNumber
                 onChange={(e) => {
-                  setAddressSector(e.target.value);
-                  setFormData({
-                    ...formData,
-                    addressSector: e.target.value,
-                  });
+                  // console.log(e);
+                  setPrice(e);
+                  setFormData({ ...formData, price: e });
                 }}
-                placeholder="Mô tả..."
+                className="w-[200px]"
+                placeholder=" Giá ..."
+                min={10000}
+                formatter={(value) => `${value} VND`}
+                parser={(value) => value.replace(" VND", "")}
               />
-            </Form.Item>
+            </Form.Item>            
           </div>
 
           <div className="flex justify-center items-center">
@@ -134,5 +138,5 @@ const AddSectorForm = ({ isVisible, onClose, onSuccess }) => {
   );
 };
 
-export default AddSectorForm;
+export default AddServiceForm;
 

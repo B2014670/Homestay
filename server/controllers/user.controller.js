@@ -1,6 +1,6 @@
 const ApiError = require("../api-error");
-const UserService = require("../services/user/user.service");
 const MongoDB = require("../utils/mongodb.util");
+const UserService = require("../services/user/user.service");
 const RoomService = require("../services/room/room.service");
 const SectorService = require("../services/sector/sector.service");
 const RefundService = require("../services/payment/refund.service");
@@ -12,8 +12,7 @@ const Yup = require('yup');
 const bcrypt = require("bcrypt");
 const jwtMethod = require('../utils/jwt.util');
 const useragent = require('express-useragent');
-const transporter = require('../config/nodemailer');
-const mailOptions = require('../utils/mailOptions.util');
+const { sendEmail } = require('../utils/mailOptions.util');
 
 // START USER
 exports.register = async (req, res, next) => {
@@ -374,9 +373,7 @@ exports.forgotPassword = async (req, res, next) => {
 
     const token = await userService.generateResetToken(registeredUser[0].email);
 
-    const options = mailOptions(registeredUser[0].email, 'resetPassword', { token });
-
-    await transporter.sendMail(options);
+    await sendEmail(registeredUser[0].email, 'resetPassword', { token });
 
     return res.status(200).json({
       err: 0,
@@ -1009,11 +1006,11 @@ exports.getAllOrderOfUser = async (req, res, next) => {
   }
 }
 
-exports.getAllOrderOfUserById = async (req, res, next) => {
+exports.getOneOrderOfUserById = async (req, res, next) => {
 
   try {
     const userService = new UserService(MongoDB.client);
-    const result = await userService.getAllOrderOfUserById(req.params);
+    const result = await userService.getOneOrderOfUserById(req.params);
 
     if (!result) {
       return res.status(400).json({

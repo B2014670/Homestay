@@ -14,29 +14,21 @@ function App() {
 
   useEffect(() => {
     if (!IsLoggedIn || IsLoggedIn === 'false') {
-      navigate('/login');     
-    } 
+      navigate('/login');
+    }
     if (IsLoggedIn === 'true') {
-      navigate('/'); 
+      navigate('/');
     }
   }, [IsLoggedIn, navigate]);
 
   return (
     <div className="">
-      <Layout
-        className="bg-[#001529]"
-      >
-        {IsLoggedIn && (
-          <Sider
-            className="top-0 left-0 z-10 bg-[#001529]"
-            collapsible
-            collapsed={collapsed}
-            onCollapse={(value) => setCollapsed(value)}
-          >
-            <SideMenu />
-          </Sider>
+      <Layout style={{ minHeight: '100vh' }}>
+        {IsLoggedIn && (<Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+          <SideMenu />
+        </Sider>
         )}
-        <Layout className={`ml-${collapsed ? 20 : 52}`}>
+        <Layout>
           <AppHeader />
           <PageContent />
         </Layout>

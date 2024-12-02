@@ -7,52 +7,44 @@ const router = express.Router();
 
 
 router.post("/register", admins.register);
-
 router.post("/login", admins.login);
-
+router.get("/getAllAdmin", admins.getAllAdmin);
 router.post("/info", admins.infoAdmin);
-
-router.post('/addSector', admins.addSector);
-
-router.get("/getAllSector", admins.getAllSector);
-
-router.post('/addRoom', admins.addRoom);
-
-router.post('/deleteRoom', admins.deleteRoom);
-
+router.post('/addAdmin', admins.addAdmin);
+router.post("/editAdmin", admins.editAdmin);
 router.post('/deleteAdmin', admins.deleteAdmin);
 
-router.get("/getAllRoom", admins.getAllRoom);
-
-router.get("/getAllUser", admins.getAllUser);
-
-router.get("/getAllUserOrder", admins.getAllUserOrder);
-
-router.get("/getAllAdmin", admins.getAllAdmin);
-
-router.post('/confirmOrderRoom', admins.confirmOrderRoom);
-
-router.post("/infoRoom", admins.getInfoRoom);
-
-router.post('/completeOrderRoom', admins.completeOrderRoom);
-
-router.post('/deleteOrderRoom', admins.deleteOrderRoom);
-
+router.get("/getAllSector", admins.getAllSector);
 router.post("/infoSector", admins.getInfoSector);
-
-router.post('/addAdmin', admins.addAdmin);
-
+router.post('/addSector', admins.addSector);
 router.post("/addRoomSector", admins.addRoomInSector);
-
 router.post("/editSector", admins.editSector);
-
 router.post("/deleteSector", admins.deleteSector);
 
-router.post("/editAdmin", admins.editAdmin);
-
+router.get("/getAllRoom", admins.getAllRoom);
+router.post("/infoRoom", admins.getInfoRoom);
+router.post('/addRoom', admins.addRoom);
 router.post("/editRoom", admins.editRoom);
+router.post('/deleteRoom', admins.deleteRoom);
 
+router.get("/getAllUser", admins.getAllUser);
 router.post('/deleteCustomer', admins.deleteCustomer);
+
+router.get("/getAllUserOrder", admins.getAllUserOrder);
+router.post('/confirmOrderRoom', admins.confirmOrderRoom);
+router.post('/completeOrderRoom', admins.completeOrderRoom);
+router.post('/deleteOrderRoom', admins.deleteOrderRoom);
+
+// extraservices
+router.get('/extraservices', admins.getAllExtraServices);
+router.get('/extraservices/:id', admins.getExtraServiceById);
+router.post('/extraservices/', admins.createExtraService);
+router.put('/extraservices/:id', admins.updateExtraService);
+router.delete('/extraservices/:id', admins.deleteExtraService);
+
+// comment
+router.get('/comments', admins.getAllComment);
+router.delete('/comments', admins.softDeleteComment);
 
 
 

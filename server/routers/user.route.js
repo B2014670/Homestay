@@ -2,6 +2,7 @@ const express = require("express");
 const users = require("../controllers/user.controller");
 const chat = require("../controllers/chat.controller");
 const forgotPasswordLimiter = require('../middleware/forgotPasswordLimiter');
+const { authMiddleware } = require("../middleware/authMiddleware"); 
 
 
 const router = express.Router();
@@ -20,7 +21,7 @@ router.post("/validateToken", users.validateToken);
 
 router.post("/token", users.refreshToken);
 
-router.post("/info", users.infoUser);
+router.post("/info", authMiddleware, users.infoUser);
 
 router.post("/updateInfoUser", users.updateInfoUser);
 
@@ -62,7 +63,7 @@ router.delete('/wishlist', users.deleteWishlist);
 
 router.get("/:userId/orders", users.getAllOrderOfUser);
 
-router.get("/:userId/orders/:idOrder", users.getAllOrderOfUserById);
+router.get("/:userId/orders/:idOrder", users.getOneOrderOfUserById);
 
 router.get("/:userId/comments", users.getAllCommentOfUser);
 

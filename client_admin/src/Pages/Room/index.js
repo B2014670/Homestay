@@ -14,10 +14,10 @@ import {
 import {
   EditOutlined,
   DeleteOutlined,
-  UnorderedListOutlined,
   SearchOutlined,
   PlusOutlined,
   SaveOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { apiDeleteRoom, apiEditRoom, apiGetAllRoom, apiGetAllSector } from "../../api";
 import Highlighter from "react-highlight-words";
@@ -25,27 +25,40 @@ import AddRoomForm from "../../components/AddRoomForm";
 import swal from "sweetalert";
 
 const { Option } = Select;
+const { Title: AntTitle } = Typography;
+
 const Room = () => {
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState([]);
+  const [editingRow, setEditingRow] = useState(null);
   //tim kiem + sap xep
   const [searchText, setSearchText] = useState("");
-
   const [searchedColumn, setSearchedColumn] = useState("");
-
   const searchInput = useRef(null);
-
   const [showAddRoomPopup, setShowAddRoomPopup] = useState(false);
-
   const [editData, setEditData] = useState({
     _id: "",
     nameRoom: "",
     giaRoom: "",
-    loaiRoom  : "",
+    loaiRoom: "",
     discRoom: "",
     idSectorRoom: "",
   })
+  const [sectors, setSectors] = useState({});
 
+
+  useEffect(() => {
+    getRooms()
+  }, []);
+
+  const getRooms = () => {
+    setLoading(true);
+    apiGetAllRoom().then((res) => {
+      setDataSource(res.data.rooms);
+      // console.log(res.data.rooms)
+      setLoading(false);
+    });
+  }
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
     confirm();
@@ -158,8 +171,6 @@ const Room = () => {
       ),
   });
 
-  const [sectors, setSectors] = useState({});
-
   useEffect(() => {
     // Gọi API để lấy thông tin khu vực
     const fetchSectors = async () => {
@@ -196,7 +207,7 @@ const Room = () => {
           return (
             <Input
               defaultValue={text}
-              onChange={(e) => setEditData({...editData, nameRoom: e.target.value})}
+              onChange={(e) => setEditData({ ...editData, nameRoom: e.target.value })}
             />
           );
         }
@@ -215,7 +226,7 @@ const Room = () => {
             <InputNumber
               step={10000}
               defaultValue={text}
-              onChange={(e) => setEditData({...editData, giaRoom: e})}
+              onChange={(e) => setEditData({ ...editData, giaRoom: e })}
             />
           );
         }
@@ -232,8 +243,8 @@ const Room = () => {
             <Select
               defaultValue={text}
               style={{ width: 120 }}
-              onChange={(value) => 
-                setEditData({...editData,  loaiRoom : value})
+              onChange={(value) =>
+                setEditData({ ...editData, loaiRoom: value })
                 // console.log(value)
               }
             >
@@ -251,7 +262,7 @@ const Room = () => {
     {
       title: "Khu vực",
       dataIndex: "idSectorRoom",
-   
+
       ...getColumnSearchProps("idSectorRoom"),
       // render: (idSectorRoom) => sectors[idSectorRoom] || "Loading...",
       render: (text, record) => {
@@ -260,8 +271,8 @@ const Room = () => {
             <Select
               defaultValue={text}
               style={{ width: 120 }}
-              onChange={(e) => 
-                setEditData({...editData, idSectorRoom: e})
+              onChange={(e) =>
+                setEditData({ ...editData, idSectorRoom: e })
                 // console.log(e)
               }
             >
@@ -315,8 +326,8 @@ const Room = () => {
           return (
             <Input
               defaultValue={text}
-              onChange={(e) => 
-                setEditData({...editData, discRoom: e.target.value})
+              onChange={(e) =>
+                setEditData({ ...editData, discRoom: e.target.value })
                 // console.log(e.target.value)
               }
             />
@@ -338,15 +349,10 @@ const Room = () => {
               >
                 Lưu
               </SaveOutlined>
-              <DeleteOutlined
+              <CloseCircleOutlined
                 className="m-1 flex items-center justify-center"
+                onClick={() => setEditingRow(null)}
                 style={{ fontSize: "20px", color: "red" }}
-                onClick={async () => {
-                  const result = await apiDeleteRoom(record);
-                  if (result.status === 0) {
-                    swal("Thành Công !", result.msg, "success");
-                  }
-                }}
               />
             </div>
           );
@@ -364,75 +370,71 @@ const Room = () => {
               Chỉnh sửa
             </EditOutlined>
             <Popconfirm
-                      okType="danger"
-                      //  okButtonProps={{ style: {  backgroundColor: 'red'  }}}
-                      title="Bạn có chắc chắn muốn xóa không?"
-                      onConfirm={async () => {
-                        console.log(record);
-                        const result = await apiDeleteRoom({"_id" : record._id});
-                        console.log(result)
-                        if (result.data.status === 0) {
-                          swal("Thành Công !", "Xóa phòng thành công !", "success").then((value) => {
-                            window.location.reload();
-                          });;
-                        } else {
-                          console.log("Có lỗi xảy ra!");
-                        }
-                      }}
-                      onCancel={() => {
-                        console.log("Hủy bỏ thao tác xóa");
-                      }}
-                      okText="Có"
-                      cancelText="Không"
-                    >
-                      <DeleteOutlined
-                        className="m-1 flex items-center justify-center"
-                        style={{ fontSize: "20px", color: "red" }}
-                      />
-                    </Popconfirm>
+              okType="danger"
+              //  okButtonProps={{ style: {  backgroundColor: 'red'  }}}
+              title="Bạn có chắc chắn muốn xóa không?"
+              onConfirm={async () => {
+                console.log(record);
+                const result = await apiDeleteRoom({ "_id": record._id });
+                console.log(result)
+                if (result.data.status === 0) {
+                  swal("Thành Công !", "Xóa phòng thành công !", "success").then((value) => {
+                    getRooms();
+                  });
+                } else {
+                  console.log("Có lỗi xảy ra!");
+                }
+              }}
+              onCancel={() => {
+                console.log("Hủy bỏ thao tác xóa");
+              }}
+              okText="Có"
+              cancelText="Không"
+            >
+              <DeleteOutlined
+                className="m-1 flex items-center justify-center"
+                style={{ fontSize: "20px", color: "red" }}
+              />
+            </Popconfirm>
           </div>
         );
       },
     },
   ];
 
-  useEffect(() => {
-    setLoading(true);
-    apiGetAllRoom().then((res) => {
-      setDataSource(res.data.rooms);
-      // console.log(res.data.rooms)
-      setLoading(false);
-    });
-  }, []);
-
-  const [editingRow, setEditingRow] = useState(null);
-
   const handleEditClick = (record) => {
     setEditingRow(record._id);
-    setEditData({...editData, _id: record._id});
+    setEditData({ ...editData, _id: record._id });
   };
-  const handleSaveClick = async(record) => {
-    if(editData){
+
+  const handleSaveClick = async (record) => {
+    if (editData) {
       const result = await apiEditRoom(editData)
       console.log(result)
-    if(result.data.status === 1){
-      swal("Thành Công!" , result.data.msg, "success").then((value) => { window.location.reload();})
-    }else{
-      swal("Thông báo !" , result.data.msg, "warning").then((value) => { window.location.reload();})
+      if (result.data.status === 1) {
+        swal("Thành Công!", result.data.msg, "success").then((value) => { setEditingRow(null); setEditData(); getRooms() })
+      } else {
+        swal("Thông báo !", result.data.msg, "warning").then((value) => { getRooms() })
+      }
     }
-    }
-    
+
   };
 
   return (
-    <div className="p-5">
-      {showAddRoomPopup && (
-        <AddRoomForm setShowAddRoomPopup={setShowAddRoomPopup}></AddRoomForm>
-      )}
+    <div className="m-5">
 
-      <Space size={20} direction="vertical">
-        <div className="flex justify-around">
-          <Typography.Title level={3}>QUẢN LÝ PHÒNG HOMESTAY</Typography.Title>
+      <AddRoomForm
+        isVisible={showAddRoomPopup}
+        onClose={() => setShowAddRoomPopup(false)}
+        onSuccess={() => getRooms()}
+      />
+      {/* {showAddRoomPopup && (
+        <AddRoomForm setShowAddRoomPopup={setShowAddRoomPopup}></AddRoomForm>
+      )} */}
+
+      <Space size={0} direction="vertical" className="w-full">
+        <div className="flex justify-between">
+          <AntTitle level={4} className="text-2xl font-semibold mb-4">QUẢN LÝ PHÒNG HOMESTAY</AntTitle>
           <Button
             className="bg-primary border text-green"
             size={40}

@@ -247,7 +247,7 @@ const DetailRoom = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
+    <div className="max-w-7xl mx-auto py-4">
       <Card className="shadow-lg rounded-lg overflow-hidden">
         <div className="flex flex-col lg:flex-row">
           {/* Left Section - Room Details */}
@@ -276,8 +276,8 @@ const DetailRoom = () => {
                         <Image
                           src={homestayData.imgRoom[0].secure_url}
                           alt="Main Room"
-                          height={300}
-                          className="w-full object-fill rounded-lg"
+                          height={300}                     
+                          className="w-full object-cover rounded-lg"
                         />
                       </div>
 
@@ -351,8 +351,7 @@ const DetailRoom = () => {
                 <Paragraph>{homestayData.discRoom}</Paragraph>
                 <Divider />
 
-                {/* Comments Section */}
-                <Title level={4} className="mb-4">Bình luận</Title>
+                {/* Comments Section */}                
                 <CommentViewer comments={comments} />
               </>
             ) : (

@@ -26,20 +26,20 @@ class RoomService {
     return room;
   }
 
-  // async check(filter) {
-  //   // console.log(filter);
-  //   const cursor = await this.Room.find(filter);
-  //   return await cursor.toArray();
-  // }
-
-
   async check(filter) {
     try {
       const roomsWithSectors = await this.Room.aggregate([
         { $match: filter || {} }, // Apply the filter
         {
           $addFields: {
-            idSectorRoom: { $toObjectId: "$idSectorRoom" } // Convert string to ObjectId
+            idSectorRoom: { $toObjectId: "$idSectorRoom" }, // Convert string to ObjectId
+            cmtRoom: {
+              $filter: {
+                input: "$cmtRoom", // The comments array
+                as: "comment", // Alias for each comment
+                cond: { $eq: ["$$comment.isDeleted", false] } // Only include comments that are not deleted
+              }
+            }
           }
         },
         {
@@ -66,11 +66,31 @@ class RoomService {
   }
 
   async checkByIdRoom(filter) {
-    // console.log(filter);
-    const cursor = await this.Room.find({
-      _id: ObjectId.isValid(filter.idRoom) ? new ObjectId(filter.idRoom) : null,
-    });
-    return await cursor.toArray();
+    try {
+      const cursor = await this.Room.aggregate([
+        {
+          $match: {
+            _id: ObjectId.isValid(filter.idRoom) ? new ObjectId(filter.idRoom) : null,
+          },
+        },
+        {
+          $addFields: {
+            cmtRoom: {
+              $filter: {
+                input: "$cmtRoom", // The comments array
+                as: "comment", // Alias for each comment
+                cond: { $eq: ["$$comment.isDeleted", false] } // Only include comments that are not deleted
+              }
+            }
+          }
+        }
+      ]);
+
+      return cursor.toArray();
+    } catch (error) {
+      console.error("Error in fetching room with filtered comments:", error);
+      throw error;
+    }
   }
 
   async searchRoom(queryParams) {
@@ -93,7 +113,14 @@ class RoomService {
       { $match: query },
       {
         $addFields: {
-          idSectorRoom: { $toObjectId: "$idSectorRoom" } // Convert string to ObjectId
+          idSectorRoom: { $toObjectId: "$idSectorRoom" }, // Convert string to ObjectId
+          cmtRoom: {
+            $filter: {
+              input: "$cmtRoom", // The comments array
+              as: "comment", // Alias for each comment
+              cond: { $eq: ["$$comment.isDeleted", false] }
+            }
+          }
         }
       },
       {
@@ -125,7 +152,7 @@ class RoomService {
 
     function parseDate(dateStr) {
       const [day, month, year] = dateStr.split("/").map(Number);
-      return new Date(year, month - 1, day); // Months are zero-indexed
+      return new Date(Date.UTC(year, month - 1, day)); // Months are zero-indexed
     }
 
     // Check for availability based on the provided date range
@@ -214,27 +241,48 @@ class RoomService {
     // console.log(filter);
     const cursor = await this.Room.find({
       idSectorRoom: filter.enKhuVuc,
+      // 'cmtRoom.isDeleted': { $ne: true } 
     });
     return await cursor.toArray();
   }
 
   async findAvailableRooms(datesArray) {
+
     // Tìm tất cả các phòng
-    const cursor = await this.Room.find({});
-    const allRooms = await cursor.toArray();
+    const rooms = await this.Room.find({}).toArray();
 
-    // Lọc ra các phòng không có đơn đặt phòng nào trùng với mảng ngày đầu vào
-    const availableRooms = allRooms.filter(room => {
-      // Biến đổi mảng ordersRoom thành mảng các chuỗi ngày để so sánh
-      const orderDates = room.ordersRoom.flatMap(order => order);
+    function parseDate(dateStr) {
+      const [day, month, year] = dateStr.split("/").map(Number);
+      return new Date(Date.UTC(year, month - 1, day)); // Months are zero-indexed
+    }
 
-      // Kiểm tra xem có ngày nào trong ordersRoom trùng với ngày trong datesArray không
-      return !datesArray.some(date => orderDates.includes(date));
+    // Chuyển đổi `datesArray` thành các ngày đầu và cuối
+    const [inputStartDate, inputEndDate] = datesArray.map(parseDate);
+
+    // Check for availability based on the provided date range
+    const availableRooms = rooms.filter(room => {
+
+      // Ensure that the room has 'ordersRoom' array and process it
+      if (!Array.isArray(room.ordersRoom)) {
+        return true; // If no orders, room is available
+      }
+
+      return !room.ordersRoom.some(booking => {
+        if (!Array.isArray(booking) || booking.length < 2) {
+          return false; // Skip invalid bookings
+        }
+        const bookingStartDate = parseDate(booking[0]);
+        const bookingEndDate = parseDate(booking[1]);
+
+        return (
+          // Check date overlaps
+          (inputStartDate < bookingEndDate && inputEndDate > bookingStartDate)
+        );
+      });
     });
-    console.log(availableRooms)
+
     return availableRooms;
   }
-
 
   async EditRoom(payload) {
     const updateObject = Object.keys(payload).reduce((acc, key) => {
@@ -261,6 +309,56 @@ class RoomService {
       console.log("Không có giá trị nào khác rỗng để cập nhật.");
       return null;
     }
+  }
+
+  async getAllComments() {
+    const comments = await this.Room.aggregate([
+      { $unwind: "$cmtRoom" },
+      {
+        $match: {
+          "cmtRoom.isDeleted": { $ne: true } // Ensure the comments are not deleted
+        }
+      },
+      {
+        $addFields: {
+          "cmtRoom.idUser": { $toObjectId: "$cmtRoom.idUser" } // Convert string to ObjectId
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "cmtRoom.idUser",
+          foreignField: "_id",
+          as: "cmtRoom.userDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$cmtRoom.userDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          "cmtRoom.idComment": 1,
+          "cmtRoom.idUser": 1,
+          "cmtRoom.idOrder": 1,
+          "cmtRoom.idRoom": 1,
+          "cmtRoom.rating": 1,
+          "cmtRoom.text": 1,
+          "cmtRoom.createdDate": 1,
+          "cmtRoom.updatedDate": 1,
+          "cmtRoom.isDeleted": 1,
+          "cmtRoom.userDetails._id": 1,
+          "cmtRoom.userDetails.name": 1,
+          "cmtRoom.userDetails.img": 1
+        }
+      }
+    ]).toArray();
+
+    // If there are any comments, return the array of all comments
+    return comments.length > 0 ? comments.map(item => item.cmtRoom) : [];
   }
 
   async getCommentsById(idComment) {

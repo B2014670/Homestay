@@ -76,7 +76,8 @@ export const apiInfoUser = (payload) => new Promise(async(resolve, reject)=>{
         const response = await axiosConfig({
             method: 'post',
             url: '/user/info',
-            data: payload
+            data: payload,
+            withCredentials: true,
         })
         resolve(response)
     } catch (error) {

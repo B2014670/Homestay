@@ -2,6 +2,7 @@ const { server } = require("./app"); //app
 const config = require("./config");
 const MongoDB = require("./utils/mongodb.util")
 const { scheduleAutoDeleteExpiredOrders } = require("./cron/autoDelete");
+const localtunnel = require("localtunnel");
 
 const PORT = config.app.port;
 
@@ -13,6 +14,17 @@ async function startServer() {
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
+
+    try {
+      const tunnel = await localtunnel({ port: PORT, subdomain: "homestay" }); 
+      console.log(`Public URL: ${tunnel.url}`);
+
+      tunnel.on("close", () => {
+        console.log("Localtunnel closed");
+      });
+    } catch (error) {
+      console.error("Failed to start localtunnel", error);
+    }
 
     scheduleAutoDeleteExpiredOrders();
 

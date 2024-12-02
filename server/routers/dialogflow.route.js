@@ -102,7 +102,7 @@ router.post("", async (req, res) => {
   async function inNumberRoomOfSector() {
     try {
       const data = await dialogflow.getAllSectorChatbot();
-      console.log(data);
+      // console.log(data);
 
       // // Check if data is available
       if (!data || !data.sectors || data.sectors.length === 0) {
@@ -293,7 +293,7 @@ router.post("", async (req, res) => {
       console.log('data', data);
 
       const confirmationMessage = `Chào anh/chị ${enTen.name
-        }! Homestay  xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ. 
+        }! Homestay xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ. 
         Anh/chị ${enTen.name} đặt phòng ${room.nameRoom} ngày nhận phòng : ${arrayDate[0]
         }, ngày trả phòng: ${arrayDate[arrayDate.length - 1]}. 
         Tổng số ngày là ${arrayDate.length}.
@@ -391,54 +391,65 @@ router.post("", async (req, res) => {
         return `${month}/${day}/${year}`;
       }
 
-      function getDatesList(startDateISO, endDateISO) {
-        const startDate = convertISOToDDMMYYYY(startDateISO);
-        const endDate = convertISOToDDMMYYYY(endDateISO);
-        const start = new Date(startDate.split("/").reverse().join("-"));
-        const end = new Date(endDate.split("/").reverse().join("-"));
-        const dateList = [];
+      // function getDatesList(startDateISO, endDateISO) {
+      //   const startDate = convertISOToDDMMYYYY(startDateISO);
+      //   const endDate = convertISOToDDMMYYYY(endDateISO);
+      //   const start = new Date(startDate.split("/").reverse().join("-"));
+      //   const end = new Date(endDate.split("/").reverse().join("-"));
+      //   const dateList = [];
 
-        for (
-          let dt = new Date(start);
-          dt <= end;
-          dt.setDate(dt.getDate() + 1)
-        ) {
-          dateList.push(dt.toLocaleDateString("vi-VN"));
-        }
+      //   for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+      //     dateList.push(dt.toLocaleDateString("vi-VN"));
+      //   }
 
-        return dateList.map((date) =>
-          date
-            .split("/")
-            .reverse()
-            .join("/")
-            .replace(
-              /(\d{4})\/(\d{1,2})\/(\d{1,2})/,
-              (match, year, month, day) =>
-                `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`
-            )
-        );
-      }
+      //   return dateList.map((date) =>
+      //     date
+      //       .split("/")
+      //       .reverse()
+      //       .join("/")
+      //       .replace(
+      //         /(\d{4})\/(\d{1,2})\/(\d{1,2})/,
+      //         (match, year, month, day) =>
+      //           `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`
+      //       )
+      //   );
+      // }
 
+      // function getDatesList(startDateISO, endDateISO) {
+      //   const startDate = convertISOToDDMMYYYY(startDateISO);
+      //   const endDate = convertISOToDDMMYYYY(endDateISO);
+      //   const start = new Date(startDate.split("/").reverse().join("-"));
+      //   const end = new Date(endDate.split("/").reverse().join("-"));
+      //   const dateList = [];
+      
+      //   // Lặp qua các ngày từ start đến end
+      //   for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+      //     // Lấy ngày, tháng, năm và chuyển thành định dạng DD/MM/YYYY
+      //     const day = dt.getDate().toString().padStart(2, '0');
+      //     const month = (dt.getMonth() + 1).toString().padStart(2, '0');
+      //     const year = dt.getFullYear();
+      //     dateList.push(`${day}/${month}/${year}`);
+      //   }
+      
+      //   return dateList;
+      // }
+
+     
       // Sử dụng hàm
       const enNgayCheckIn = parameters.enNgayCheckIn;
       const enNgayCheckOut = parameters.enNgayCheckOut;
       const enIn = convertISOToDDMMYYYY(enNgayCheckIn);
       const enOut = convertISOToDDMMYYYY(enNgayCheckOut);
-      console.log(enNgayCheckOut);
-      const dateList = getDatesList(enNgayCheckIn, enNgayCheckOut);
-      console.log("các ngày cần tìm :" + dateList); // Danh sách các ngày từ ngày check-in đến ngày check-out
+      // console.log('enNgayCheckIn', enNgayCheckIn);
+      // console.log('enNgayCheckOut', enNgayCheckOut);
+      // console.log('enIn', enIn);
+      // console.log('enOut', enOut);
+      // const dateList = getDatesList(enNgayCheckIn, enNgayCheckOut);
+      // console.log("các ngày cần tìm: " + dateList); // Danh sách các ngày từ ngày check-in đến ngày check-out
+      
       // hàm lấy danh sách các phòng có ngày trống
-
-      const data = await dialogflow.checkRoomByChatBot({ date: dateList });
+      const data = await dialogflow.checkRoomByChatBot({ date: [enIn,enOut] });
       if (data.length > 0) {
-        // const rooms = data.map(
-        //   (room) =>
-        //     `phòng ${
-        //       room.nameRoom
-        //     } - giá ${room.giaRoom.toLocaleString()}vnđ/Đêm - loại phòng : ${
-        //       room.loaiRoom
-        //     }.`
-        // );
         const accordionPayload = {
           type: "accordion",
           title: "Danh sách phòng tại khu vực bạn đã chọn :",
@@ -460,8 +471,7 @@ router.post("", async (req, res) => {
         // // Tạo danh sách các phòng dựa trên dữ liệu từ API
         const listItems = data.map((room) => {
           const listItem = { ...listItemsPayload };
-          listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${room.loaiRoom
-            } `;
+          listItem.title = `${capitalizeFirstLetter(room.nameRoom)} - ${room.loaiRoom} `;
           listItem.subtitle = `${room.giaRoom} vnđ/Đêm`;
           listItem.image.src.rawUrl = `${room.imgRoom[0].secure_url}`
           return listItem;
@@ -597,7 +607,7 @@ router.post("", async (req, res) => {
     }
   }
 
-  // Đây là hàm chính để xử lý các yêu cầu
+  // Đây là hàm chính để xử lý các yêu cầu theo các ý định từ dialogflow
 
   if (intent === "inTotalRoom") {
     inTotalRoom();
@@ -616,7 +626,7 @@ router.post("", async (req, res) => {
     inTotalRoom();
   }
   if (intent === "orderRoom - tenPhong - confirmOrder") {
-    confirmOrderRoom() ;
+    confirmOrderRoom();
   }
   if (intent === "inGiaPhong") {
     inTotalRoom();
@@ -636,4 +646,4 @@ router.post("", async (req, res) => {
   // console.log(intent)
 });
 
-module.exports = router ;
+module.exports = router;

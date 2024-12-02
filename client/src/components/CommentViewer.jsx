@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Input, Avatar, Select, Pagination, Rate } from 'antd';
+import { Card, Input, Avatar, Select, Pagination, Rate, Typography } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
+const { Title, Paragraph } = Typography;
 
 const CommentViewer = ({ comments }) => {
   const [filter, setFilter] = useState('');
@@ -51,7 +52,7 @@ const CommentViewer = ({ comments }) => {
 
   return (
     <div className="container mx-auto">
-      <Card >
+      <Title level={4} className="mb-4">Bình luận</Title>
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           <Select
             value={starFilter}
@@ -115,7 +116,6 @@ const CommentViewer = ({ comments }) => {
             showSizeChanger={false}
           />
         </div>
-      </Card>
     </div>
   );
 };

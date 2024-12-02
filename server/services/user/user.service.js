@@ -246,92 +246,6 @@ class UserService {
     return result;
   }
 
-  // async getAllOrderOfUser(payload) {
-  //   const result = await this.User.aggregate([
-  //     {
-  //       $match: { _id: ObjectId.isValid(payload.userId) ? new ObjectId(payload.userId) : null }
-  //     },
-  //     {
-  //       $unwind: { path: '$order', preserveNullAndEmptyArrays: true }
-  //     },
-  //     {
-  //       $match: { order: { $ne: null } }  // Ensures that `order` is not null after unwinding
-  //     },
-  //     {
-  //       $match: { orders: { $ne: [] } }  // Ensures `orders` is not an empty array after grouping
-  //     },
-  //     {
-  //       $addFields: {
-  //         'order.idRoom': { $toObjectId: "$order.idRoom" }
-  //       }
-  //     },
-  //     {
-  //       $lookup: {
-  //         from: 'rooms',
-  //         localField: 'order.idRoom',
-  //         foreignField: '_id',
-  //         as: 'roomDetails',
-  //       }
-  //     },
-  //     {
-  //       $unwind: { path: '$roomDetails', preserveNullAndEmptyArrays: true }
-  //     },
-  //     {
-  //       $addFields: {
-  //         "roomDetails.idSectorRoom": { $toObjectId: "$roomDetails.idSectorRoom" }
-  //       }
-  //     },
-  //     {
-  //       $lookup: {
-  //         from: 'sectors',
-  //         localField: 'roomDetails.idSectorRoom',
-  //         foreignField: '_id',
-  //         as: 'roomDetails.sectorDetails'
-  //       }
-  //     },
-  //     {
-  //       $unwind: { path: '$roomDetails.sectorDetails', preserveNullAndEmptyArrays: true }
-  //     },
-  //     {
-  //       $addFields: {
-  //         'order.room': '$roomDetails'
-  //       }
-  //     },
-  //     {
-  //       $unwind: { path: '$roomDetails.cmtRoom', preserveNullAndEmptyArrays: true }
-  //     },
-  //     {
-  //       // Filter out deleted comments for the room's comment array
-  //       $addFields: {
-  //         'order.room.cmtRoom': {
-  //           $filter: {
-  //             input: '$roomDetails.cmtRoom',
-  //             as: 'comment',
-  //             cond: {
-  //               $and: [
-  //                 { $eq: ['$$comment.idOrder', '$order.idOrder'] },  // Match idOrder
-  //                 { $eq: ['$$comment.isDeleted', false] }  // Only non-deleted comments
-  //               ]
-  //             }
-  //           }
-  //         }
-  //       }
-  //     },
-  //     {
-  //       $group: {
-  //         _id: '$_id',
-  //         name: { $first: "$name" },
-  //         phone: { $first: "$phone" },
-  //         email: { $first: "$email" },
-  //         address: { $first: "$address" },
-  //         img: { $first: "$img" },
-  //         orders: { $push: '$order' }
-  //       }
-  //     },
-  //   ]).toArray();
-
-  //   return result;
-  // }
   async getAllOrderOfUser(payload) {
     const result = await this.User.aggregate([
       {
@@ -416,7 +330,7 @@ class UserService {
     return result;
   }
 
-  async getAllOrderOfUserById(payload) {
+  async getOneOrderOfUserById(payload) {
     const result = await this.User.aggregate([
       {
         $match: { _id: ObjectId.isValid(payload.userId) ? new ObjectId(payload.userId) : null }
@@ -670,6 +584,7 @@ class UserService {
 
   async GetInfoOrderRoomByChatBot(payload) {
     try {
+      console.log("idOrder: ",payload.idOrder);
       const idOrder = payload.idOrder;
       // Kiểm tra idOrder không phải là undefined hoặc null
       if (!idOrder) {

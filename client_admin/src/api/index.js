@@ -308,3 +308,79 @@ export const apiAddAdmin = (payload) => new Promise(async(resolve, reject)=>{
         reject(error)
     }
   })
+
+  export const apiGetAllExtraService = (payload) => new Promise(async(resolve, reject)=>{
+    try {
+        const response = await axiosConfig({
+            method: 'get',
+            url: '/admin/extraservices',
+            data:payload,
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+  })
+
+  export const apiAddExtraService = (payload) => new Promise(async(resolve, reject)=>{
+    try {
+        const response = await axiosConfig({
+            method: 'post',
+            url: '/admin/extraservices',
+            data:payload,
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+  })
+  
+  export const apiEditExtraService = (payload) => new Promise(async(resolve, reject)=>{
+    try {
+        const response = await axiosConfig({
+            method: 'put',
+            url: `/admin/extraservices/${payload.id}`,
+            data:payload,
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+  })
+
+  export const apiDeleteExtraService = (payload) => new Promise(async(resolve, reject)=>{
+    try {
+        const response = await axiosConfig({
+            method: 'delete',
+            url: `/admin/extraservices/${payload.id}`,
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+  })
+
+  export const apiGetAllComment = () => new Promise(async(resolve, reject)=>{
+    try {
+        const response = await axiosConfig({
+            method: 'get',
+            url: '/admin/comments',
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+  })
+
+  export const apiDeleteComment = (payload) => new Promise(async(resolve, reject)=>{
+    try {
+        const response = await axiosConfig({
+            method: 'delete',
+            url: '/admin/comments',
+            data: payload,
+        })
+        resolve(response)
+    } catch (error) {
+        reject(error)
+    }
+  })
