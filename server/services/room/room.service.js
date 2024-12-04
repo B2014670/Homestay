@@ -203,7 +203,6 @@ class RoomService {
   }
 
   async deleteRoom(payload) {
-    console.log(payload);
 
     const result = await this.Room.deleteOne({
       _id: ObjectId.isValid(payload._id) ? new ObjectId(payload._id) : null,
@@ -237,6 +236,37 @@ class RoomService {
     // console.log(result)
     return result;
   }
+
+  async deleteOrderRoom(payload) {
+    const { idRoom, dateOrderRoom } = payload;
+
+    // Ensure the room ID is valid
+    if (!ObjectId.isValid(idRoom)) {
+      throw new Error('Invalid room ID');
+    }
+
+    // Ensure dateOrderRoom is an array
+    if (!Array.isArray(dateOrderRoom)) {
+      throw new Error('Invalid dateOrderRoom format');
+    }
+
+    // Perform the update to remove the specified date range from ordersRoom
+    const result = await this.Room.findOneAndUpdate(
+      {
+        _id: new ObjectId(idRoom), // Find the room by its ID
+        ordersRoom: { $elemMatch: { $eq: dateOrderRoom } }, // Match the exact array in ordersRoom
+      },
+      {
+        $pull: { ordersRoom: { $eq: dateOrderRoom } }, // Remove the matching array from ordersRoom
+      },
+      { returnDocument: 'after' } // Return the updated document
+    );
+
+    // Return the result of the update
+    return result;
+  }
+
+
   async findRoomByIdSector(filter) {
     // console.log(filter);
     const cursor = await this.Room.find({

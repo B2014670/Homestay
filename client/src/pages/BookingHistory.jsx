@@ -5,6 +5,8 @@ import { apiHistoryOrder, apiCancelRoom, apiAddComment, apiUpdateComment, apiDel
 import useAuthStore from '../stores/authStore'
 import dayjs from "dayjs"
 import customParseFormat from "dayjs/plugin/customParseFormat"
+import { useNavigate } from "react-router-dom";
+import { path } from '../utils/constant';
 
 dayjs.extend(customParseFormat)
 const dateFormat = "DD/MM/YYYY"
@@ -28,6 +30,7 @@ export default function BookingHistory() {
     const [pageSize, setPageSize] = useState(5)
     const [searchText, setSearchText] = useState('')
     const [searchedColumn, setSearchedColumn] = useState('')
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchBookingHistory()
@@ -402,8 +405,8 @@ export default function BookingHistory() {
                                     {parseInt(record.room.giaRoom).toLocaleString()} VND
                                 </p>
                                 <p className="text-sm text-gray-500">Đã bao gồm thuế và phí</p>
-                                <Button type="primary" icon={<CalendarOutlined />} className="mt-2">
-                                    Xem chỗ trống
+                                <Button onClick={() => navigate(`/${path.DETAILROOM}/${record.room._id}`)} type="primary" icon={<CalendarOutlined />} className="mt-2">
+                                    Xem chỗ trống                                 
                                 </Button>
                             </div>
                         </div>

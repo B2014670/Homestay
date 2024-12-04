@@ -42,6 +42,7 @@ async function autoDeleteExpiredOrders() {
 }
 
 function scheduleAutoDeleteExpiredOrders() {
+    // cron.schedule('*/3 * * * * *', async () => { // 3 Seconds
     cron.schedule('0 0 * * *', async () => { // Midnight
         try {
             await autoDeleteExpiredOrders();

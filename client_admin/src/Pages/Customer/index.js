@@ -177,6 +177,14 @@ const Customer = () => {
                 sorter: (a, b) => a.address.length - b.address.length,
                 sortDirections: ['descend', 'ascend'],
               },
+              {
+                title: 'Số đơn',
+                dataIndex: 'order',
+                key: 'order',
+                sorter: (a, b) => a.order.length - b.order.length,
+                sortDirections: ['descend', 'ascend'],
+                render: (order) => order.length || 0,
+              },
             ]}
             dataSource={dataSource}
             pagination={{

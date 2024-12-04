@@ -538,13 +538,6 @@ exports.orderRoom = async (req, res, next) => {
     deposit: req.query.infoOrder.deposit || 0,
     statusOrder: req.query.infoOrder.statusOrder,
     extraServices: req.query.infoOrder.extraServices || null,
-    // discount: req.query.infoOrder.discount,  // New field: discount
-    // tax: req.query.infoOrder.tax,  // New field: tax
-    // totalAfterDiscount: req.query.infoOrder.totalAfterDiscount,  // New field: total after discount
-    // notes: req.query.infoOrder.notes,  // New field: order notes
-    // createdAt: new Date(),  // New field: creation timestamp
-    // updatedAt: new Date(),  // New field: updated timestamp (initially same as createdAt)
-    // completedAt: req.query.infoOrder.completedAt || null,  // New field: completion date (if order is complete)
     idOrder: idv4
   }
   const user = {

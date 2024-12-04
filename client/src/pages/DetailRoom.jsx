@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Form, Card, Typography, Descriptions, Rate, Button, DatePicker, message, Tag, Divider, Image, Radio, Space, Checkbox } from 'antd';
+import { theme, Form, Card, Typography, Descriptions, Rate, Button, DatePicker, message, Tag, Divider, Image, Radio, Space, Checkbox } from 'antd';
 import { UserOutlined, EnvironmentOutlined, DollarOutlined, LoginOutlined, CoffeeOutlined } from '@ant-design/icons';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { PayPalButtons } from "@paypal/react-paypal-js";
@@ -48,8 +48,10 @@ const DetailRoom = () => {
     transactionId: null,
     deposit: deposit,
     statusOrder: 1,
-    extraServices:[]
+    extraServices: []
   });
+
+  const { token } = theme.useToken();
 
   useEffect(() => {
     if (id) {
@@ -81,7 +83,7 @@ const DetailRoom = () => {
       homestayData.ordersRoom.forEach(order => {
         if (Array.isArray(order) && order.length === 2) {
           const [start, end] = order;
-          const datesInRange = getDatesBetween(start, end);
+          const datesInRange = getDatesBetweenBooking(start, end);
           newDisabledDateData.push(...datesInRange);
         }
       });
@@ -132,8 +134,18 @@ const DetailRoom = () => {
       return;
     }
 
-    const dateArray = getDatesBetween(dates[0], dates[1]);
-    const isOverlap = dateArray.some((date) => disabledDateData.includes(date));
+    const dateArray = getDatesBetweenInput(dates[0], dates[1]);
+
+    // Kiểm tra xem 2 ngày có liên tiếp hay không
+    const areConsecutiveDates = dates[1].isSame(dates[0].add(1, 'day'), 'day');
+
+    // Nếu là 2 ngày liên tiếp, kiểm tra xem tất cả các ngày trong dateArray có nằm trong disabledDateData không
+    const isOverlap = areConsecutiveDates
+      ? dateArray.every((date) => disabledDateData.includes(date)) // Kiểm tra tất cả ngày trong dateArray
+      : dateArray.some((date) => disabledDateData.includes(date)); // Kiểm tra xem có ngày nào trùng không
+
+    // const dateArray = getDatesBetweenInput(dates[0], dates[1]);
+    // const isOverlap = dateArray.some((date) => disabledDateData.includes(date));
     if (isOverlap) {
       resetDateSelection();
       swal("Thông báo !", "Vui lòng không chọn những ngày đã được đặt trước đó !", "warning");
@@ -160,11 +172,10 @@ const DetailRoom = () => {
     setFormData(prev => ({ ...prev, dateInput: [], totalMoney: 0 }));
   };
 
-  const getDatesBetween = (start, end) => {
+  const getDatesBetweenBooking = (start, end) => {
     const dates = [];
     let currentDate = dayjs(start, dateFormat);
     const endDate = dayjs(end, dateFormat);
-
     while (currentDate <= endDate) {
       dates.push(currentDate.format(dateFormat));
       currentDate = currentDate.add(1, 'day');
@@ -172,9 +183,71 @@ const DetailRoom = () => {
     return dates;
   };
 
+  const getDatesBetweenInput = (start, end) => {
+    const dates = [];
+    let currentDate = dayjs(start, dateFormat);
+    const endDate = dayjs(end, dateFormat);
+
+    // Kiểm tra xem start và end có liền kề hay không
+    const isAdjacent = currentDate.add(1, 'day').isSame(endDate);
+
+    if (isAdjacent) {
+      // Nếu liền kề thì lấy cả hai ngày đầu và cuối
+      dates.push(currentDate.format(dateFormat));
+      dates.push(endDate.format(dateFormat));
+    } else {
+      // Nếu không liền kề thì chỉ lấy các ngày ở giữa
+      currentDate = currentDate.add(1, 'day'); // Bỏ qua ngày đầu
+      while (currentDate < endDate) {
+        dates.push(currentDate.format(dateFormat));
+        currentDate = currentDate.add(1, 'day');
+      }
+    }
+
+    return dates;
+  };
+
+  // const disabledDate = (current) => {
+  //   const formattedDisabledDays = disabledDateData.map((day) => dayjs(day, dateFormat));
+  //   return current < dayjs().startOf("day") || formattedDisabledDays.some((disabledDay) => current.isSame(disabledDay, "day"));
+  // };
   const disabledDate = (current) => {
-    const formattedDisabledDays = disabledDateData.map((day) => dayjs(day, dateFormat));
-    return current < dayjs().startOf("day") || formattedDisabledDays.some((disabledDay) => current.isSame(disabledDay, "day"));
+    return current < dayjs().startOf("day")
+  };
+
+  // Chuyển đổi mảng ngày đã đặt thành định dạng ngày phù hợp với Ant Design
+  const formatBookedDates = disabledDateData.map(date => date.replace(/\//g, '-'));
+
+  const style = {
+    border: `1px solid ${token.colorPrimary}`,
+    borderRadius: '50%',
+    backgroundColor: 'lightblue',
+    color: 'white',
+  };
+
+  // Hàm render ô ngày
+  const cellRender = (current, info) => {
+    if (info.type !== 'date') {
+      return info.originNode;
+    }
+    // Kiểm tra nếu ngày có trong mảng ngày đã đặt
+    const isBooked = formatBookedDates.includes(current.format('DD-MM-YYYY'));
+
+    // Nếu là ngày đã đặt, tô màu
+    if (isBooked) {
+      return (
+        <div className="ant-picker-cell-inner" style={style}>
+          {current.date()}
+        </div>
+      );
+    }
+
+    // Nếu không phải ngày đã đặt, render ô ngày bình thường
+    return (
+      <div className="ant-picker-cell-inner">
+        {current.date()}
+      </div>
+    );
   };
 
   const handlePaymentMethodChange = (e) => {
@@ -211,7 +284,7 @@ const DetailRoom = () => {
         transactionId: transactionId || formData.transactionId,
       },
     };
-    console.log(dataInput.infoOrder);
+    // console.log(dataInput.infoOrder);
     const response = await apiPostOrderRoom(dataInput);
     if (response.status === 200)
       swal("Thành Công !", " Đặt phòng thành công !", "success").then((value) => {
@@ -276,7 +349,7 @@ const DetailRoom = () => {
                         <Image
                           src={homestayData.imgRoom[0].secure_url}
                           alt="Main Room"
-                          height={300}                     
+                          height={300}
                           className="w-full object-cover rounded-lg"
                         />
                       </div>
@@ -318,11 +391,11 @@ const DetailRoom = () => {
                 <Descriptions
                   className="w-full"
                   bordered
-                  column={{  sm: 1, md: 2, lg: 2 }}
+                  column={{ sm: 1, md: 2, lg: 2 }}
                 >
                   <Descriptions.Item label="Rating" >
                     <Rate disabled defaultValue={homestayData.danhgiaRoom} />
-                  </Descriptions.Item>                                
+                  </Descriptions.Item>
 
                   <Descriptions.Item label="Loại phòng" span={2}>
                     <Tag icon={<UserOutlined />} color="blue">
@@ -351,7 +424,7 @@ const DetailRoom = () => {
                 <Paragraph>{homestayData.discRoom}</Paragraph>
                 <Divider />
 
-                {/* Comments Section */}                
+                {/* Comments Section */}
                 <CommentViewer comments={comments} />
               </>
             ) : (
@@ -371,6 +444,7 @@ const DetailRoom = () => {
                 >
                   <RangePicker
                     disabledDate={disabledDate}
+                    cellRender={cellRender}
                     value={selectedDateRange}
                     placeholder={['Ngày Đi', 'Ngày Về']}
                     format={dateFormat}
@@ -409,11 +483,13 @@ const DetailRoom = () => {
                   {isBreakfastIncluded && (
                     <BreakfastBooking
                       onBookingChange={(bookingData) => {
+                        const priceRoom = selectedDateRange[1].diff(selectedDateRange[0], 'day') * homestayData?.giaRoom;
+                        setTotalAmount(priceRoom + bookingData.totalServiceCost);
                         setFormData((prev) => ({
                           ...prev,
+                          totalMoney: priceRoom + bookingData.totalServiceCost,
                           extraServices: [bookingData]
                         }));
-                        setTotalAmount((prev) => prev + bookingData.totalServiceCost);
                       }}
                       loaiRoom={homestayData?.loaiRoom}
                       selectedDateRange={selectedDateRange}

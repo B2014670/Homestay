@@ -366,12 +366,32 @@ exports.deleteRoom = async (req, res, next) => {
   // console.log(req.body)
   try {
     const roomService = new RoomService(MongoDB.client);
-    const result = await roomService.deleteRoom(req.body);
-    // console.log(result)
+    const room = await roomService.checkByIdRoom({ "idRoom": req.body._id })
+    const result = await roomService.deleteRoom({_id: room[0]._id});
     if (result.deletedCount > 0) {
+
+      try {
+        const sectorService = new SectorService(MongoDB.client);
+        const updateSectorResult = await sectorService.deleteOneRoomInSector({"idSector": room[0].idSectorRoom});
+
+        if (!updateSectorResult) {
+          console.error("Failed to update totalRoomInSector");
+          return res.status(200).json({
+            status: 1,
+            msg: "Xóa phòng thành công, nhưng không thể cập nhật số lượng phòng trong khu vực.",
+          });
+        }
+      } catch (sectorError) {
+        console.error(sectorError);
+        return res.status(500).json({
+          status: 1,
+          msg: "Xóa phòng thành công, nhưng xảy ra lỗi khi cập nhật khu vực.",
+        });
+      }
+
       return res.status(200).json({
         status: 0,
-        msg: "Xóa Phòng Thành Công !!!"
+        msg: "Xóa phòng thành công!"
       });
     }
     else {
@@ -380,7 +400,7 @@ exports.deleteRoom = async (req, res, next) => {
 
   } catch (error) {
     console.log(error)
-    return next(new ApiError(500, "Xảy ra lỗi trong quá trình xoa phong !"));
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình xóa phòng!"));
   }
 };
 
@@ -551,16 +571,25 @@ exports.completeOrderRoom = async (req, res, next) => {
 };
 
 exports.deleteOrderRoom = async (req, res, next) => {
-  // console.log(req.body)
   try {
     const userService = new UserService(MongoDB.client);
+    const roomService = new RoomService(MongoDB.client);
     const result = await userService.DeleteOrderRoom(req.body);
-    // console.log(result)
-    if (result) {
+
+    const room = {
+      idRoom: req.body.idRoom,
+      dateOrderRoom: req.body.dateInput,
+    };
+
+    // Xóa ngày đặt phòng khỏi phòng
+    const result1 = await roomService.deleteOrderRoom(room);
+
+
+    if (result && result1 ) {
       return res.status(200).json({
         status: 1,
         data: result,
-        msg: "Xóa đơn đặt thành công !"
+        msg: "Xóa ngày đặt thành công !"
       });
     }
     else {

@@ -301,11 +301,11 @@ const Rooms = () => {
 
               {/* Reset Button */}
               <button
-                className="flex items-center justify-center w-full h-[40px] mb-2 rounded-md bg-[#17e9e0] hover:bg-[#0ec4b7] transition-all"
+                className="flex items-center justify-center w-full h-[40px] mb-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-shadow"
                 onClick={handleReset}
               >
                 <AiOutlineReload size={20} />
-                <span className="ml-1">Đặt lại</span>
+                <span className="ml-1 ">Đặt lại</span>
               </button>
 
             </div>

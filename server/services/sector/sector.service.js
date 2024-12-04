@@ -61,6 +61,22 @@ class SectorService {
     return result;
   }
 
+  async deleteOneRoomInSector(payload) {
+  
+    const result = await this.Sector.findOneAndUpdate(
+      {
+        _id: ObjectId.isValid(payload.idSector)
+          ? new ObjectId(payload.idSector)
+          : null,
+        totalRoomInSector: { $gt: 0 }, // Đảm bảo số phòng không âm
+      },
+      { $inc: { totalRoomInSector: -1 } },
+      { returnDocument: "after", upsert: false } // Không tạo mới nếu không tìm thấy
+    );
+    console.log(result);
+    return result;
+  }  
+
   async EditSector(payload) {
     // Sao chép payload và loại bỏ idSector
     const { idSector, ...updateData } = payload;

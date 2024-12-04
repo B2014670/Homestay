@@ -130,7 +130,7 @@ router.post("", async (req, res) => {
       const listItems = data.sectors.map((sector) => {
         return {
           ...listItemsPayload,
-          title: `${capitalizeFirstLetter(sector.nameSector)} - ${sector.totalRoomInSector} phòng`,
+          title: `${capitalizeFirstLetter(sector.nameSector)}: ${sector.totalRoomInSector} phòng`,
           subtitle: `${sector.discSector}`,
           event: {
             name: "select_sector",
@@ -421,7 +421,7 @@ router.post("", async (req, res) => {
       //   const start = new Date(startDate.split("/").reverse().join("-"));
       //   const end = new Date(endDate.split("/").reverse().join("-"));
       //   const dateList = [];
-      
+
       //   // Lặp qua các ngày từ start đến end
       //   for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
       //     // Lấy ngày, tháng, năm và chuyển thành định dạng DD/MM/YYYY
@@ -430,11 +430,11 @@ router.post("", async (req, res) => {
       //     const year = dt.getFullYear();
       //     dateList.push(`${day}/${month}/${year}`);
       //   }
-      
+
       //   return dateList;
       // }
 
-     
+
       // Sử dụng hàm
       const enNgayCheckIn = parameters.enNgayCheckIn;
       const enNgayCheckOut = parameters.enNgayCheckOut;
@@ -446,9 +446,9 @@ router.post("", async (req, res) => {
       // console.log('enOut', enOut);
       // const dateList = getDatesList(enNgayCheckIn, enNgayCheckOut);
       // console.log("các ngày cần tìm: " + dateList); // Danh sách các ngày từ ngày check-in đến ngày check-out
-      
+
       // hàm lấy danh sách các phòng có ngày trống
-      const data = await dialogflow.checkRoomByChatBot({ date: [enIn,enOut] });
+      const data = await dialogflow.checkRoomByChatBot({ date: [enIn, enOut] });
       if (data.length > 0) {
         const accordionPayload = {
           type: "accordion",
@@ -545,7 +545,6 @@ router.post("", async (req, res) => {
   //hàm lấy thông tin đặt phòng từ IdOrder
   async function getInfoOrder() {
     try {
-      // console.log(parameters)
       const idOrder = parameters.EnIdOrder;
       // console.log(idOrder)
       const data = await dialogflow.getInfoOrderRoomByChatBot({
@@ -556,21 +555,34 @@ router.post("", async (req, res) => {
           fulfillmentText: "Không tìm thấy mã đơn đặt phòng trùng khớp với mã đơn đã cung cấp.",
         });
       }
-      console.log(data);
-      const paymentStatus = data.pay ? "Đã thanh toán" : "Chưa thanh toán";
-      let orderStatus = "";
-      if (data.statusOrder === "1") {
-        orderStatus = "Chờ xác nhận";
+      // console.log(data);
+
+      // Định nghĩa trạng thái đơn hàng
+      const statusMapping = {
+        "1": "Chờ xác nhận",
+        "2": "Đã xác nhận thông tin",
+        "3": "Đã hoàn thành đơn",
+        "10": "Đã hủy đơn",
+      };
+
+      const paymentStatus = data.pay === "true" ? "Đã thanh toán" : "Chưa thanh toán";
+      const orderStatus = statusMapping[data.statusOrder] || "Chưa xác định";
+      // Build extra services information
+      let extraServicesInfo = [];
+      if (data.extraServices && data.extraServices.length > 0) {
+        extraServicesInfo = data.extraServices.map(service => ({
+          type: "description",
+          title: `Bao gồm: ${service.serviceType}`,
+          text: [
+            `Số khách: ${service.guests || "Chưa có thông tin"}`,
+            `Ngày sử dụng: ${service.dates ? service.dates.join(", ") : "Chưa có thông tin"}`,
+            `Giá mỗi đơn vị: ${service.pricePerUnit || "Chưa có thông tin"}`,
+            `Tổng chi phí dịch vụ: ${service.totalServiceCost || "Chưa có thông tin"}`,
+          ],
+        }));
       }
-      if (data.statusOrder === "2") {
-        orderStatus = "Đã xác nhận thông tin";
-      }
-      if (data.statusOrder === "3") {
-        orderStatus = "Đã hoàn thành đơn";
-      }
-      if (data.statusOrder === "10") {
-        orderStatus = "Đã hủy đơn";
-      }
+      console.log(extraServicesInfo);
+
       const fulfillmentMessage = {
         fulfillmentMessages: [
           {
@@ -578,22 +590,35 @@ router.post("", async (req, res) => {
               richContent: [
                 [
                   {
-                    type: "accordion",
+                    type: "description",
                     title: "Thông Tin Đơn Đặt Phòng",
-                    subtitle: `Mã Đơn hàng : ${data.idOrder}`,
+                    subtitle: `Mã đơn: ${data.idOrder ?? "Không có thông tin"}`,
                     text: [
-                      `Họ và Tên : ${data.userInput}\n`,
-                      `Số điện thoại : ${data.phoneInput}\n`,
-                      `Ngày nhận phòng : ${data.dateInput[0]}\n`,
-                      `Ngày trả phòng : ${data.dateInput[data.dateInput.length - 1]
-                      }\n`,
-                      `Tổng tiền : ${data.totalMoney}`,
-                      `Thanh toán : ${paymentStatus}`,
-                      `Trạng thái đơn  : ${orderStatus}`,
-                    ],
+                      `Mã đơn: ${data.idOrder ?? "Không có thông tin"}`,
+                      `Họ và Tên: ${data.userInput ?? "Chưa cung cấp"}`,
+                      `Số điện thoại: ${data.phoneInput ?? "Chưa cung cấp"}`,
+                      `Ngày nhận phòng: ${data.dateInput?.[0] ?? "Chưa cung cấp"}`,
+                      `Ngày trả phòng: ${data.dateInput?.[data.dateInput.length - 1] ?? "Chưa cung cấp"}`,
+                      `Tổng tiền: ${data.totalMoney ?? "Chưa tính"}`,
+                      `Thanh toán: ${paymentStatus}`,
+                      `Trạng thái đơn: ${orderStatus}`
+                    ]
                   },
                 ],
+                extraServicesInfo.length > 0 ? extraServicesInfo : [],
+                [
+                  {
+                    "type": "chips",
+                    "options": [
+                      {
+                        "text": "Xem chi tiết",
+                        "link": "http://localhost:3000/datphong"
+                      }
+                    ]
+                  }
+                ],
               ],
+
             },
           },
         ],
