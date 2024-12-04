@@ -32,6 +32,7 @@ class ExtraServiceService {
         try {
             const filter = {
                 _id: ObjectId.isValid(idExtraService) ? new ObjectId(idExtraService) : null,
+                status: 1,
             };
             const result = await this.ExtraService.findOne(filter);
             return result

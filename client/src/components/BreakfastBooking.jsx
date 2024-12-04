@@ -5,9 +5,10 @@ import { CoffeeOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-const BREAKFAST_PRICE_PER_PERSON = 50000; // 150,000 VND per person
+function BreakfastBooking({ onBookingChange, loaiRoom, selectedDateRange, serviceData }) {
+  const breakfastService = serviceData.find((service) => service.name === "Bửa sáng");
+  const BREAKFAST_PRICE_PER_PERSON = breakfastService ? parseInt(breakfastService.price) : 50000;
 
-function BreakfastBooking({ onBookingChange, loaiRoom, selectedDateRange }) {
   const [guests, setGuests] = useState(1);
   const [dates, setDates] = useState([]);
   const [totalCost, setTotalCost] = useState(0);

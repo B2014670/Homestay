@@ -585,12 +585,19 @@ exports.deleteOrderRoom = async (req, res, next) => {
     const result1 = await roomService.deleteOrderRoom(room);
 
 
-    if (result && result1 ) {
-      return res.status(200).json({
-        status: 1,
-        data: result,
-        msg: "Xóa ngày đặt thành công !"
-      });
+    if (result) {
+      if (result1)
+        return res.status(200).json({
+          status: 1,
+          data: result,
+          msg: "Xóa ngày đặt thành công !"
+        });
+      else 
+        return res.status(200).json({
+          status: 1,
+          data: result,
+          msg: "Xóa đơn hàng thành công !"
+        });
     }
     else {
       return res.status(200).json("code lỗi");
@@ -606,7 +613,7 @@ exports.deleteOrderRoom = async (req, res, next) => {
 exports.getAllExtraServices = async (req, res, next) => {
   try {
     const extraServiceService = new ExtraServiceService(MongoDB.client);
-    const data = await extraServiceService.getAll(); // Giả định `getAll()` trả về danh sách dịch vụ bổ sung
+    const data = await extraServiceService.getAll({ status: 1 });
     const result = {
       extraServices: data,
       total: data.length,
@@ -626,7 +633,7 @@ exports.getExtraServiceById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const extraServiceService = new ExtraServiceService(MongoDB.client);
-    const data = await extraServiceService.getById(id); // Giả định `getById()` trả về một dịch vụ bổ sung
+    const data = await extraServiceService.getById(id); 
 
     if (data) {
       return res.status(200).json(data);

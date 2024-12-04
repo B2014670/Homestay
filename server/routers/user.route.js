@@ -91,4 +91,8 @@ router.put("/conversation/update-admin", chat.updateAdmin);
 
 router.get('/admins/:adminId/conversations', chat.getConversationsForAdmin);
 
+router.get('/extraservices', users.getAllExtraServices);
+
+router.get('/extraservices/:id', users.getExtraServiceById);
+
 module.exports = router;

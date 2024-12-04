@@ -5,6 +5,7 @@ const RoomService = require("../services/room/room.service");
 const SectorService = require("../services/sector/sector.service");
 const RefundService = require("../services/payment/refund.service");
 const WishlistService = require("../services/wishlist/wishlist.service");
+const ExtraServiceService = require("../services/extraservice/extraservice.service");
 const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
@@ -456,8 +457,6 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-
-
 exports.infoUser = async (req, res, next) => {
   // console.log(req)
   try {
@@ -519,39 +518,68 @@ exports.getAllRoom = async (req, res, next) => {
 };
 
 exports.orderRoom = async (req, res, next) => {
-  const idv4 = uuidv4();
-  const room = {
-    idRoom: req.query.Room?._id ?? req.query.infoOrder.idRoom,
-    dateOrderRoom: req.query.infoOrder.dateInput,
-  }
-  console.log(req.query.infoOrder)
-  const infoOrder = {
-    idUser: req.query.infoOrder.idUser,
-    userInput: req.query.infoOrder.userInput,
-    phoneInput: req.query.infoOrder.phoneInput,
-    idRoom: req.query.infoOrder.idRoom,
-    dateInput: req.query.infoOrder.dateInput,
-    totalMoney: req.query.infoOrder.totalMoney,
-    pay: req.query.infoOrder.pay,
-    paymentMethod: req.query.infoOrder.paymentMethod,
-    transactionId: req.query.infoOrder.transactionId || null,
-    deposit: req.query.infoOrder.deposit || 0,
-    statusOrder: req.query.infoOrder.statusOrder,
-    extraServices: req.query.infoOrder.extraServices || null,
-    idOrder: idv4
-  }
-  const user = {
-    info: infoOrder,
-  }
-  // console.log(req.query)
   try {
+    const idv4 = uuidv4();
+    const room = {
+      idRoom: req.query.Room?._id ?? req.query.infoOrder.idRoom,
+      dateOrderRoom: req.query.infoOrder.dateInput,
+    }
+
+    const infoOrder = {
+      idUser: req.query.infoOrder.idUser,
+      userInput: req.query.infoOrder.userInput,
+      phoneInput: req.query.infoOrder.phoneInput,
+      idRoom: req.query.infoOrder.idRoom,
+      dateInput: req.query.infoOrder.dateInput,
+      totalMoney: req.query.infoOrder.totalMoney,
+      pay: req.query.infoOrder.pay,
+      paymentMethod: req.query.infoOrder.paymentMethod,
+      transactionId: req.query.infoOrder.transactionId || null,
+      deposit: req.query.infoOrder.deposit || 0,
+      statusOrder: req.query.infoOrder.statusOrder,
+      extraServices: req.query.infoOrder.extraServices || null,
+      idOrder: idv4
+    }
+    const user = {
+      info: infoOrder,
+    }
+
+    // Kiểm tra đầu vào `dateInput` là một mảng hợp lệ
+    if (!Array.isArray(infoOrder.dateInput) || infoOrder.dateInput.length !== 2) {
+      return res.status(400).send({ message: "Thông tin ngày đặt phòng không hợp lệ!" });
+    }
+
     const userService = new UserService(MongoDB.client);
     const roomService = new RoomService(MongoDB.client);
-    const result1 = await roomService.OrderRoom(room)
-    const result2 = await userService.OrderRoomUser(user)
-    return res.send(result2)
+
+    // Kiểm tra idRoom hợp lệ
+    const roomResult = await roomService.checkByIdRoom({ idRoom: req.query.infoOrder.idRoom });
+    if (!roomResult) {
+      return res.status(404).send({ message: "Phòng không tồn tại!" });
+    }
+
+    // Kiểm tra phòng trống
+    if (roomResult[0].ordersRoom) {
+      const [inputStartDate, inputEndDate] = infoOrder.dateInput.map(parseDate);
+
+      if (isDateOverlap(roomResult[0].ordersRoom, inputStartDate, inputEndDate)) {
+        return res.status(400).send({
+          message: "Phòng đã được đặt vào ngày bạn chọn. Vui lòng chọn ngày khác!",
+        });
+      }
+    }
+
+    // Thực hiện lưu thông tin đặt phòng
+    const roomOrderResult = await roomService.OrderRoom(room)
+    const userOrderResult  = await userService.OrderRoomUser(user)
+
+    if (roomOrderResult && userOrderResult) {
+      return res.status(200).send({ message: "Đặt phòng thành công!" });
+    } else {
+      return res.status(500).send({ message: "Lưu thông tin đặt phòng thất bại!" });
+    }
   } catch (error) {
-    // console.log(error)
+    console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình đặt phòng !"));
   }
 };
@@ -890,9 +918,9 @@ exports.softDeleteComment = async (req, res, next) => {
       });
     }
 
-    const result = await roomService.deleteComment({ 
-      idRoom: comment.idRoom, 
-      idComment 
+    const result = await roomService.deleteComment({
+      idRoom: comment.idRoom,
+      idComment
     });
 
     if (result.modifiedCount === 0) {
@@ -1019,4 +1047,55 @@ exports.getOneOrderOfUserById = async (req, res, next) => {
     return next(new ApiError(500, "Đã xảy ra lỗi khi xoá yêu thích của người dùng."));
 
   }
+}
+
+// Service
+exports.getAllExtraServices = async (req, res, next) => {
+  try {
+    const extraServiceService = new ExtraServiceService(MongoDB.client);
+    const data = await extraServiceService.getAll({ status: 1 });
+
+    if (data) {
+      return res.status(200).json(data);
+    } else {
+      return res.status(400).json({ message: "Đã xảy ra lỗi" });
+    }
+  } catch (error) {
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuất dịch vụ bổ sung!"));
+  }
+};
+
+exports.getExtraServiceById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const extraServiceService = new ExtraServiceService(MongoDB.client);
+    const data = await extraServiceService.getById(id); 
+
+    if (data) {
+      return res.status(200).json(data);
+    } else {
+      return res.status(404).json({ message: "Không tìm thấy dịch vụ bổ sung!" });
+    }
+  } catch (error) {
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình truy xuất dịch vụ bổ sung!"));
+  }
+};
+
+
+// Function
+
+function isDateOverlap(orders, inputStartDate, inputEndDate) {
+  return orders.some(booking => {
+    if (!Array.isArray(booking) || booking.length < 2) {
+      return false; // Skip invalid bookings
+    }
+    const bookingStartDate = parseDate(booking[0]);
+    const bookingEndDate = parseDate(booking[1]);
+    return inputStartDate < bookingEndDate && inputEndDate > bookingStartDate;
+  });
+}
+
+function parseDate(dateStr) {
+  const [day, month, year] = dateStr.split("/").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)); // Months are zero-indexed
 }

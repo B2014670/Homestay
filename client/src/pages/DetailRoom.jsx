@@ -10,7 +10,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import CommentViewer from '../components/CommentViewer';
 import BreakfastBooking from '../components/BreakfastBooking';
 import useAuthStore from '../stores/authStore';
-import { apiGetRoomWithSector, apiPostOrderRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist, apiGetAllComment } from '../services';
+import { apiGetRoomWithSector, apiPostOrderRoom, apiGetUserWishlist, apiCreateWishlist, apiDeleteWishlist, apiGetAllComment, apiGetExtraService } from '../services';
 import { path } from '../utils/constant';
 
 dayjs.extend(customParseFormat);
@@ -26,6 +26,7 @@ const DetailRoom = () => {
   const location = useLocation();
 
   const [homestayData, setHomestayData] = useState(null);
+  const [serviceData, setServiceDataData] = useState(null);
   const [comments, setComments] = useState([]);
   const [disabledDateData, setDisabledDateData] = useState([]);
   const [pay, setPay] = useState(true);
@@ -57,6 +58,7 @@ const DetailRoom = () => {
     if (id) {
       fetchRoom();
       fetchComment();
+      fetchExtraService();
     }
   }, [id]);
 
@@ -96,6 +98,19 @@ const DetailRoom = () => {
       const response = await apiGetRoomWithSector({ idRoom: id });
       if (response?.data) {
         setHomestayData(response.data);
+      } else {
+        console.error('No data returned from API');
+      }
+    } catch (error) {
+      console.error('Error fetching room:', error);
+    }
+  };
+
+  const fetchExtraService = async () => {
+    try {
+      const response = await apiGetExtraService();
+      if (response?.data.data) {
+        setServiceDataData(response.data.data);
       } else {
         console.error('No data returned from API');
       }
@@ -285,11 +300,32 @@ const DetailRoom = () => {
       },
     };
     // console.log(dataInput.infoOrder);
-    const response = await apiPostOrderRoom(dataInput);
-    if (response.status === 200)
-      swal("Thành Công !", " Đặt phòng thành công !", "success").then((value) => {
-        fetchRoom();
-      });
+    // const response = await apiPostOrderRoom(dataInput);
+    // if (response.status === 200)
+    //   swal("Thành Công !", " Đặt phòng thành công !", "success")
+    //     .then((value) => {
+    //       fetchRoom();
+    //     });
+    // else {
+    //   message.error('Đặt phòng thất bại');
+    // }
+
+    try {
+      const response = await apiPostOrderRoom(dataInput);
+      if (response.status === 200) {
+        swal("Thành Công !", " Đặt phòng thành công !", "success")
+          .then((value) => {
+            fetchRoom();
+          });
+      } else {
+        message.error(response.data?.message || 'Đặt phòng thất bại');
+      }
+    } catch (error) {
+      console.error("Lỗi khi đặt phòng:", error);
+      message.error(error.response?.data?.message || 'Đặt phòng thất bại do lỗi hệ thống');
+    }
+
+
   };
 
   const handleWishlistToggle = async () => {
@@ -491,6 +527,7 @@ const DetailRoom = () => {
                           extraServices: [bookingData]
                         }));
                       }}
+                      serviceData= {serviceData}
                       loaiRoom={homestayData?.loaiRoom}
                       selectedDateRange={selectedDateRange}
                     />
