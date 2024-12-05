@@ -341,6 +341,52 @@ class RoomService {
     }
   }
 
+  async getAllCommentsIncludeHide() {
+    const comments = await this.Room.aggregate([
+      { $unwind: "$cmtRoom" },
+      {
+        $addFields: {
+          "cmtRoom.idUser": { $toObjectId: "$cmtRoom.idUser" }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "cmtRoom.idUser",
+          foreignField: "_id",
+          as: "cmtRoom.userDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$cmtRoom.userDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          // nameRoom: "$nameRoom",
+          "cmtRoom.idComment": 1,
+          "cmtRoom.idUser": 1,
+          "cmtRoom.idOrder": 1,
+          "cmtRoom.idRoom": 1,
+          "cmtRoom.rating": 1,
+          "cmtRoom.text": 1,
+          "cmtRoom.createdDate": 1,
+          "cmtRoom.updatedDate": 1,
+          "cmtRoom.isDeleted": 1,
+          "cmtRoom.userDetails._id": 1,
+          "cmtRoom.userDetails.name": 1,
+          "cmtRoom.userDetails.img": 1
+        }
+      }
+    ]).toArray();
+
+    // If there are any comments, return the array of all comments
+    return comments.length > 0 ? comments.map(item => item.cmtRoom) : [];
+  }
+
   async getAllComments() {
     const comments = await this.Room.aggregate([
       { $unwind: "$cmtRoom" },
@@ -442,13 +488,65 @@ class RoomService {
     return comment.length > 0 ? comment[0].cmtRoom : null;
   }
 
+  async getCommentsByIdIncludeHide(idComment) {
+    const comment = await this.Room.aggregate([
+      { $unwind: "$cmtRoom" },
+      {
+        $match: {
+          "cmtRoom.idComment": idComment,
+          // "cmtRoom.isDeleted": { $ne: true }
+        }
+      },
+      {
+        $addFields: {
+          "cmtRoom.idUser": { $toObjectId: "$cmtRoom.idUser" } // Convert string to ObjectId
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "cmtRoom.idUser",
+          foreignField: "_id",
+          as: "cmtRoom.userDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$cmtRoom.userDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          "nameRoom":1,
+          "cmtRoom.idComment": 1,
+          "cmtRoom.idUser": 1,
+          "cmtRoom.idOrder": 1,
+          "cmtRoom.idRoom": 1,
+          "cmtRoom.rating": 1,
+          "cmtRoom.text": 1,
+          "cmtRoom.createdDate": 1,
+          "cmtRoom.updatedDate": 1,
+          "cmtRoom.isDeleted": 1,
+          "cmtRoom.userDetails._id": 1,
+          "cmtRoom.userDetails.name": 1,
+          "cmtRoom.userDetails.img": 1
+        }
+      }
+
+    ]).toArray();
+
+    return comment.length > 0 ? comment[0].cmtRoom : null;
+  }
+
   async getCommentsByUser(idUser) {
     const comments = await this.Room.aggregate([
       { $unwind: "$cmtRoom" },
       {
         $match: {
           "cmtRoom.idUser": idUser,
-          "cmtRoom.isDeleted": { $ne: true }
+          // "cmtRoom.isDeleted": { $ne: true }
         }
       },
       {
@@ -606,6 +704,24 @@ class RoomService {
       },
       { returnDocument: "after", }
     );
+    return result;
+  }
+
+  async restoreComment(payload) {
+    const { idRoom, idComment } = payload;
+
+    const result = await this.Room.updateOne(
+      {
+        _id: ObjectId.isValid(idRoom) ? new ObjectId(idRoom) : null,
+        "cmtRoom.idComment": idComment,
+        "cmtRoom.isDeleted": true,
+      },
+      {
+        $set: { "cmtRoom.$.isDeleted": false, },
+        $unset: { "comments.$.deletedDate": "" }
+      }
+    );
+
     return result;
   }
 

@@ -706,7 +706,7 @@ exports.getAllComment = async (req, res, next) => {
   try {
     const roomService = new RoomService(MongoDB.client);
 
-    const comments = await roomService.getAllComments();
+    const comments = await roomService.getAllCommentsIncludeHide();
 
     return res.status(200).json({
       err: 0,
@@ -721,7 +721,6 @@ exports.getAllComment = async (req, res, next) => {
 
 exports.softDeleteComment = async (req, res, next) => {
   const { idUser, idComment } = req.body;
-  console.log(req.body);
 
   try {
     const roomService = new RoomService(MongoDB.client);
@@ -763,3 +762,44 @@ exports.softDeleteComment = async (req, res, next) => {
     return next(new ApiError(500, "Đã có lỗi xảy ra trong quá trình đánh dấu xóa bình luận."));
   }
 };
+
+exports.unSoftDeleteComment = async (req, res, next) => {
+  const { idComment } = req.body;
+
+  try {
+    const roomService = new RoomService(MongoDB.client);
+
+    const comment = await roomService.getCommentsByIdIncludeHide(idComment);
+
+    if (!comment) {
+      return res.status(404).json({
+        err: -1,
+        msg: "Không tìm thấy bình luận.",
+      });
+    }
+
+    // Update the comment's status to "active" or the appropriate non-deleted status
+    const result = await roomService.restoreComment({
+      idRoom: comment.idRoom,
+      idComment,
+    });
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không thể khôi phục bình luận.",
+      });
+    }
+
+    return res.status(200).json({
+      err: 0,
+      msg: "Bình luận đã được khôi phục thành công!",
+    });
+  } catch (err) {
+    console.error(err);
+    return next(
+      new ApiError(500, "Đã có lỗi xảy ra trong quá trình khôi phục bình luận.")
+    );
+  }
+};
+

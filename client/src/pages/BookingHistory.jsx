@@ -320,7 +320,7 @@ export default function BookingHistory() {
             title: 'Thao tác',
             key: 'action',
             render: (_, record) => {
-                const hasRated = record.room?.cmtRoom.some(comment => comment.idOrder === record.idOrder && !comment.isDeleted)
+                const hasRated = record.room?.cmtRoom.some(comment => comment.idOrder === record.idOrder ) //&& !comment.isDeleted
                 return (
                     <div className="flex space-x-2">
                         <Button
@@ -503,7 +503,7 @@ export default function BookingHistory() {
                                     <p className="mt-2">
                                         <strong className="font-medium">Nội dung: </strong>
                                         <span className="text-gray-700">{comment.text}</span>
-                                    </p>
+                                    </p>                                    
                                     {comment.updatedDate ? (
                                         <p className="mt-2">
                                             <strong className="font-medium">Cập nhật lần cuối: </strong>
@@ -513,6 +513,12 @@ export default function BookingHistory() {
                                         <p className="mt-2">
                                             <strong className="font-medium">Ngày tạo: </strong>
                                             <span className="text-gray-600">{dayjs(comment.createdDate).format('DD/MM/YYYY')}</span>
+                                        </p>
+                                    )}
+                                    {comment.updatedDate ?? (
+                                        <p className="mt-2">
+                                            <strong className="font-medium">Trạng thái </strong>
+                                            <span className="text-gray-600">{comment.isDeleted ? "Tạm ẩn" : "Hiển thị"}</span>
                                         </p>
                                     )}
                                     <div className="mt-4 flex space-x-2">

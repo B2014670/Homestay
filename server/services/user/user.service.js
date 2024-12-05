@@ -307,7 +307,7 @@ class UserService {
               cond: {
                 $and: [
                   { $eq: ['$$comment.idOrder', '$order.idOrder'] },  // Match idOrder from the comment and order
-                  { $eq: ['$$comment.isDeleted', false] }  // Only include non-deleted comments
+                  // { $eq: ['$$comment.isDeleted', false] }  // Only include non-deleted comments
                 ]
               }
             }

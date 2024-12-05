@@ -75,7 +75,7 @@ router.post("/comments", users.createComment);
 
 router.put("/comments", users.updateComment);
 
-router.delete("/comments", users.softDeleteComment);
+// router.delete("/comments", users.softDeleteComment);
 
 router.post("/conversation", chat.createConversation);
 

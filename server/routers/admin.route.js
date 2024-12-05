@@ -45,6 +45,7 @@ router.delete('/extraservices/:id', admins.deleteExtraService);
 // comment
 router.get('/comments', admins.getAllComment);
 router.delete('/comments', admins.softDeleteComment);
+router.post('/comments', admins.unSoftDeleteComment);
 
 
 
