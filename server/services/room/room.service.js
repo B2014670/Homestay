@@ -280,8 +280,8 @@ class RoomService {
     try {
       const roomsWithSectors = await this.Room.aggregate([
         {
-          $match: { idSectorRoom: filter.enKhuVuc } 
-        }, 
+          $match: { idSectorRoom: filter.enKhuVuc }
+        },
         {
           $addFields: {
             idSectorRoom: { $toObjectId: "$idSectorRoom" }, // Convert string to ObjectId
@@ -359,16 +359,34 @@ class RoomService {
   }
 
   async EditRoom(payload) {
+
+    const currentRoom = await this.Room.findOne({ _id: ObjectId.isValid(payload._id) ? new ObjectId(payload._id) : null });
+
+    if (!currentRoom) {
+      throw new Error('Room not found');
+    }
+
+    let updatedImgRoom = currentRoom.imgRoom;
+    payload.imgRoom.forEach((newItem, index) => {
+      if (Object.keys(newItem).length > 0) {  // Nếu phần tử mới không rỗng
+        updatedImgRoom[index] = newItem;  // Thay thế phần tử trong mảng
+      }
+    });
+
     const updateObject = Object.keys(payload).reduce((acc, key) => {
       // Chỉ thêm các trường có giá trị khác rỗng vào đối tượng cập nhật
-      if (payload[key] !== "") {
+      if (key !== "_id" && payload[key] !== "") {
         acc[key] = payload[key];
       }
       return acc;
     }, {});
-    delete updateObject._id;
 
-    // Nếu updateObject không trống, tiến hành cập nhật
+    // Cập nhật lại imgRoom nếu đã thay đổi
+    if (updatedImgRoom.length > 0) {
+      updateObject.imgRoom = updatedImgRoom;
+    }
+
+    //Nếu updateObject không trống, tiến hành cập nhật
     if (Object.keys(updateObject).length > 0) {
       const result = await this.Room.findOneAndUpdate(
         {
@@ -377,7 +395,7 @@ class RoomService {
         { $set: updateObject },
         { returnDocument: "after", upsert: true }
       );
-      console.log(result);
+
       return result;
     } else {
       console.log("Không có giá trị nào khác rỗng để cập nhật.");

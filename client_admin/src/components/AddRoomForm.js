@@ -1,99 +1,36 @@
-import React, { useEffect, useState, useRef } from "react";
-import { IoMdCloseCircle } from "react-icons/io";
+import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { apiAddRoom, apiGetAllSector } from "../api";
 import swal from "sweetalert";
-
 import { Button, Form, Input, InputNumber, Select, Upload, Modal } from "antd";
+
 const { TextArea } = Input;
 
 const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
   const [selectedFile, setSelectedFile] = useState([]);
   const [nameRoom, setNameRoom] = useState("");
   const [giaRoom, setGiaRoom] = useState(0);
-  const [khuvucId, setKhuvucId] = useState("View biển");
+  const [sectorId, setSectorId] = useState("");
   const [loaiRoom, setLoaiRoom] = useState("1-2 người");
   const [discRoom, setDiscRoom] = useState("");
   const [sectors, setSectors] = useState([]);
-  const [selectedSectorId, setSelectedSectorId] = useState({});
-
-  const normFile = (e) => {
-    if (Array.isArray(e)) {
-      return e;
-    }
-    return e?.fileList;
-  };
+  // const [selectedSectorId, setSelectedSectorId] = useState({});
 
   const [formData, setFormData] = useState({
     nameRoom: nameRoom,
     giaRoom: giaRoom,
     loaiRoom: loaiRoom,
     discRoom: discRoom,
-    idSectorRoom: khuvucId,
+    idSectorRoom: sectorId,
     imgRoom: selectedFile,
     discRoom: discRoom,
   });
 
-  function beforeUpload(file) {
-    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
-    if (!isJpgOrPng) {
-      console.error("You can only upload JPG/PNG file!");
-      swal(
-        "Cảnh báo !",
-        "Bạn không thể tải tệp không phải hình ảnh ! Vui lòng xóa tệp và tải lại",
-        "warning"
-      );
-    }
-    return isJpgOrPng;
-  }
-
-  const uploadImage = async (e) => {
-    const formdata = new FormData();
-    formdata.append("file", e);
-    formdata.append("upload_preset", "we6hizdj");
-    await axios
-      .post("https://api.cloudinary.com/v1_1/dwcrfnnov/image/upload", formdata)
-      .then((response) => {
-        // console.log(response.data);
-        // setSelectedFile([...selectedFile, response.data]);
-        setSelectedFile([...selectedFile, {
-          url: response.data.url,
-          secure_url: response.data.secure_url,
-          public_id: response.data.public_id,
-          signature: response.data.signature,
-          delete_token: response.data.delete_token,
-        }]);
-
-
-
-        // setFormData({...formData,imgRoom : selectedFile});
-        // formData.imgRoom.push(response.data);
-        formData.imgRoom.push({
-          url: response.data.url,
-          secure_url: response.data.secure_url,
-          public_id: response.data.public_id,
-          signature: response.data.signature,
-          delete_token: response.data.delete_token,
-        });
-
-        // console.log(formData);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  const dummyRequest = ({ file, onSuccess }) => {
-    setTimeout(() => {
-      onSuccess("ok");
-    }, 0);
-  };
-
   useEffect(() => {
     const fetchSectors = async () => {
       try {
-        const response = await apiGetAllSector(); // Thay '/api/sectors' bằng endpoint thực tế của bạn
+        const response = await apiGetAllSector();
         const data = response.data.sectors;
         setSectors(data);
       } catch (error) {
@@ -103,17 +40,73 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
     fetchSectors();
   }, []);
 
+  const normFile = (e) => {
+    if (Array.isArray(e)) {
+      return e;
+    }
+    return e?.fileList;
+  };
+
+  const dummyRequest = ({ file, onSuccess }) => {
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
+  };
+
+  function beforeUpload(file) {
+    const isImage = ['image/jpeg', 'image/png', 'image/jpg', 'image/svg+xml'].includes(file.type);
+    if (!isImage) {
+      console.error("You can only upload JPG/PNG file!");
+      swal(
+        "Cảnh báo !",
+        "Bạn không thể tải tệp không phải hình ảnh ! Vui lòng xóa tệp và tải lại",
+        "warning"
+      );
+    }
+    return isImage;
+  }
+
+  const uploadImage = async (file) => {
+    const formdata = new FormData();
+    formdata.append("file", file);
+    formdata.append("upload_preset", "we6hizdj");
+    await axios
+      .post("https://api.cloudinary.com/v1_1/dwcrfnnov/image/upload", formdata)
+      .then((response) => {
+        setSelectedFile((prev) => [
+          ...prev,
+          {
+            url: response.data.url,
+            secure_url: response.data.secure_url,
+            public_id: response.data.public_id,
+            signature: response.data.signature,
+            delete_token: response.data.delete_token,
+          }
+        ]);
+
+        formData.imgRoom.push({
+          url: response.data.url,
+          secure_url: response.data.secure_url,
+          public_id: response.data.public_id,
+          signature: response.data.signature,
+          delete_token: response.data.delete_token,
+        });
+      })
+      .catch((err) => {
+        console.error("Error uploading image:", err);
+      });
+  };
+
   const submitform = async () => {
     // console.log(formData)
 
     const result = await apiAddRoom(formData);
-    console.log(result)
+
     if (result.status === 200) {
-      swal("Thông báo !", "Thêm phòng mới thành công  !", "success").then(value => {
+      swal("Thông báo !", "Thêm phòng mới thành công  !", "success").then(() => {
         onClose();
         onSuccess();
-      }
-      )
+      })
     } else {
       swal(
         "Thông báo !",
@@ -192,7 +185,7 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
                   placeholder="Chọn khu vực"
                   onChange={(option, label) => {
                     console.log(option, label)
-                    setKhuvucId(option);
+                    setSectorId(option);
                     setFormData({ ...formData, idSectorRoom: option });
                   }}
                 >
@@ -209,7 +202,6 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
               label="Giá phòng : "
               name="giaRoom"
               rules={[
-                { required: true, message: "Vui lòng nhập thông tin !" },
                 {
                   required: true,
                   message: "Vui lòng nhập số tiền 100000!",
@@ -262,7 +254,6 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
               getValueFromEvent={normFile}
               className=""
               rules={[
-                { required: true, message: "Vui lòng cập nhật hình ảnh !" },
                 {
                   required: true,
                   message: "Vui lòng cập nhật 3  hình ảnh !",
@@ -279,8 +270,9 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
                 listType="picture-card"
               >
                 <PlusOutlined />
-                <div>Uploads</div>
+                <div>Tải lên</div>
               </Upload>
+              
             </Form.Item>
           </div>
 
@@ -299,3 +291,4 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
 };
 
 export default AddRoomForm;
+

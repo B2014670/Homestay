@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import React, { useEffect, useState, useRef } from "react";
-import { Avatar, Button, Rate, Space, Table, Typography, Input, Select, Tooltip, message, Modal } from "antd";
+import { Avatar, Button, Rate, Space, Table, Typography, Input, Select, Tooltip, message, Modal, Popconfirm } from "antd";
 import Highlighter from "react-highlight-words";
 import dayjs from "dayjs";
 
@@ -589,51 +589,64 @@ const Orders = () => {
               title: "Xử lí",
               render: (_, record) => (
                 <div className="flex justify-between">
-                  <Button
-                    className="bg-blue-500 text-white hover:opacity-80 hover:bg-white  rounded-lg transition duration-150 ease-in-out"
-                    onClick={() => {
-                      handleCheckInOut(record);
-                      // handleClickCompleteOrder(record);
-                    }}
-                    disabled={record.statusOrder !== '2'}
-                  >
-                    CheckIn/Out
-                  </Button>
-                  <UnorderedListOutlined
-                    title="Xem chi tiết"
-                    className="m-1 flex items-center justify-center"
-                    style={{ fontSize: "20px", color: "green" }}
-                    onClick={() => alert("Xem chi tiet")}
-                  />
+                  {record.statusOrder === '2' && (
+                    <Button
+                      className="max-w-[110px] bg-blue-500 text-white hover:opacity-80 hover:bg-white  rounded-lg transition duration-150 ease-in-out"
+                      onClick={() => {
+                        handleCheckInOut(record);
+                      }}
+
+                    >
+                      CheckIn/Out
+                    </Button>
+                  )}
+                  {record.statusOrder === '1' && (
+                    <Button
+                      className="w-[110px] bg-green-500 text-white hover:opacity-80 hover:bg-white  rounded-lg transition duration-150 ease-in-out"
+                      onClick={() => {
+                        handleClickConfirmOrder(record);
+                      }}
+                    >
+                      Xác nhận
+                    </Button>
+                  )}
                 </div>
               ),
             },
             {
-              title: "Xác Nhận",
-              dataIndex: "statusOrder",
+              title: "Thao Tác",
               align: 'center',
               fixed: 'right',
-              render: (value, record) => (
+              render: (_, record) => (
                 <div className="flex space-x-2">
                   <Button
-                    className="bg-green-500 text-white hover:opacity-80 hover:bg-white  rounded-lg transition duration-150 ease-in-out"
-                    onClick={() => {
-                      handleClickConfirmOrder(record);
-                    }}
-                    disabled={record.statusOrder !== '1'}
+                    color="default" variant="outlined"
+                    onClick={() => alert("Xem chi tiet")}
                   >
-                    Xác nhận
+                    Chi tiết
                   </Button>
 
-                  <Button
-                    danger
-                    onClick={() => {
-                      handleClickCancelOrder(record);
+                  <Popconfirm
+                    okType="danger"                   
+                    title="Bạn có chắc chắn muốn xóa không?"
+                    onConfirm={
+                      () => {
+                        handleClickCancelOrder(record);
+                      }
+                    }
+                    onCancel={() => {
+                      console.log("Hủy bỏ thao tác xóa");
                     }}
-                    disabled={record.statusOrder !== '1' && record.statusOrder !== '2'}
+                    okText="Có"
+                    cancelText="Không"
                   >
-                    Hủy
-                  </Button>
+                    <Button
+                      danger
+                      disabled={record.statusOrder !== '1' && record.statusOrder !== '2'}
+                    >
+                      Hủy
+                    </Button>
+                  </Popconfirm>
                 </div>
               ),
             },

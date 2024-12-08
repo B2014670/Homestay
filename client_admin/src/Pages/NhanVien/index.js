@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import moment from 'moment';
 
 import {
   Avatar,
@@ -229,7 +228,7 @@ const NhanVien = () => {
               style={{ width: "100%" }}
               onChange={(value) => setEditData({ ...editData, isAdmin: value })}
             >
-              <Option value="1">Quản Lý Nhân Viên</Option>
+              {/* <Option value="1">Quản Lý Nhân Viên</Option> */}
               <Option value="2">Quản Lý Khách Hàng</Option>
               <Option value="3">Quản Lý Đặt Phòng</Option>
               <Option value="4">Quản Lý Khu Vực</Option>
@@ -243,20 +242,26 @@ const NhanVien = () => {
             text.map((role) => {
               let roleName;
               switch (role) {
-                case "1":
-                  roleName = "Quản Lý Nhân Viên";
-                  break;
+                // case "1":
+                //   roleName = "Quản lý nhân viên";
+                //   break;
                 case "2":
-                  roleName = "Quản Lý Khách Hàng";
+                  roleName = "Quản lý khách hàng";
                   break;
                 case "3":
-                  roleName = "Quản Lý Đặt Phòng";
+                  roleName = "Quản lý đặt phòng";
                   break;
                 case "4":
-                  roleName = "Quản Lý Khu Vực";
+                  roleName = "Quản lý khu vực";
                   break;
                 case "5":
-                  roleName = "Quản Lý Phòng";
+                  roleName = "Quản lý phòng";
+                  break;
+                case "6":
+                  roleName = "Quản lý dịch vụ";
+                  break;
+                case "7":
+                  roleName = "Quản lý khách hàng";
                   break;
                 default:
                   roleName = "";
@@ -269,11 +274,14 @@ const NhanVien = () => {
         }
       },
       filters: [
-        { text: "Quản Lý nhân viên", value: "1" },
-        { text: "Quản Lý Khách hàng", value: "2" },
-        { text: "Quản Lý Đặt Phòng", value: "3" },
-        { text: "Quản Lý Khu Vực", value: "4" },
-        { text: "Quản Lý Phòng", value: "5" },
+        // { text: "Quản lý nhân viên", value: "1" },
+        { text: "Quản lý Khách hàng", value: "2" },
+        { text: "Quản lý đặt phòng", value: "3" },
+        { text: "Quản lý khu vực", value: "4" },
+        { text: "Quản lý phòng", value: "5" },
+        { text: "Quản lý dịch vụ", value: "6" },
+        { text: "Quản lý khách hàng", value: "7" },
+
       ],
       onFilter: (value, record) => {
         // Kiểm tra xem mảng isAdmin có chứa giá trị lọc không

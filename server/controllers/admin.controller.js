@@ -13,7 +13,7 @@ const RefundService = require("../services/payment/refund.service");
 // Admin
 exports.register = async (req, res, next) => {
   const { username, password, phone } = req.body;
-  console.log(req.body)
+  // console.log(req.body)
   try {
     if (!username || !password || !phone) {
       return res.status(200).json({ err: 1, msg: "Thông tin không được để trống !" })
@@ -56,8 +56,8 @@ exports.login = async (req, res, next) => {
         msg: " Tài khoản không tồn tại !"
       });
     }
-    else {
-      if (password === isRegisted[0].password) {
+    else {      
+      if (bcrypt.compareSync(password, isRegisted[0].password))  { //(password === isRegisted[0].password)
         const { password, ...adminWithoutPassword } = isRegisted[0];
 
         return res.status(200).json({
@@ -82,7 +82,7 @@ exports.login = async (req, res, next) => {
 exports.getAllAdmin = async (req, res, next) => {
   try {
     const adminService = new AdminService(MongoDB.client);
-    const data = await adminService.check({}, { password: 0 });
+    const data = await adminService.check({ "phone" : {$ne :"0000000001"}}, { password: 0 });
     const result = {
       admins: data,
     }

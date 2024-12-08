@@ -16,7 +16,7 @@ async function startServer() {
     });
 
     try {
-      const tunnel = await localtunnel({ port: PORT, subdomain: "homestay" }); 
+      const tunnel = await localtunnel({ port: PORT, subdomain: "homestay1234" }); 
       console.log(`Public URL: ${tunnel.url}`);
 
       tunnel.on("close", () => {

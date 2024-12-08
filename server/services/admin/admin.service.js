@@ -1,4 +1,6 @@
 const { ObjectId } = require("mongodb");
+const bcrypt = require("bcrypt");
+const hashpwd = (password) => bcrypt.hashSync(password, bcrypt.genSaltSync(12));
 class AdminService {
   constructor(client) {
     this.Admin = client.db().collection("admins");
@@ -7,7 +9,7 @@ class AdminService {
   extractAdminData(payload) {
     const admin = {
       userName: payload.userName,
-      password: payload.password,
+      password: payload.password ? hashpwd(payload.password) : '',
       birthYear: payload.birthYear,
       avatar: payload.avatar,
       phone: payload.phone,
@@ -34,7 +36,7 @@ class AdminService {
   }
 
   async register(payload) {
-    const admin = await this.extractAdminData(payload);
+    const admin = this.extractAdminData(payload);
     const result = await this.Admin.findOneAndUpdate(
       admin,
       { $set: { isAdmin: true } },
@@ -44,7 +46,7 @@ class AdminService {
   }
   async addAdmin(payload) {
     // console.log(payload);
-    const admin = await this.extractAdminData(payload);
+    const admin = this.extractAdminData(payload);
     const result = await this.Admin.findOneAndUpdate(
       admin,
       { $set: { isAdmin: payload.isAdmin } },
@@ -60,9 +62,14 @@ class AdminService {
     });
     return result;
   }
+
   async EditAdmin(payload) {
     // Create a filter based on _id
     const filter = { _id: new ObjectId(payload._id) };
+
+    if (payload.password) {
+      payload.password = hashpwd(payload.password); // Băm mật khẩu
+    }
 
     // Remove _id and properties with empty string or empty array from payload
     const updateData = Object.entries(payload).reduce((acc, [key, value]) => {

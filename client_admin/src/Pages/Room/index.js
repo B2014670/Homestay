@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-  Rate,
   Space,
   Table,
   Typography,
@@ -10,6 +9,7 @@ import {
   Select,
   Popconfirm,
   InputNumber,
+  Upload,
 } from "antd";
 import {
   EditOutlined,
@@ -23,10 +23,12 @@ import { apiDeleteRoom, apiEditRoom, apiGetAllRoom, apiGetAllSector } from "../.
 import Highlighter from "react-highlight-words";
 import AddRoomForm from "../../components/AddRoomForm";
 import swal from "sweetalert";
+import axios from "axios"
 
 import RoomManagement from "../../components/RoomManagement";
 
 const { Option } = Select;
+const { TextArea } = Input;
 const { Title: AntTitle } = Typography;
 
 const Room = () => {
@@ -41,12 +43,16 @@ const Room = () => {
   const [editData, setEditData] = useState({
     _id: "",
     nameRoom: "",
+    imgRoom: [{}, {}, {}],
     giaRoom: "",
     loaiRoom: "",
     discRoom: "",
     idSectorRoom: "",
   })
   const [sectors, setSectors] = useState({});
+
+  const maxLength = 60; // Số ký tự tối đa để hiển thị
+  const [expanded, setExpanded] = React.useState(false);
 
 
   useEffect(() => {
@@ -78,7 +84,6 @@ const Room = () => {
       selectedKeys,
       confirm,
       clearFilters,
-      close,
     }) => (
       <div
         style={{
@@ -119,27 +124,6 @@ const Room = () => {
           >
             Đặt lại
           </Button>
-          {/* <Button
-            size="small"
-            onClick={() => {
-              confirm({
-                closeDropdown: false,
-              });
-              setSearchText(selectedKeys[0]);
-              setSearchedColumn(dataIndex);
-            }}
-          >
-            Lọc
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              close();
-            }}
-          >
-            Đóng
-          </Button> */}
         </Space>
       </div>
     ),
@@ -197,6 +181,57 @@ const Room = () => {
     { label: "3-4 người", value: "3-4 người" },
     { label: "5-7 người", value: "5-7 người" },
   ];
+
+  const dummyRequest = ({ file, onSuccess }) => {
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
+  };
+
+  function beforeUpload(file) {
+    const isImage = ['image/jpeg', 'image/png', 'image/jpg', 'image/svg+xml'].includes(file.type);
+    if (!isImage) {
+      console.error("You can only upload JPG/PNG file!");
+      swal(
+        "Cảnh báo !",
+        "Bạn không thể tải tệp không phải hình ảnh ! Vui lòng xóa tệp và tải lại",
+        "warning"
+      );
+    }
+    return isImage;
+  }
+
+  const uploadImage = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "we6hizdj");
+
+      const response = await axios.post(
+        "https://api.cloudinary.com/v1_1/dwcrfnnov/image/upload",
+        formData
+      );
+
+      // Trả về kết quả cần thiết để sử dụng
+      return {
+        url: response.data.url,
+        secure_url: response.data.secure_url,
+        public_id: response.data.public_id,
+        signature: response.data.signature,
+        delete_token: response.data.delete_token,
+      };
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      // Hiển thị cảnh báo hoặc xử lý lỗi
+      swal(
+        "Lỗi tải lên!",
+        "Đã xảy ra lỗi khi tải ảnh lên Cloudinary. Vui lòng thử lại.",
+        "error"
+      );
+      return null; // Trả về null nếu upload thất bại
+    }
+  };
+
   const columns = [
     {
       title: "Tên Phòng",
@@ -291,30 +326,151 @@ const Room = () => {
     },
     {
       title: "Hình Ảnh 1",
-      render: (value) => (
-        <Image width={100} src={value.imgRoom[0].secure_url} />
-      ),
+      render: (value, record) => {
+        if (record._id === editingRow) {
+          return (
+            <Upload
+              listType="picture-card"
+              showUploadList={false}
+              beforeUpload={beforeUpload}
+              customRequest={dummyRequest}
+              onChange={async (info) => {
+                if (info.file.status === "done") {
+                  const uploadedFile = await uploadImage(info.file.originFileObj);
+
+                  if (uploadedFile) {
+                    // Cập nhật dữ liệu nếu upload thành công
+                    setEditData((prev) => ({
+                      ...prev,
+                      imgRoom: [ // Cập nhật ảnh thứ 1
+                        {
+                          url: uploadedFile.url,
+                          secure_url: uploadedFile.secure_url,
+                          public_id: uploadedFile.public_id,
+                          signature: uploadedFile.signature,
+                          delete_token: uploadedFile.delete_token,
+                        },
+                        ...prev.imgRoom.slice(1),
+                      ],
+                    }));
+                  }
+                }
+              }}
+            >
+              {editData.imgRoom && editData.imgRoom[0]?.secure_url ? (
+                <Image
+                  width={100}
+                  src={editData.imgRoom[0].secure_url}
+                  preview={false}
+                />
+              ) : (
+                <div>Upload</div>
+              )}
+            </Upload>
+          );
+        }
+        return <Image width={100} src={value.imgRoom[0].secure_url} />
+      },
     },
     {
       title: "Hình Ảnh 2",
-      render: (value) => (
-        <Image width={100} src={value.imgRoom[1].secure_url} />
-      ),
+      render: (value, record) => {
+        if (record._id === editingRow) {
+          return (
+            <Upload
+              listType="picture-card"
+              showUploadList={false}
+              beforeUpload={beforeUpload}
+              customRequest={dummyRequest}
+              onChange={async (info) => {
+                if (info.file.status === "done") {
+                  const uploadedFile = await uploadImage(info.file.originFileObj);
+
+                  if (uploadedFile) {
+                    // Cập nhật dữ liệu nếu upload thành công
+                    setEditData((prev) => ({
+                      ...prev,
+                      imgRoom: [ // Cập nhật ảnh thứ 2
+                        ...prev.imgRoom.slice(0, 1),
+                        {
+                          url: uploadedFile.url,
+                          secure_url: uploadedFile.secure_url,
+                          public_id: uploadedFile.public_id,
+                          signature: uploadedFile.signature,
+                          delete_token: uploadedFile.delete_token,
+                        },
+                        ...prev.imgRoom.slice(2),
+                      ],
+                    }));
+                  }
+                }
+              }}
+            >
+              {
+                editData.imgRoom && editData.imgRoom[1]?.secure_url ? (
+                  <Image
+                    width={100}
+                    src={editData.imgRoom[1].secure_url}
+                    preview={true}
+                  />
+                ) : (
+                  <div>Upload</div>
+                )
+              }
+            </Upload >
+          );
+        }
+        return <Image width={100} src={value.imgRoom[1].secure_url} />
+      },
     },
     {
       title: "Hình Ảnh 3",
-      render: (value) => (
-        <Image width={100} src={value.imgRoom[2].secure_url} />
-      ),
+      render: (value, record) => {
+        if (record._id === editingRow) {
+          return (
+            <Upload
+              listType="picture-card"
+              showUploadList={false}
+              beforeUpload={beforeUpload}
+              customRequest={dummyRequest}
+              onChange={async (info) => {
+                if (info.file.status === "done") {
+                  const uploadedFile = await uploadImage(info.file.originFileObj);
+
+                  if (uploadedFile) {
+                    // Cập nhật dữ liệu nếu upload thành công
+                    setEditData((prev) => ({
+                      ...prev,
+                      imgRoom: [ // Cập nhật ảnh thứ 3
+                        ...(prev.imgRoom.slice(0, 2) ),
+                        {
+                          url: uploadedFile.url,
+                          secure_url: uploadedFile.secure_url,
+                          public_id: uploadedFile.public_id,
+                          signature: uploadedFile.signature,
+                          delete_token: uploadedFile.delete_token,
+                        }
+                      ],
+                    }));
+                  }
+                }
+              }}
+            >
+              {editData.imgRoom && editData.imgRoom[2]?.secure_url ? (
+                <Image
+                  width={100}
+                  src={editData.imgRoom[2].secure_url}
+                  preview={false}
+                />
+              ) : (
+                <div>Upload</div>
+              )}
+            </Upload>
+          );
+        }
+        return <Image width={100} src={value.imgRoom[2].secure_url} />;
+      },
     },
-    // {
-    //   title: "Đánh giá",
-    //   key: "danhgiaRoom",
-    //   dataIndex: "danhgiaRoom",
-    //   render: (rating) => {
-    //     return <Rate value={rating} allowHalf disabled></Rate>;
-    //   },
-    // },
     {
       title: "Mô tả",
       key: "discRoom",
@@ -326,16 +482,32 @@ const Room = () => {
       render: (text, record) => {
         if (record._id === editingRow) {
           return (
-            <Input
+            <TextArea
+              showCount
               defaultValue={text}
               onChange={(e) =>
                 setEditData({ ...editData, discRoom: e.target.value })
-                // console.log(e.target.value)
               }
             />
           );
         }
-        return text;
+
+        return (
+          <div>
+            <Typography.Text>
+              {expanded ? text : `${text.substring(0, maxLength)}...`}
+            </Typography.Text>
+            {text.length > maxLength && (
+              <Button
+                type="link"
+                onClick={() => setExpanded(!expanded)}
+                style={{ padding: 0, marginLeft: 5 }}
+              >
+                {expanded ? "Ẩn bớt" : "Xem thêm"}
+              </Button>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -419,7 +591,6 @@ const Room = () => {
         swal("Thông báo !", result.data.msg, "warning").then((value) => { getRooms() })
       }
     }
-
   };
 
   return (
