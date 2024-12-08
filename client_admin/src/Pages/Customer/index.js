@@ -44,7 +44,6 @@ const Customer = () => {
         />
         <Space>
           <Button
-            type="primary"
             onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
             icon={<SearchOutlined />}
             size="small"
@@ -52,7 +51,7 @@ const Customer = () => {
               width: 90,
             }}
           >
-            Search
+            Tìm
           </Button>
           <Button
             onClick={() => clearFilters && handleReset(clearFilters)}
@@ -61,9 +60,9 @@ const Customer = () => {
               width: 90,
             }}
           >
-            Reset
+            Đặt lại
           </Button>
-          <Button
+          {/* <Button
             type="link"
             size="small"
             onClick={() => {
@@ -84,7 +83,7 @@ const Customer = () => {
             }}
           >
             close
-          </Button>
+          </Button> */}
         </Space>
       </div>
     ),

@@ -1,7 +1,7 @@
 const express = require("express");
 const users = require("../controllers/user.controller");
 const chat = require("../controllers/chat.controller");
-const forgotPasswordLimiter = require('../middleware/forgotPasswordLimiter');
+const forgotPasswordLimiter = require("../middleware/forgotPasswordLimiter");
 const { authMiddleware } = require("../middleware/authMiddleware"); 
 
 
@@ -25,11 +25,11 @@ router.post("/info", authMiddleware, users.infoUser);
 
 router.post("/updateInfoUser", users.updateInfoUser);
 
-router.post('/forgot-password', forgotPasswordLimiter,  users.forgotPassword);
+router.post("/forgot-password", forgotPasswordLimiter,  users.forgotPassword);
 
-router.post('/reset-password/:token', users.resetPassword);
+router.post("/reset-password/:token", users.resetPassword);
 
-router.post('/changePassword', users.changePassword);
+router.post("/changePassword", users.changePassword);
 
 router.post("/searchRoom", users.searchRoom);
 
@@ -51,15 +51,15 @@ router.get("/getAllSector", users.getAllSector);
 
 // router.get("/getAllTypeRoom", users.getAllTypeRoom);
 
-router.post('/wishlist', users.createWishlist);
+router.post("/wishlist", users.createWishlist);
 
-router.get('/wishlist/:userId', users.getUserWishlist);
+router.get("/wishlist/:userId", users.getUserWishlist);
 
-router.get('/wishlist/:userId/room', users.getUserWishlistRooms);
+router.get("/wishlist/:userId/room", users.getUserWishlistRooms);
 
-router.put('/wishlist/:id', users.updateWishlist);
+router.put("/wishlist/:id", users.updateWishlist);
 
-router.delete('/wishlist', users.deleteWishlist);
+router.delete("/wishlist", users.deleteWishlist);
 
 router.get("/:userId/orders", users.getAllOrderOfUser);
 
@@ -89,10 +89,10 @@ router.delete("/conversation/:conversationId", chat.endConversation);
 
 router.put("/conversation/update-admin", chat.updateAdmin);
 
-router.get('/admins/:adminId/conversations', chat.getConversationsForAdmin);
+router.get("/admins/:adminId/conversations", chat.getConversationsForAdmin);
 
-router.get('/extraservices', users.getAllExtraServices);
+router.get("/extraservices", users.getAllExtraServices);
 
-router.get('/extraservices/:id', users.getExtraServiceById);
+router.get("/extraservices/:id", users.getExtraServiceById);
 
 module.exports = router;

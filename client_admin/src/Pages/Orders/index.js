@@ -1,22 +1,23 @@
+import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import React, { useEffect, useState, useRef } from "react";
-import { Avatar, Button, Rate, Space, Table, Typography, Input, Select, Tooltip, message } from "antd";
-import { SearchOutlined, CopyOutlined } from "@ant-design/icons";
+import { Avatar, Button, Rate, Space, Table, Typography, Input, Select, Tooltip, message, Modal } from "antd";
 import Highlighter from "react-highlight-words";
+import dayjs from "dayjs";
 
 import {
+  apiGetAllUserOrder,
   apiConfirmOrderRoom,
-  apiGetAllUser,
-  apiGetInfoRoom,
-  apiGetAllRoom,
+  apiCheckinOrderRoom,
   apiCompleteOrderRoom,
   apiDeleteOrderRoom,
+  apiCancelOrderRoom,
 } from "../../api";
-import AddSectorForm from "../../components/AddSectorForm";
+// import AddSectorForm from "../../components/AddSectorForm";
 import {
-  EditOutlined,
-  DeleteOutlined,
+  SearchOutlined,
+  CopyOutlined,
   UnorderedListOutlined,
-  CheckCircleOutlined,
 } from "@ant-design/icons";
 import swal from "sweetalert";
 
@@ -29,7 +30,7 @@ const Orders = () => {
 
   const getOrders = (data) => {
     setLoading(true);
-    apiGetAllUser().then((res) => {
+    apiGetAllUserOrder().then((res) => {
       setDataSource(res.data.users);
       setLoading(false);
     });
@@ -45,24 +46,47 @@ const Orders = () => {
         (acc, user) => [...acc, ...user.order],
         []
       );
+
+      // allOrder.sort((a, b) => {
+      //   if (a.statusOrder === "1") return -1;
+      //   if (b.statusOrder === "1") return 1;
+      //   if (a.statusOrder === "10") return 1;
+      //   if (b.statusOrder === "10") return -1;
+      //   if (a.statusOrder === "2" && b.statusOrder !== "1") return -1;
+      //   if (b.statusOrder === "2" && a.statusOrder !== "1") return 1;
+      //   return 0;
+      // });
+
       allOrder.sort((a, b) => {
-        if (a.statusOrder === "1") return -1;
-        if (b.statusOrder === "1") return 1;
-        if (a.statusOrder === "10") return 1;
-        if (b.statusOrder === "10") return -1;
-        if (a.statusOrder === "2" && b.statusOrder !== "1") return -1;
-        if (b.statusOrder === "2" && a.statusOrder !== "1") return 1;
-        return 0;
+        const priority = { "1": 1, "2": 2, "10": 3 };
+        return (priority[a.statusOrder] || 4) - (priority[b.statusOrder] || 4);
       });
       setData(allOrder);
+      // console.log('allOrder', allOrder);
 
     }
   }, [dataSource]);
-  // console.log(data)
 
   const handleClickConfirmOrder = async (payload) => {
-    const result = await apiConfirmOrderRoom(payload);
-    console.log(result.data);
+    try {
+      const result = await apiConfirmOrderRoom(payload);
+      if (result.data.status === 1) {
+        swal({
+          title: "Thành Công!",
+          text: result.data.msg,
+          icon: "success",
+          button: "OK",
+        }).then(() => {
+          getOrders();
+        });
+      }
+    } catch (error) {
+      swal({ title: "Error", text: error.message, icon: "error", button: "OK" });
+    }
+  };
+  const handleClicCheckInOrder = async (payload) => {
+    const result = await apiCompleteOrderRoom(payload);
+    // console.log(result.data);
     if (result.data.status === 1) {
       swal({
         title: "Thành Công!",
@@ -76,7 +100,7 @@ const Orders = () => {
   };
   const handleClickCompleteOrder = async (payload) => {
     const result = await apiCompleteOrderRoom(payload);
-    console.log(result.data);
+    // console.log(result.data);
     if (result.data.status === 1) {
       swal({
         title: "Thành Công!",
@@ -89,9 +113,22 @@ const Orders = () => {
     }
   };
   const handleClickDeleteOrder = async (payload) => {
-    console.log(payload);
+    // console.log(payload);
     const result = await apiDeleteOrderRoom(payload);
-    console.log(result.data);
+    // console.log(result.data);
+    if (result.data.status === 1) {
+      swal({
+        title: "Thành Công!",
+        text: result.data.msg,
+        icon: "success",
+        button: "OK",
+      }).then(() => {
+        getOrders();
+      });
+    }
+  };
+  const handleClickCancelOrder = async (payload) => {
+    const result = await apiCancelOrderRoom(payload);
     if (result.data.status === 1) {
       swal({
         title: "Thành Công!",
@@ -104,29 +141,249 @@ const Orders = () => {
     }
   };
 
-  const [roomNames, setRoomNames] = useState({});
-  const [roomIds, setRoomIds] = useState([]);
-  const getApiGetInfo = async (idRoom) => {
-    const res = await apiGetInfoRoom({ idRoom });
-    const nameRoom = res.data[0].nameRoom;
-    setRoomNames((prevRoomNames) => ({ ...prevRoomNames, [idRoom]: nameRoom }));
-  };
+  function handleCheckInOut(record) {
+    if (!record.cccd) {
+      swal({
+        text: "Vui lòng nhập chứng minh thư (12 số)",
+        content: "input",
+        buttons: {
+          confirm: {
+            text: "Xác nhận",
+            value: true,
+            visible: true,
+            closeModal: false,
+          },
+          cancel: {
+            text: "Đóng",
+            value: false,
+            visible: true,
+            closeModal: true,
+          },
+        },
+      }).then((value) => {
+        const trimmedValue = value ? value.trim() : "";
 
-  useEffect(() => {
-    // Assuming you have a list of room IDs you want to fetch names for
-    const fetchRooms = async () => {
-      const res = await apiGetAllRoom();
-      // console.log(object)
-      // console.log(res.data.rooms[0])
+        if (!trimmedValue) {
+          swal({
+            title: "Lỗi!",
+            text: "Chứng minh thư không được để trống.",
+            icon: "error",
+            button: "OK",
+          });
+          return;
+        }
+        if (!/^\d{12}$/.test(trimmedValue)) {
+          swal({
+            title: "Lỗi!",
+            text: "Chứng minh thư phải là 12 số.",
+            icon: "error",
+            button: "OK",
+          });
+          return;
+        }
 
-      res.data.rooms.forEach((room) => {
-        setRoomIds((prev) => [...prev, room._id]);
+
+        // Handle valid CCCD input
+        apiCheckinOrderRoom({ ...record, cccd: trimmedValue })
+          .then(() => {
+            swal("Thành công!", "Chứng minh thư đã được cập nhật.", "success");
+            getOrders();
+          })
+          .catch((err) => {
+            swal(
+              "Lỗi!",
+              err?.response?.data?.message || "Đã xảy ra lỗi khi cập nhật.",
+              "error"
+            );
+          });
       });
+    } else {
+      Modal.info({
+        title: "Hóa đơn",
+        content: (
+          <div>
+            <p><strong>Mã đơn:</strong> {record.idOrder}</p>
+            <p><strong>Người sử dụng:</strong> {record.userInput}</p>
+            <p><strong>Số điện thoại:</strong> {record.phoneInput}</p>
+            <p><strong>Phòng:</strong> {record.room?.nameRoom}</p>
+            <p>
+              <strong>Giá:</strong> {record.room?.giaRoom.toLocaleString()} VND x{" "}
+              {record.dateInput && record.dateInput.length === 2
+                ? dayjs(record.dateInput[1], "DD/MM/YYYY").diff(
+                  dayjs(record.dateInput[0], "DD/MM/YYYY"),
+                  "day"
+                )
+                : "Chưa xác định"}{" "}
+              đêm
+            </p>
+            <div>
+              <strong>Dịch vụ:</strong>
+              {record.extraServices && record.extraServices.length > 0 ? (
+                <ul>
+                  {record.extraServices.map((service, index) => (
+                    <li key={index}>
+                      {service.serviceType || "Dịch vụ không xác định"} {" "}
+                      ({Number(service.pricePerUnit).toLocaleString()} VND) x
+                      {service.guests || 0} (khách) x
+                      {(Array.isArray(service.dates) ? service.dates.length : "Không rõ")} (ngày)
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                "Không có dịch vụ bổ sung"
+              )}
+            </div>
+            <p>
+              <strong>Trả trước:</strong>{" "}
+              {Number(record.deposit || 0).toLocaleString()} VND
+            </p>
+            <hr style={{ margin: "10px 0" }} />
+            <p>
+              <strong>Thành tiền:</strong>{" "}
+              {(Number(record.totalMoney || 0) - Number(record.deposit || 0)).toLocaleString()} VND
+            </p>
+          </div>
+        ),
+        onOk() { },
+        footer: (
+          <div style={{ textAlign: "right" }}>
+            <Button
+              onClick={() => printInvoice(record)}
+              style={{ marginRight: 8 }}
+            >
+              In hóa đơn
+            </Button>
+            <Button
+              onClick={() => handleClickCompleteOrder(record)}
+              style={{ marginRight: 8 }}
+            >
+              Hoàn thành đơn
+            </Button>
+            <Button onClick={() => Modal.destroyAll()}>Đóng</Button>
+          </div>
+        ),
+      });
+    }
+  }
+
+  function printInvoice(record) {
+    if (!record || !record.idOrder) {
+      alert('Không tìm thấy thông tin đơn hàng!');
+      return;
+    }
+
+    const userDetails = record.user || { name: "N/A", phone: "N/A", email: "N/A" };
+    const roomDetails = record.room || {};
+    const startDate = dayjs(record.dateInput?.[0], "DD/MM/YYYY");
+    const endDate = dayjs(record.dateInput?.[1], "DD/MM/YYYY");
+    const night = startDate.isValid() && endDate.isValid() ? endDate.diff(startDate, "day") : 0;
+
+    const totalAmount = Number(record.totalMoney || 0);
+    const deposit = Number(record.deposit || 0);
+
+    const extraServices = Array.isArray(record.extraServices) ? record.extraServices : [];
+    const serviceRows = extraServices.map((service, index) => `
+        <tr>
+            <td>${service.serviceType || "Dịch vụ không xác định"}</td>
+            <td>${Number(service.pricePerUnit || 0).toLocaleString()} VND</td>            
+            <td>${service.guests || 0} khách x${(Array.isArray(service.dates) ? service.dates.length : "Không rõ")} ngày</td>
+            <td>${Number(service.totalServiceCost || 0).toLocaleString()} VND</td>
+        </tr>
+    `).join('');
+
+    const newWindow = window.open('', '_blank', 'width=800,height=600');
+    newWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Hóa Đơn Khách Sạn</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    color: #333;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 10px;
+                }
+                .header { text-align: center; margin-bottom: 10px; }
+                .header h1 { color: #2c3e50; margin-bottom: 5px; }
+                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px; }
+                .info-section h2 {
+                    color: #2c3e50; border-bottom: 2px solid #3498db;
+                    padding-bottom: 5px; margin-bottom: 10px;
+                }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .total-section { text-align: right; }
+                .total-row { font-weight: bold; }
+                .footer { text-align: center; margin-top: 20px; font-style: italic; color: #7f8c8d; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Hóa Đơn Khách Sạn</h1>
+                <p>Mã Đơn Hàng: ${record.idOrder}</p>
+                <p>Ngày lập: ${new Date().toLocaleDateString()}</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-section">
+                    <h2>Thông tin khách hàng</h2>
+                    <p><strong>Tên:</strong> ${userDetails.name}</p>
+                    <p><strong>Số điện thoại:</strong> ${userDetails.phone}</p>
+                    <p><strong>Email:</strong> ${userDetails.email}</p>
+                </div>
+                <div class="info-section">
+                    <h2>Thông tin nhà cung cấp</h2>
+                    <p><strong>Tên:</strong> Homestay</p>                    
+                    <p><strong>Điện thoại:</strong> 0292 2222 222</p>
+                    <p><strong>Địa chỉ:</strong> Bãi Bàng, Lại Sơn, Kiên Hải, Kiên Giang.</p>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mô tả</th>
+                        <th>Đơn giá</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>${roomDetails.nameRoom || "Phòng không xác định"}</td>
+                        <td>${(roomDetails.giaRoom || 0).toLocaleString()} VND</td>
+                        <td>${night} đêm</td>
+                        <td>${(roomDetails.giaRoom * night || 0).toLocaleString()} VND</td>
+                    </tr>
+                    ${serviceRows}
+                </tbody>
+            </table>
+
+            <div class="total-section">
+                <p><strong>Tổng cộng:</strong> ${totalAmount.toLocaleString()} VND</p>
+                <p><strong>Đã trả trước:</strong> ${deposit.toLocaleString()} VND</p>
+                <p class="total-row"><strong>Số tiền cần thanh toán:</strong> ${(totalAmount - deposit).toLocaleString()} VND</p>
+            </div>
+
+            <div class="footer">
+                <p>Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!</p>
+                <p>Chúc quý khách có một kỳ nghỉ vui vẻ.</p>
+            </div>
+        </body>
+        </html>
+    `);
+
+    newWindow.onload = function () {
+      newWindow.print();
+      newWindow.close();
     };
-    fetchRooms();
-    // const roomIds = ["65b377dfdc9b573d146614dd","65deda99215212200ab94206"];
-    roomIds.forEach((id) => getApiGetInfo(id));
-  }, [data, dataSource]);
+  }
+
 
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
@@ -147,7 +404,6 @@ const Orders = () => {
       selectedKeys,
       confirm,
       clearFilters,
-      close,
     }) => (
       <div
         style={{
@@ -187,28 +443,6 @@ const Orders = () => {
             }}
           >
             Đặt lại
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              confirm({
-                closeDropdown: false,
-              });
-              setSearchText(selectedKeys[0]);
-              setSearchedColumn(dataIndex);
-            }}
-          >
-            Lọc
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              close();
-            }}
-          >
-            Đóng
           </Button>
         </Space>
       </div>
@@ -256,9 +490,9 @@ const Orders = () => {
             {
               title: "Mã Đơn",
               dataIndex: "idOrder",
-              width: "150px",
+              width: "100px",
+              ...getColumnSearchProps("idOrder"),
               sorter: (a, b) => a.idOrder.localeCompare(b.idOrder),
-              // render: (value) => <span>{value}</span>,
               render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <Tooltip title={text}>
@@ -281,17 +515,15 @@ const Orders = () => {
               sortDirections: ["descend", "ascend"],
             },
             {
-              title: "Số điện thoại",
+              title: "Điện thoại",
               dataIndex: "phoneInput",
               ...getColumnSearchProps("phoneInput"),
             },
             {
               title: "Tên phòng",
-              dataIndex: "idRoom",
-              render: (idRoom) => {
-                // Use the roomNames state to access the room name
-                const name = roomNames[idRoom];
-                return <span>{name}</span>;
+              dataIndex: "room",
+              render: (room) => {
+                return <span>{room?.nameRoom}</span>;
               },
             },
             {
@@ -305,13 +537,32 @@ const Orders = () => {
               render: (value) => <span>{value[0]}</span>,
               align: 'center',
             },
-            // {
-            //   title: "Số ngày",
-            //   dataIndex: "dateInput",
-            //   sorter: (a, b) => a.dateInput.length - b.dateInput.length,
-            //   render: (value) => <span>{value.length}</span>,
-            //   align: 'center',
-            // },
+            {
+              title: "Số ngày",
+              dataIndex: "dateInput",
+              sorter: (a, b) => a.dateInput.length - b.dateInput.length,
+              render: (value) => {
+                const start = dayjs(value[0], "DD/MM/YYYY");
+                const end = dayjs(value[1], "DD/MM/YYYY");
+                const days = end.diff(start, "day");
+                return <span>{days}</span>;
+              },
+              align: 'center',
+            },
+            {
+              title: "Thanh toán",
+              dataIndex: "pay",
+              filters: [
+                { text: "Rồi", value: "true" },
+                { text: "Chưa", value: "false" },
+              ],
+              onFilter: (value, record) => record.pay.toString() === value,
+              render: (value) => (
+                <span>
+                  {value === "true" ? "Rồi" : "Chưa"}
+                </span>
+              ),
+            },
             {
               title: "Trạng thái",
               dataIndex: "statusOrder",
@@ -325,94 +576,68 @@ const Orders = () => {
               render: (value) => {
                 let status;
                 switch (value) {
-                  case "1":
-                    status = "Chờ xác nhận";
-                    break;
-                  case "2":
-                    status = "Đã xác nhận";
-                    break;
-                  case "3":
-                    status = "Đã hoàn thành";
-                    break;
-                  case "10":
-                    status = "Đã hủy đặt";
-                    break;
-                  default:
-                    status = "Không xác định";
+                  case '1': status = 'Chờ xác nhận'; break;
+                  case '2': status = 'Đã xác nhận'; break;
+                  case '3': status = 'Đã hoàn thành'; break;
+                  case '10': status = 'Đã hủy đặt'; break;
+                  default: status = 'Không xác định';
                 }
                 return <span>{status}</span>;
               },
             },
             {
-              title: "Thanh toán",
-              dataIndex: "pay",
-              filters: [
-                { text: "Đã thanh toán", value: "true" },
-                { text: "Chưa thanh toán", value: "false" },
-              ],
-              onFilter: (value, record) => record.pay.toString() === value,
-              render: (value) => (
-                <span>
-                  {value === "true" ? "Đã thanh toán" : "Chưa thanh toán"}
-                </span>
+              title: "Xử lí",
+              render: (_, record) => (
+                <div className="flex justify-between">
+                  <Button
+                    className="bg-blue-500 text-white hover:opacity-80 hover:bg-white  rounded-lg transition duration-150 ease-in-out"
+                    onClick={() => {
+                      handleCheckInOut(record);
+                      // handleClickCompleteOrder(record);
+                    }}
+                    disabled={record.statusOrder !== '2'}
+                  >
+                    CheckIn/Out
+                  </Button>
+                  <UnorderedListOutlined
+                    title="Xem chi tiết"
+                    className="m-1 flex items-center justify-center"
+                    style={{ fontSize: "20px", color: "green" }}
+                    onClick={() => alert("Xem chi tiet")}
+                  />
+                </div>
               ),
             },
             {
               title: "Xác Nhận",
               dataIndex: "statusOrder",
               align: 'center',
+              fixed: 'right',
               render: (value, record) => (
-                <span>
-                  {value === "1" ? (
-                    <Button
-                      title="Xác nhận đơn đặt phòng"
-                      className=" flex items-center justify-center"
-                      style={{ fontSize: "18px", color: "green" }}
-                      shape="round"
-                      icon={<CheckCircleOutlined />}
-                      onClick={() => {
-                        handleClickConfirmOrder(record);
-                      }}
-                    >
-                      Xác Nhận
-                    </Button>
-                  ) :
-                    <span>Đã xác nhận</span>
-                  }
-                </span>
-              ),
-            },
-            {
-              title: "Xử lí",
-              render: (index) => (
-                <div className="flex justify-between">
-                  {/* <UnorderedListOutlined
-                    title="Xem chi tiết"
-                    className="m-1 flex items-center justify-center"
-                    style={{ fontSize: "20px", color: "green" }}
-                    onClick={() => {}}
-                  /> */}
-                  <CheckCircleOutlined
-                    title="Nhấn để hoàn thành đơn"
-                    className="m-1 flex items-center justify-center"
-                    style={{ fontSize: "20px", color: "blue" }}
+                <div className="flex space-x-2">
+                  <Button
+                    className="bg-green-500 text-white hover:opacity-80 hover:bg-white  rounded-lg transition duration-150 ease-in-out"
                     onClick={() => {
-                      // console.log(index)
-                      handleClickCompleteOrder(index);
+                      handleClickConfirmOrder(record);
                     }}
-                  />
-                  <DeleteOutlined
-                    title="Xóa đơn hàng"
-                    className="m-1 flex items-center justify-center"
-                    style={{ fontSize: "20px", color: "red" }}
+                    disabled={record.statusOrder !== '1'}
+                  >
+                    Xác nhận
+                  </Button>
+
+                  <Button
+                    danger
                     onClick={() => {
-                      // console.log(index)
-                      handleClickDeleteOrder(index);
+                      handleClickCancelOrder(record);
                     }}
-                  />
+                    disabled={record.statusOrder !== '1' && record.statusOrder !== '2'}
+                  >
+                    Hủy
+                  </Button>
                 </div>
               ),
             },
+
           ]}
           dataSource={data}
           pagination={{
@@ -420,7 +645,8 @@ const Orders = () => {
           }}
         ></Table>
       </Space>
-    </div>
+
+    </div >
   );
 };
 

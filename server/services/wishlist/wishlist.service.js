@@ -106,7 +106,7 @@ class WishlistService {
       },
       // Unwind the roomDetails array to flatten the results
       {
-        $unwind: { path: '$roomDetails', preserveNullAndEmptyArrays: true }
+        $unwind: { path: '$roomDetails' } //, preserveNullAndEmptyArrays: true
       },
       {
         $addFields: {

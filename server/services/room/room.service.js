@@ -139,7 +139,7 @@ class RoomService {
       },
     ]).toArray();
 
-    console.log(rooms.length);
+    // console.log(rooms.length);
 
     if (!dateRange) {
       // Manually paginate the results
@@ -267,14 +267,58 @@ class RoomService {
   }
 
 
+  // async findRoomByIdSector(filter) {
+  //   // console.log(filter);
+  //   const cursor = await this.Room.find({
+  //     idSectorRoom: filter.enKhuVuc,
+  //     // 'cmtRoom.isDeleted': { $ne: true } 
+  //   });    
+  //   return await cursor.toArray();
+  // }
+
   async findRoomByIdSector(filter) {
-    // console.log(filter);
-    const cursor = await this.Room.find({
-      idSectorRoom: filter.enKhuVuc,
-      // 'cmtRoom.isDeleted': { $ne: true } 
-    });
+    try {
+      const roomsWithSectors = await this.Room.aggregate([
+        {
+          $match: { idSectorRoom: filter.enKhuVuc } 
+        }, 
+        {
+          $addFields: {
+            idSectorRoom: { $toObjectId: "$idSectorRoom" }, // Convert string to ObjectId
+            cmtRoom: {
+              $filter: {
+                input: "$cmtRoom", // The comments array
+                as: "comment", // Alias for each comment
+                cond: { $eq: ["$$comment.isDeleted", false] } // Only include comments that are not deleted
+              }
+            }
+          }
+        },
+        {
+          $lookup: {
+            from: "sectors",
+            localField: "idSectorRoom",
+            foreignField: "_id",
+            as: "sectorDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$sectorDetails",
+            preserveNullAndEmptyArrays: true
+          }
+        } // Flatten the result
+      ]).toArray();
+
+      return roomsWithSectors;
+    } catch (error) {
+      console.error("Error in fetching rooms with sectors:", error);
+      throw error;
+    }
+
     return await cursor.toArray();
   }
+
 
   async findAvailableRooms(datesArray) {
 
@@ -519,7 +563,7 @@ class RoomService {
       {
         $project: {
           _id: 0,
-          "nameRoom":1,
+          "nameRoom": 1,
           "cmtRoom.idComment": 1,
           "cmtRoom.idUser": 1,
           "cmtRoom.idOrder": 1,

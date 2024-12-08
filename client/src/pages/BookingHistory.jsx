@@ -27,7 +27,7 @@ export default function BookingHistory() {
     const [form] = Form.useForm()
 
     const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(5)
+    const [pageSize, setPageSize] = useState(7)
     const [searchText, setSearchText] = useState('')
     const [searchedColumn, setSearchedColumn] = useState('')
     const navigate = useNavigate();
@@ -85,6 +85,7 @@ export default function BookingHistory() {
     }
 
     const handleCancelOrder = async (record) => {
+        alert(record.idOrder)
         const payload = {
             idUser: record.idUser,
             idOrder: record.idOrder,

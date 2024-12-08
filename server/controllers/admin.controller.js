@@ -8,6 +8,7 @@ const MongoDB = require("../utils/mongodb.util");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
 const multer = require("multer");
+const RefundService = require("../services/payment/refund.service");
 
 // Admin
 exports.register = async (req, res, next) => {
@@ -367,12 +368,12 @@ exports.deleteRoom = async (req, res, next) => {
   try {
     const roomService = new RoomService(MongoDB.client);
     const room = await roomService.checkByIdRoom({ "idRoom": req.body._id })
-    const result = await roomService.deleteRoom({_id: room[0]._id});
+    const result = await roomService.deleteRoom({ _id: room[0]._id });
     if (result.deletedCount > 0) {
 
       try {
         const sectorService = new SectorService(MongoDB.client);
-        const updateSectorResult = await sectorService.deleteOneRoomInSector({"idSector": room[0].idSectorRoom});
+        const updateSectorResult = await sectorService.deleteOneRoomInSector({ "idSector": room[0].idSectorRoom });
 
         if (!updateSectorResult) {
           console.error("Failed to update totalRoomInSector");
@@ -524,6 +525,28 @@ exports.getAllUserOrder = async (req, res, next) => {
   }
 };
 
+exports.getAllOrderOfAllUserForAdmin = async (req, res, next) => {
+
+  try {
+    const userService = new UserService(MongoDB.client);
+    const result = await userService.getAllOrdersForAllUsers();
+
+    if (!result) {
+      return res.status(400).json({
+        err: -1,
+        msg: "Không tìm thấy lịch sử đặt phòng nào!",
+      });
+    }
+    return res.status(200).json({
+      length: result.length,
+      users: result,      
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Đã xảy ra lỗi khi xoá yêu thích của người dùng."));
+
+  }
+}
+
 exports.confirmOrderRoom = async (req, res, next) => {
   // console.log(req.body)
   try {
@@ -544,6 +567,47 @@ exports.confirmOrderRoom = async (req, res, next) => {
   } catch (error) {
     console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình xác nhận đơn đặt phòng !"));
+  }
+};
+
+exports.checkinOrderRoom = async (req, res, next) => {
+  const { idUser, idOrder, cccd } = req.body;
+
+  if (!idUser || !idOrder || !cccd) {
+    return res.status(400).json({
+      status: 0,
+      msg: "Thiếu thông tin (idUser, idOrder, hoặc CCCD)"
+    });
+  }
+
+  try {
+    if (!/^\d{12}$/.test(cccd)) {
+      return res.status(400).json({
+        status: 0,
+        msg: "Chứng minh thư phải là 12 số"
+      });
+    }
+
+    const userService = new UserService(MongoDB.client);
+    const result = await userService.InsertCCCD(req.body);
+    // console.log(result)
+    if (result) {
+      return res.status(200).json({
+        status: 1,
+        data: result,
+        msg: "Checkin đơn thành công!"
+      });
+    }
+    else {
+      return res.status(400).json({
+        status: 0,
+        msg: "Không tìm thấy đơn hoặc không thể cập nhật CCCD"
+      });
+    }
+
+  } catch (error) {
+    console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong quá trình checkin đơn đặt phòng!"));
   }
 };
 
@@ -592,7 +656,7 @@ exports.deleteOrderRoom = async (req, res, next) => {
           data: result,
           msg: "Xóa ngày đặt thành công !"
         });
-      else 
+      else
         return res.status(200).json({
           status: 1,
           data: result,
@@ -606,6 +670,50 @@ exports.deleteOrderRoom = async (req, res, next) => {
   } catch (error) {
     console.log(error)
     return next(new ApiError(500, "Xảy ra lỗi trong quá trình xóa đơn đặt phòng !"));
+  }
+};
+
+exports.cancelOrderRoom = async (req, res, next) => {
+  const payload = {
+    idUser: req.body.idUser,
+    idOrder: req.body.idOrder,
+  }
+  try {
+    const roomService = new RoomService(MongoDB.client);
+    const userService = new UserService(MongoDB.client);
+    const refundService = new RefundService(MongoDB.client);
+
+    // Step 1: Cancel the user's order
+    const orderResult = await userService.CancelOrderRoomAdmin(payload)
+    if (!orderResult) {
+      return res.status(400).json({
+        err: -1,
+        msg: 'Không tìm thấy đơn hàng hoặc không thể cập nhật!',
+      });
+    }
+
+    // Step 2: Delete the room booking dates
+    const roomResult = await roomService.deleteDateRoom(orderResult.order[0])
+
+    // Step 3: If there is a transaction ID, perform the refund
+    if (orderResult.order[0].transactionId) {
+      const refundResult = await refundService.refundTransaction(orderResult.order[0].transactionId);
+      if (refundResult.status === 'COMPLETED') {
+        // Update refund status
+        await userService.updateRefundStatus(orderResult.idUser, orderResult.order[0].idOrder, "true");
+      } else {
+        await userService.updateRefundStatus(orderResult.idUser, orderResult.order[0].idOrder, "false");
+      }
+    }
+
+    return res.status(200).json({
+      status: 1,
+      data: orderResult,
+      msg: "Xóa đơn hàng thành công !"
+    });
+  } catch (error) {
+    console.log(error)
+    return next(new ApiError(500, "Xảy ra lỗi trong hủy phòng !"));
   }
 };
 
@@ -633,7 +741,7 @@ exports.getExtraServiceById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const extraServiceService = new ExtraServiceService(MongoDB.client);
-    const data = await extraServiceService.getById(id); 
+    const data = await extraServiceService.getById(id);
 
     if (data) {
       return res.status(200).json(data);
@@ -741,9 +849,9 @@ exports.softDeleteComment = async (req, res, next) => {
     //   });
     // }
 
-    const result = await roomService.deleteComment({ 
-      idRoom: comment.idRoom, 
-      idComment 
+    const result = await roomService.deleteComment({
+      idRoom: comment.idRoom,
+      idComment
     });
 
     if (result.modifiedCount === 0) {

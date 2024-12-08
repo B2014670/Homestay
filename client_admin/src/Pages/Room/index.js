@@ -24,6 +24,8 @@ import Highlighter from "react-highlight-words";
 import AddRoomForm from "../../components/AddRoomForm";
 import swal from "sweetalert";
 
+import RoomManagement from "../../components/RoomManagement";
+
 const { Option } = Select;
 const { Title: AntTitle } = Typography;
 
@@ -115,9 +117,9 @@ const Room = () => {
               width: 90,
             }}
           >
-            Xóa
+            Đặt lại
           </Button>
-          <Button
+          {/* <Button
             size="small"
             onClick={() => {
               confirm({
@@ -137,7 +139,7 @@ const Room = () => {
             }}
           >
             Đóng
-          </Button>
+          </Button> */}
         </Space>
       </div>
     ),
@@ -428,9 +430,6 @@ const Room = () => {
         onClose={() => setShowAddRoomPopup(false)}
         onSuccess={() => getRooms()}
       />
-      {/* {showAddRoomPopup && (
-        <AddRoomForm setShowAddRoomPopup={setShowAddRoomPopup}></AddRoomForm>
-      )} */}
 
       <Space size={0} direction="vertical" className="w-full">
         <div className="flex justify-between">
@@ -458,8 +457,133 @@ const Room = () => {
           }}
         ></Table>
       </Space>
+
+      <RoomManagement data={{
+        "totalRooms": 5,
+        "paginatedRooms": [
+          {
+            "_id": "66b87b2f95307a46d21b64c6",
+            "loaiRoom": "1-2 người",
+            "discRoom": "Phòng Hoàng Hôn được thiết kế để tạo cảm giác gần gũi với thiên nhiên, với tone màu ấm áp như vàng, cam, hoặc be, gợi lên hình ảnh của ánh hoàng hôn. Ban công rộng giúp khách tận hưởng trọn vẹn cảnh đẹp vào buổi chiều tà.",
+            "nameRoom": "Phòng Hoàng Hôn",
+            "idSectorRoom": "66b8701095307a46d21b5cd2",
+            "giaRoom": 330000,
+            "danhgiaRoom": 5,
+            "ordersRoom": [],
+            "statusRoom": 0,
+            "sectorDetails": {
+              "_id": "66b8701095307a46d21b5cd2",
+              "nameSector": "Bãi trước",
+              "discSector": "Có xe đưa đón, có bàn bida, golf",
+              "addressSector": "View biển",
+              "statusSector": 1,
+              "totalRoomInSector": 1
+            }
+          },
+          {
+            "_id": "6737ca33aa9bc8606ebea0b0",
+            "loaiRoom": "3-4 người",
+            "idSectorRoom": "6704eb88a402e0fb4cfc9d16",
+            "giaRoom": 1000000,
+            "discRoom": "Không gian đẳng cấp với ánh sáng xanh ngọc bích, nội thất hiện đại, và cửa kính lớn để ngắm nhìn toàn cảnh thành phố",
+            "nameRoom": "Phòng Sapphire",
+            "cmtRoom": [],
+            "danhgiaRoom": 5,
+            "ordersRoom": [],
+            "statusRoom": 0,
+            "sectorDetails": {
+              "_id": "6704eb88a402e0fb4cfc9d16",
+              "nameSector": "Bãi sau",
+              "discSector": "Khu vực yên tĩnh, phù hợp nghỉ dưỡng",
+              "addressSector": "Trên đồi cao, view toàn thành phố",
+              "statusSector": 1,
+              "totalRoomInSector": 2
+            }
+          },
+          {
+            "_id": "6737cb03aa9bc8606ebea10e",
+            "loaiRoom": "5-7 người",
+            "idSectorRoom": "66b87b3f95307a46d21b64d4",
+            "giaRoom": 2000000,
+            "discRoom": "Rực rỡ với ánh sáng tự nhiên, cửa sổ hướng Đông giúp bạn đón bình minh mỗi sớm mai.",
+            "nameRoom": "Phòng Ánh Dương",
+            "cmtRoom": [],
+            "danhgiaRoom": 5,
+            "ordersRoom": [],
+            "statusRoom": 0,
+            "sectorDetails": {
+              "_id": "66b87b3f95307a46d21b64d4",
+              "nameSector": "Bãi giữa",
+              "addressSector": "Gần trung tâm thành phố",
+              "discSector": "Hồ bơi ngoài trời, khu BBQ, sân tennis",
+              "statusSector": 1,
+              "totalRoomInSector": 2
+            }
+          },
+          {
+            "_id": "6737cbb7aa9bc8606ebea15c",
+            "discRoom": "Thiết kế hiện đại tối giản kết hợp hài hòa giữa các tông màu, mang lại cảm giác yên bình và thư giãn",
+            "idSectorRoom": "6704eb88a402e0fb4cfc9d16",
+            "giaRoom": 600000,
+            "loaiRoom": "3-4 người",
+            "nameRoom": "Phòng Harmony",
+            "cmtRoom": [],
+            "danhgiaRoom": 5,
+            "ordersRoom": [],
+            "statusRoom": 0,
+            "sectorDetails": {
+              "_id": "6704eb88a402e0fb4cfc9d16",
+              "nameSector": "Bãi sau",
+              "discSector": "Khu vực yên tĩnh, phù hợp nghỉ dưỡng",
+              "addressSector": "Trên đồi cao, view toàn thành phố",
+              "statusSector": 1,
+              "totalRoomInSector": 2
+            }
+          },
+          {
+            "_id": "674de988daf36963aa5425a6",
+            "discRoom": "Có khu vườn, có sân hiên và khách có thể sử dụng Wi-Fi miễn phí và chỗ đậu xe riêng miễn phí.",
+            "idSectorRoom": "66b87b3f95307a46d21b64d4",
+            "giaRoom": 400000,
+            "loaiRoom": "1-2 người",
+            "nameRoom": "Phòng Bình Minh",
+            "cmtRoom": [],
+            "danhgiaRoom": 5,
+            "ordersRoom": [
+              [
+                "01/01/2025",
+                "04/01/2025"
+              ],
+              [
+                "24/12/2024",
+                "25/12/2024"
+              ],
+              [
+                "29/12/2024",
+                "30/12/2024"
+              ],
+              [
+                "25/02/2025",
+                "26/02/2025"
+              ]
+            ],
+            "statusRoom": 0,
+            "sectorDetails": {
+              "_id": "66b87b3f95307a46d21b64d4",
+              "nameSector": "Bãi giữa",
+              "addressSector": "Gần trung tâm thành phố",
+              "discSector": "Hồ bơi ngoài trời, khu BBQ, sân tennis",
+              "statusSector": 1,
+              "totalRoomInSector": 2
+            }
+          }
+        ]
+      }} />
     </div>
   );
 };
+
+
+
 
 export default Room;

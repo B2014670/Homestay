@@ -184,8 +184,7 @@ router.post("", async (req, res) => {
 
       const accordionPayload = {
         type: "accordion",
-        title: "Danh sách phòng tại khu vực bạn đã chọn :",
-        // subtitle: `gõ "&lt;Tên phòng&gt;" để thực hiện đặt phòng`,
+        title: `Danh sách phòng tại khu vực ${data[0]?.sectorDetails?.nameSector || ""}  :`,
         subtitle: 'Chọn phòng để thực hiện đặt phòng',
       };
 

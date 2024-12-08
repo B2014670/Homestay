@@ -220,7 +220,7 @@ const RecentOrder = () => {
         dataSource={dataSource}
         loading={loading}
         pagination={false}
-        scroll={{ y: 300 }}
+        scroll={{ y: 250 }}
         className="overflow-x-auto"
       />
     </Card>
@@ -238,10 +238,8 @@ const DashBoardChart = () => {
         const orders = result.data.users.flatMap(user => user.order);
         const completedOrders = orders.filter(order => order.statusOrder === "3");
 
-        // const months = Array.from({ length: 12 }, (_, i) =>
-        //   new Date(0, i).toLocaleString("vi-VN", { month: "short" }));
         // Tạo danh sách tháng với định dạng T1, T2, ...
-      const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
+        const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
 
         const initialRevenueByMonth = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
 

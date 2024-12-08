@@ -225,8 +225,13 @@ class UserService {
 
   // ORDER STARTING
   async getUserOrder(filter) {
-    const projection = { refreshToken: 0 };
-    const cursor = await this.User.find(filter, { projection });
+    const projection = { refreshToken: 0, reset_password_expires: 0, reset_password_token: 0 };
+    const cursor = await this.User.find(
+      {
+        ...filter,
+        order: { $ne: null, $ne: [] }
+      },
+      { projection });
     return await cursor.toArray();
   }
 
@@ -242,6 +247,100 @@ class UserService {
       },
       { returnDocument: "after" }
     );
+
+    return result;
+  }
+
+  async getAllOrdersForAllUsers() {
+    const result = await this.User.aggregate([
+      // Match all users where orders are not null or empty
+      { $match: { order: { $ne: null, $ne: [] } } },
+      // Unwind the orders array for each user
+      {
+        $unwind: { path: '$order' }
+      },
+      // Add ObjectId for idRoom in orders
+      {
+        $addFields: {
+          'order.idRoom': { $toObjectId: '$order.idRoom' }
+        }
+      },
+      // Lookup room details based on idRoom in orders
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: 'order.idRoom',
+          foreignField: '_id',
+          as: 'roomDetails',
+        }
+      },
+      // Unwind room details
+      {
+        $unwind: { path: '$roomDetails', preserveNullAndEmptyArrays: true }
+      },
+      // Add ObjectId for idSectorRoom in room details
+      {
+        $addFields: {
+          'roomDetails.idSectorRoom': { $toObjectId: '$roomDetails.idSectorRoom' }
+        }
+      },
+      // Lookup sector details based on idSectorRoom
+      {
+        $lookup: {
+          from: 'sectors',
+          localField: 'roomDetails.idSectorRoom',
+          foreignField: '_id',
+          as: 'roomDetails.sectorDetails'
+        }
+      },
+      // Unwind sector details
+      {
+        $unwind: { path: '$roomDetails.sectorDetails', preserveNullAndEmptyArrays: true }
+      },
+      // Add room details to the order object
+      {
+        $addFields: {
+          'order.room': '$roomDetails'
+        }
+      },
+      // Add user details to each order
+      {
+        $addFields: {
+          'order.user': {
+            _id: '$_id',
+            name: '$name',
+            phone: '$phone',
+            email: '$email',
+            address: '$address',
+            img: '$img',
+          }
+        }
+      },
+      // Group the data back by user
+      {
+        $group: {
+          _id: '$_id',
+          name: { $first: '$name' },
+          phone: { $first: '$phone' },
+          email: { $first: '$email' },
+          address: { $first: '$address' },
+          img: { $first: '$img' },
+          order: { $push: '$order' }
+        }
+      },
+      // Clean up empty orders if any
+      {
+        $addFields: {
+          orders: {
+            $filter: {
+              input: '$orders',
+              as: 'order',
+              cond: { $ne: ['$$order', {}] }
+            }
+          }
+        }
+      }
+    ]).toArray();
 
     return result;
   }
@@ -442,14 +541,50 @@ class UserService {
     const result = await this.User.findOneAndUpdate(
       {
         _id: ObjectId.isValid(idUser) ? new ObjectId(idUser) : null,
-        "order.idOrder": idOrder,
-        "order.statusOrder": "1",
+        order: {
+          $elemMatch: {
+            idOrder: idOrder,
+            statusOrder: "1",
+          },
+        },
       },
       {
         $set: { "order.$.statusOrder": "10" },
       },
       { returnDocument: "after", projection: { order: { $elemMatch: { idOrder: idOrder } } } }
     );
+    console.log(result);
+
+    if (!result) {
+      throw new Error("Order not found or cannot be updated.");
+    }
+
+    return result;
+  }
+
+  async CancelOrderRoomAdmin(payload) {
+    const { idUser, idOrder } = payload;
+
+    const result = await this.User.findOneAndUpdate(
+      {
+        _id: ObjectId.isValid(idUser) ? new ObjectId(idUser) : null,
+        order: {
+          $elemMatch: {
+            idOrder: idOrder,
+            statusOrder: { $in: ["1", "2"] },
+          },
+        },
+      },
+      {
+        $set: { "order.$.statusOrder": "10" },
+      },
+      { returnDocument: "after", projection: { order: { $elemMatch: { idOrder: idOrder } } } }
+    );
+    console.log(result);
+
+    if (!result) {
+      throw new Error("Order not found or cannot be updated.");
+    }
 
     return result;
   }
@@ -500,10 +635,31 @@ class UserService {
     return result;
   }
 
+  async InsertCCCD(payload) {
+    const { idUser, idOrder, cccd } = payload;
+
+    const result = await this.User.findOneAndUpdate(
+      {
+        _id: ObjectId.isValid(idUser) ? new ObjectId(idUser) : null,
+        "order.idOrder": idOrder,
+      },
+      {
+        $set: { "order.$.cccd": cccd },
+      },
+      { returnDocument: "after" }
+    );
+
+    if (!result) {
+      throw new ApiError(404, "Không tìm thấy đơn đặt phòng hoặc người dùng");
+    }
+    
+    return result;
+  }
+
   async completeOrderRoom(payload) {
     const idUser = payload.idUser;
     const idOrder = payload.idOrder;
-    console.log(payload);
+    // console.log(payload);
     const result = await this.User.findOneAndUpdate(
       {
         _id: ObjectId.isValid(idUser) ? new ObjectId(idUser) : null,
@@ -584,7 +740,7 @@ class UserService {
 
   async GetInfoOrderRoomByChatBot(payload) {
     try {
-      console.log("idOrder: ",payload.idOrder);
+      console.log("idOrder: ", payload.idOrder);
       const idOrder = payload.idOrder;
       // Kiểm tra idOrder không phải là undefined hoặc null
       if (!idOrder) {

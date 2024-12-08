@@ -76,7 +76,7 @@ const Service = () => {
             size="small"
             style={{ width: 90, marginRight: 8 }}
           >
-            Tìm kiếm
+            Tìm
           </Button>
           <Button
             onClick={() => clearFilters()}

@@ -183,7 +183,6 @@ const AddRoomForm = ({ isVisible, onClose, onSuccess }) => {
               </div>
             </Form.Item>
             <Form.Item
-
               label="Khu vực phòng : "
               rules={[{ required: true, message: 'Vui lòng nhập thông tin!' }]}
             >
