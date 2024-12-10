@@ -26,41 +26,136 @@ class RoomService {
     return room;
   }
 
+  // async check(filter) {
+  //   try {
+  //     const roomsWithSectors = await this.Room.aggregate([
+  //       { $match: filter || {} }, // Apply the filter
+  //       {
+  //         $addFields: {
+  //           idSectorRoom: { $toObjectId: "$idSectorRoom" }, // Convert string to ObjectId
+  //           cmtRoom: {
+  //             $filter: {
+  //               input: "$cmtRoom", // The comments array
+  //               as: "comment", // Alias for each comment
+  //               cond: { $eq: ["$$comment.isDeleted", false] } // Only include comments that are not deleted
+  //             }
+  //           }
+  //         }
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "sectors",
+  //           localField: "idSectorRoom",
+  //           foreignField: "_id",
+  //           as: "sectorDetails",
+  //         },
+  //       },
+  //       {
+  //         $unwind: {
+  //           path: "$sectorDetails",
+  //           preserveNullAndEmptyArrays: true
+  //         }
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users", // Join with users to fetch order details
+  //           let: { roomId: "$_id" },
+  //           pipeline: [
+  //             { $unwind: "$order" }, // Flatten orders array
+  //             { $match: { $expr: { $eq: ["$order.idRoom", "$$roomId"] } } }, // Match room ID
+  //             {
+  //               $project: {
+  //                 _id: 0,
+  //                 idUser: "$order.idUser",
+  //                 userInput: "$order.userInput",
+  //                 phoneInput: "$order.phoneInput",
+  //                 dateInput: "$order.dateInput",
+  //                 totalMoney: "$order.totalMoney",
+  //                 pay: "$order.pay",
+  //                 paymentMethod: "$order.paymentMethod",
+  //                 transactionId: "$order.transactionId",
+  //                 deposit: "$order.deposit",
+  //                 statusOrder: "$order.statusOrder",
+  //                 extraServices: "$order.extraServices",
+  //                 idOrder: "$order.idOrder"
+  //               }
+  //             }
+  //           ],
+  //           as: "orderDetails"
+  //         }
+  //       }
+  //     ]).toArray();
+
+  //     return roomsWithSectors;
+  //   } catch (error) {
+  //     console.error("Error in fetching rooms with sectors:", error);
+  //     throw error;
+  //   }
+  // }
+
   async check(filter) {
     try {
-      const roomsWithSectors = await this.Room.aggregate([
+      const roomsWithDetails = await this.Room.aggregate([
         { $match: filter || {} }, // Apply the filter
         {
           $addFields: {
             idSectorRoom: { $toObjectId: "$idSectorRoom" }, // Convert string to ObjectId
             cmtRoom: {
               $filter: {
-                input: "$cmtRoom", // The comments array
-                as: "comment", // Alias for each comment
-                cond: { $eq: ["$$comment.isDeleted", false] } // Only include comments that are not deleted
+                input: "$cmtRoom", // Filter comments
+                as: "comment",
+                cond: { $eq: ["$$comment.isDeleted", false] }
               }
             }
           }
         },
         {
           $lookup: {
-            from: "sectors",
+            from: "sectors", // Join with sectors
             localField: "idSectorRoom",
             foreignField: "_id",
-            as: "sectorDetails",
-          },
+            as: "sectorDetails"
+          }
         },
         {
           $unwind: {
             path: "$sectorDetails",
             preserveNullAndEmptyArrays: true
           }
-        } // Flatten the result
+        },
+        {
+          $lookup: {
+            from: "users", // Join with users to fetch order details
+            let: { roomId: { $toString: "$_id" } },
+            pipeline: [
+              { $unwind: "$order" }, // Flatten orders array
+              { $match: { $expr: { $eq: ["$order.idRoom", "$$roomId"] } } }, // Match room ID
+              {
+                $project: {
+                  _id: 0,
+                  idUser: "$order.idUser",
+                  userInput: "$order.userInput",
+                  phoneInput: "$order.phoneInput",
+                  dateInput: "$order.dateInput",
+                  totalMoney: "$order.totalMoney",
+                  pay: "$order.pay",
+                  paymentMethod: "$order.paymentMethod",
+                  transactionId: "$order.transactionId",
+                  deposit: "$order.deposit",
+                  statusOrder: "$order.statusOrder",
+                  extraServices: "$order.extraServices",
+                  idOrder: "$order.idOrder"
+                }
+              }
+            ],
+            as: "orderDetails"
+          }
+        }        
       ]).toArray();
 
-      return roomsWithSectors;
+      return roomsWithDetails;
     } catch (error) {
-      console.error("Error in fetching rooms with sectors:", error);
+      console.error("Error in fetching rooms with details:", error);
       throw error;
     }
   }
@@ -82,6 +177,34 @@ class RoomService {
                 cond: { $eq: ["$$comment.isDeleted", false] } // Only include comments that are not deleted
               }
             }
+          }
+        },
+        {
+          $lookup: {
+            from: "users", // Join with users to fetch order details
+            let: { roomId: { $toString: "$_id" } },
+            pipeline: [
+              { $unwind: "$order" }, // Flatten orders array
+              { $match: { $expr: { $eq: ["$order.idRoom", "$$roomId"] } } }, // Match room ID
+              {
+                $project: {
+                  _id: 0,
+                  idUser: "$order.idUser",
+                  userInput: "$order.userInput",
+                  phoneInput: "$order.phoneInput",
+                  dateInput: "$order.dateInput",
+                  totalMoney: "$order.totalMoney",
+                  pay: "$order.pay",
+                  paymentMethod: "$order.paymentMethod",
+                  transactionId: "$order.transactionId",
+                  deposit: "$order.deposit",
+                  statusOrder: "$order.statusOrder",
+                  extraServices: "$order.extraServices",
+                  idOrder: "$order.idOrder"
+                }
+              }
+            ],
+            as: "orderDetails"
           }
         }
       ]);

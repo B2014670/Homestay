@@ -368,51 +368,51 @@ export default function AccountPage() {
         </div>
       ),
     },
-    {
-      key: '2',
-      label: (
-        <span>
-          <MessageOutlined />
-          Trò chuyện với quản trị viên
-        </span>
-      ),
-      children: (
-        <div className="flex flex-col h-[300px]">
-          <div className="flex-grow overflow-y-auto space-y-4">
-            {messages?.length === 0 ? (
-              <div className='text-center text-lg font-semibold mt-24'>
-                Không có tin nhắn nào
-              </div>
-            ) : (
-              <>
-                {messages?.map((msg, index) => (
-                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-black'}`}>
-                      <p>{typeof msg.message === 'string' ? msg.message : JSON.stringify(msg.message)}</p>
-                      <p className="text-xs opacity-50">{dayjs(msg.timestamp).format('HH:mm DD/MM/YYYY')}</p>
-                    </div>
-                  </div>
-                ))}
-                {/* Place the ref to the last element */}
-                <div ref={endOfMessagesRef} />
-              </>
-            )}
-          </div>
-          <div className="flex">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onPressEnter={sendMessage}
-              placeholder="Nhập tin nhắn của bạn..."
-              className="flex-grow"
-            />
-            <Button onClick={sendMessage} type="primary" className="ml-2">
-              Gửi
-            </Button>
-          </div>
-        </div>
-      ),
-    },
+    // {
+    //   key: '2',
+    //   label: (
+    //     <span>
+    //       <MessageOutlined />
+    //       Trò chuyện với quản trị viên
+    //     </span>
+    //   ),
+    //   children: (
+    //     <div className="flex flex-col h-[300px]">
+    //       <div className="flex-grow overflow-y-auto space-y-4">
+    //         {messages?.length === 0 ? (
+    //           <div className='text-center text-lg font-semibold mt-24'>
+    //             Không có tin nhắn nào
+    //           </div>
+    //         ) : (
+    //           <>
+    //             {messages?.map((msg, index) => (
+    //               <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+    //                 <div className={`max-w-xs p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-black'}`}>
+    //                   <p>{typeof msg.message === 'string' ? msg.message : JSON.stringify(msg.message)}</p>
+    //                   <p className="text-xs opacity-50">{dayjs(msg.timestamp).format('HH:mm DD/MM/YYYY')}</p>
+    //                 </div>
+    //               </div>
+    //             ))}
+    //             {/* Place the ref to the last element */}
+    //             <div ref={endOfMessagesRef} />
+    //           </>
+    //         )}
+    //       </div>
+    //       <div className="flex">
+    //         <Input
+    //           value={newMessage}
+    //           onChange={(e) => setNewMessage(e.target.value)}
+    //           onPressEnter={sendMessage}
+    //           placeholder="Nhập tin nhắn của bạn..."
+    //           className="flex-grow"
+    //         />
+    //         <Button onClick={sendMessage} type="primary" className="ml-2">
+    //           Gửi
+    //         </Button>
+    //       </div>
+    //     </div>
+    //   ),
+    // },
   ];
 
   return (

@@ -23,9 +23,9 @@ const SideMenu = () => {
   ];
 
   const adminMenuItems = [
-    { label: 'Quản Lý Đặt Phòng', icon: <ShoppingCartOutlined />, key: '/orders', value: 3 },
-    { label: 'Quản Lý Khu Vực', icon: <MenuFoldOutlined />, key: '/sectors', value: 4 }, 
     { label: 'Quản Lý Phòng', icon: <HomeOutlined />, key: '/rooms', value: 5 },   
+    { label: 'Quản Lý Đặt Phòng', icon: <ShoppingCartOutlined />, key: '/orders', value: 3 },
+    { label: 'Quản Lý Khu Vực', icon: <MenuFoldOutlined />, key: '/sectors', value: 4 },    
     { label: 'Quản Lý Dịch Vụ', icon: <CoffeeOutlined />, key: '/services', value: 6 },    
     { label: 'Quản Lý Đánh Giá', icon: <StarOutlined  />, key: '/comments', value: 7 },
     { label: 'Quản lý Nhân Viên', icon: <UsergroupAddOutlined />, key: '/staffs', value: 1 },
@@ -43,11 +43,11 @@ const SideMenu = () => {
     <div className="flex flex-col h-full">
       <div className='sticky top-0 z-10'>
         <div className="bg-[#001529]">
-          <header  className="flex justify-center items-center py-4">
+          <header  className="flex justify-center items-center bg-white py-2">
             <img
-              src="./logo3.png"
+              src="./OIP.png"
               alt="Logo"
-              className="w-24 cursor-pointer"
+              className="w-[300px] cursor-pointer h-12 object-cover"
               onClick={() => navigate('/')}
             />
           </header >

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { InputNumber, DatePicker, Typography, Card, Tag } from 'antd';
-import { CoffeeOutlined, UserOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 function BreakfastBooking({ onBookingChange, loaiRoom, selectedDateRange, serviceData }) {
   const breakfastService = serviceData.find((service) => service.name === "Bửa sáng");
@@ -104,7 +104,6 @@ function BreakfastBooking({ onBookingChange, loaiRoom, selectedDateRange, servic
 
 BreakfastBooking.propTypes = {
   onBookingChange: PropTypes.func.isRequired,
-  // loaiRoom: PropTypes.string.isRequired,
   selectedDateRange: PropTypes.array.isRequired,
 };
 

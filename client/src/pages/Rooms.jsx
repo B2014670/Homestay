@@ -28,7 +28,7 @@ const Rooms = () => {
   // Initial states for search filters
   const [wishlists, setWishlists] = useState([]);
   const [rollSliderStart, setRollSliderStart] = useState(100000);
-  const [rollSliderEnd, setRollSliderEnd] = useState(10000000);
+  const [rollSliderEnd, setRollSliderEnd] = useState(5000000);
   const [allSector, setAllSector] = useState([]);
   const searchQuery = location.state || {};
   const initialDateRange = location.state?.dateRange
@@ -36,7 +36,7 @@ const Rooms = () => {
     : [];
   const [disabledDateData, setDisabledDateData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
   const [totalRooms, setTotalRooms] = useState(0);
 
 
@@ -341,7 +341,7 @@ const Rooms = () => {
                 <Slider
                   className="w-[160px mt-7"
                   min={100000}
-                  max={20000000}
+                  max={10000000}
                   step={10000}
                   range
                   value={[rollSliderStart, rollSliderEnd]}

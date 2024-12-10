@@ -5,6 +5,10 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { path } from '../utils/constant';
 
 const RoomCard = ({ room, isLoggedIn, handleWishlistToggle, wishlists, navigate }) => {
+    const ratings = room.cmtRoom.map(comment => comment.rating); // Lấy tất cả các rating từ mảng cmtRoom
+    const totalRating = ratings.reduce((acc, curr) => acc + curr, 0); // Tính tổng rating
+    const averageRating = totalRating / ratings.length;
+
     const isWishlisted = wishlists.some(item => item.roomId === room._id);
 
     const handleClick = () => {
@@ -56,7 +60,7 @@ const RoomCard = ({ room, isLoggedIn, handleWishlistToggle, wishlists, navigate 
                     </div>
                     <div className="mb-1 text-right">
                         {/* Rating */}
-                        <Rate disabled defaultValue={room.danhgiaRoom} allowHalf className="text-yellow-400" />
+                        <Rate disabled defaultValue={averageRating || room.danhgiaRoom} allowHalf className="text-yellow-400" />
                         <span className="block text-gray-600 text-sm mt-1">{room.cmtRoom.length} đánh giá</span>
                     </div>
                 </div>

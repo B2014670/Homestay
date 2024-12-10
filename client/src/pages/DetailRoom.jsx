@@ -97,6 +97,7 @@ const DetailRoom = () => {
     try {
       const response = await apiGetRoomWithSector({ idRoom: id });
       if (response?.data) {
+        // console.log(response.data);
         setHomestayData(response.data);
       } else {
         console.error('No data returned from API');
@@ -141,6 +142,18 @@ const DetailRoom = () => {
     } catch (error) {
       console.error('Error fetching wishlist:', error);
     }
+  };
+
+  const calculateAverageRating = (comments) => {
+    if (comments.length === 0) {
+      return 0; // Return 0 if there are no comments
+    }
+  
+    const totalRating = comments.reduce((acc, comment) => acc + (comment.rating || 0), 0);
+  
+    const averageRating = totalRating / comments.length;
+    
+    return averageRating;
   };
 
   const handleDateChange = (dates) => {
@@ -222,10 +235,6 @@ const DetailRoom = () => {
     return dates;
   };
 
-  // const disabledDate = (current) => {
-  //   const formattedDisabledDays = disabledDateData.map((day) => dayjs(day, dateFormat));
-  //   return current < dayjs().startOf("day") || formattedDisabledDays.some((disabledDay) => current.isSame(disabledDay, "day"));
-  // };
   const disabledDate = (current) => {
     return current < dayjs().startOf("day")
   };
@@ -299,16 +308,6 @@ const DetailRoom = () => {
         transactionId: transactionId || formData.transactionId,
       },
     };
-    // console.log(dataInput.infoOrder);
-    // const response = await apiPostOrderRoom(dataInput);
-    // if (response.status === 200)
-    //   swal("Thành Công !", " Đặt phòng thành công !", "success")
-    //     .then((value) => {
-    //       fetchRoom();
-    //     });
-    // else {
-    //   message.error('Đặt phòng thất bại');
-    // }
 
     try {
       const response = await apiPostOrderRoom(dataInput);
@@ -429,8 +428,8 @@ const DetailRoom = () => {
                   bordered
                   column={{ sm: 1, md: 2, lg: 2 }}
                 >
-                  <Descriptions.Item label="Rating" >
-                    <Rate disabled defaultValue={homestayData.danhgiaRoom} />
+                  <Descriptions.Item label="Rating">
+                    <Rate disabled defaultValue={calculateAverageRating(homestayData?.cmtRoom)} />
                   </Descriptions.Item>
 
                   <Descriptions.Item label="Loại phòng" span={2}>
@@ -527,7 +526,7 @@ const DetailRoom = () => {
                           extraServices: [bookingData]
                         }));
                       }}
-                      serviceData= {serviceData}
+                      serviceData={serviceData}
                       loaiRoom={homestayData?.loaiRoom}
                       selectedDateRange={selectedDateRange}
                     />

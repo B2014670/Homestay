@@ -9,6 +9,7 @@ const { Title: AntTitle } = Typography;
 const Customer = () => {
   const [loading, setLoading] = useState(false)
   const [dataSource, setDataSource] = useState([])
+  const [filterName, setFilterName] = useState("SYS");
 
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
@@ -120,9 +121,18 @@ const Customer = () => {
   useEffect(() => {
     setLoading(true)
     apiGetAllUser()
-      .then(res => {
+      .then((res) => {
         // console.log(res)
-        setDataSource(res.data.users)
+        const users = res.data.users;
+        if (filterName) {
+          // Filter users based on the `filterName` criteria
+          const filtered = users.filter((user) =>
+            !user.name.toLowerCase().includes(filterName.toLowerCase())
+          );
+          setDataSource(filtered);
+        } else {
+          setDataSource(users); 
+        }
         setLoading(false)
       })
   }, [])
@@ -148,7 +158,7 @@ const Customer = () => {
                 title: "Ảnh",
                 dataIndex: "img",
                 align: "center",
-                render: (img) => <Avatar src={img.url?? "https://th.bing.com/th/id/R.cf89e8e6daa9dabc8174c303e4d53d3a?rik=BcjJH68FR0CVvg&pid=ImgRaw&r=0"} />
+                render: (img) => <Avatar src={img.url ?? "https://th.bing.com/th/id/R.cf89e8e6daa9dabc8174c303e4d53d3a?rik=BcjJH68FR0CVvg&pid=ImgRaw&r=0"} />
               },
               {
                 title: 'Tên tài khoản',

@@ -62,7 +62,7 @@ const Orders = () => {
         return (priority[a.statusOrder] || 4) - (priority[b.statusOrder] || 4);
       });
       setData(allOrder);
-      // console.log('allOrder', allOrder);
+      console.log('allOrder', allOrder);
 
     }
   }, [dataSource]);
@@ -82,20 +82,6 @@ const Orders = () => {
       }
     } catch (error) {
       swal({ title: "Error", text: error.message, icon: "error", button: "OK" });
-    }
-  };
-  const handleClicCheckInOrder = async (payload) => {
-    const result = await apiCompleteOrderRoom(payload);
-    // console.log(result.data);
-    if (result.data.status === 1) {
-      swal({
-        title: "Thành Công!",
-        text: result.data.msg,
-        icon: "success",
-        button: "OK",
-      }).then(() => {
-        getOrders();
-      });
     }
   };
   const handleClickCompleteOrder = async (payload) => {
@@ -165,13 +151,14 @@ const Orders = () => {
 
         if (!trimmedValue) {
           swal({
-            title: "Lỗi!",
-            text: "Chứng minh thư không được để trống.",
-            icon: "error",
+            title: "Cảnh báo!",
+            text: "Checking chưa hoàn tất",
+            icon: "warning",
             button: "OK",
           });
           return;
         }
+
         if (!/^\d{12}$/.test(trimmedValue)) {
           swal({
             title: "Lỗi!",
@@ -201,9 +188,10 @@ const Orders = () => {
       Modal.info({
         title: "Hóa đơn",
         content: (
-          <div>
+          <div style={{ lineHeight: "1.5" }}>
             <p><strong>Mã đơn:</strong> {record.idOrder}</p>
             <p><strong>Người sử dụng:</strong> {record.userInput}</p>
+            <p><strong>Căn cước:</strong> {record.cccd}</p>
             <p><strong>Số điện thoại:</strong> {record.phoneInput}</p>
             <p><strong>Phòng:</strong> {record.room?.nameRoom}</p>
             <p>
@@ -266,6 +254,65 @@ const Orders = () => {
     }
   }
 
+  function viewOrderDetails(record) {
+    const modal = Modal.info({
+      title: "Chi tiết đơn hàng",
+      content: (
+        <div style={{ lineHeight: "1.5" }}>
+          <p><strong>Mã đơn:</strong> {record.idOrder}</p>
+          <p><strong>Người sử dụng:</strong> {record.userInput}</p>
+          <p><strong>Căn cước:</strong> {record.cccd || "Chưa xác định"}</p>
+          <p><strong>Số điện thoại:</strong> {record.phoneInput || "Chưa xác định"}</p>
+          <p><strong>Phòng:</strong> {record.room?.nameRoom || "Chưa xác định"}</p>
+          <p>
+            <strong>Giá:</strong>{" "}
+            {record.room?.giaRoom.toLocaleString()} VND x{" "}
+            {record.dateInput && record.dateInput.length === 2
+              ? dayjs(record.dateInput[1], "DD/MM/YYYY").diff(
+                  dayjs(record.dateInput[0], "DD/MM/YYYY"),
+                  "day"
+                )
+              : "Chưa xác định"}{" "}
+            đêm
+          </p>
+          <div>
+            <strong>Dịch vụ:</strong>
+            {record.extraServices && record.extraServices.length > 0 ? (
+              <ul>
+                {record.extraServices.map((service, index) => (
+                  <li key={index}>
+                    {service.serviceType || "Dịch vụ không xác định"} {" "}
+                    ({Number(service.pricePerUnit).toLocaleString()} VND) x
+                    {service.guests || 0} (khách) x
+                    {(Array.isArray(service.dates) ? service.dates.length : "Không rõ")} (ngày)
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              "Không có dịch vụ bổ sung"
+            )}
+          </div>
+          <p>
+            <strong>Trả trước:</strong>{" "}
+            {Number(record.deposit || 0).toLocaleString()} VND
+          </p>
+          <hr style={{ margin: "10px 0" }} />
+          <p>
+            <strong>Thành tiền:</strong>{" "}
+            {(Number(record.totalMoney || 0) - Number(record.deposit || 0)).toLocaleString()} VND
+          </p>
+        </div>
+      ),
+      footer: (
+        <div style={{ textAlign: "right" }}>
+          <Button onClick={() => modal.destroy()}>
+            Đóng
+          </Button>
+        </div>
+      ),
+    });
+  }
+  
   function printInvoice(record) {
     if (!record || !record.idOrder) {
       alert('Không tìm thấy thông tin đơn hàng!');
@@ -384,7 +431,6 @@ const Orders = () => {
     };
   }
 
-
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const searchInput = useRef(null);
@@ -456,11 +502,18 @@ const Orders = () => {
     ),
     onFilter: (value, record) =>
       record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
-    onFilterDropdownOpenChange: (visible) => {
-      if (visible) {
-        setTimeout(() => searchInput.current?.select(), 100);
-      }
+    filterDropdownProps: {
+      onOpenChange: (open) => {
+        if (open) {
+          setTimeout(() => searchInput.current?.select(), 100);
+        }
+      },
     },
+    // onOpenChange: (visible) => {
+    //   if (visible) {
+    //     setTimeout(() => searchInput.current?.select(), 100);
+    //   }
+    // },
     render: (text) =>
       searchedColumn === dataIndex ? (
         <Highlighter
@@ -475,6 +528,43 @@ const Orders = () => {
       ) : (
         text
       ),
+  });
+
+  const getColumnSearchProps2 = (dataIndex) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          placeholder={`Search ${dataIndex}`}
+          onPressEnter={() => handleSearch(selectedKeys, confirm)}
+          style={{ width: 188, marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            onClick={() => handleSearch(selectedKeys, confirm)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Tìm
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Đặt lại
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+    onFilter: (value, record) => {
+      // Safely access nested property using optional chaining
+      const data = dataIndex.split('.').reduce((acc, key) => acc?.[key], record) || '';
+      return data.toString().toLowerCase().includes(value.toLowerCase());
+    },
   });
 
   return (
@@ -511,8 +601,8 @@ const Orders = () => {
               title: "Người sử dụng",
               dataIndex: "userInput",
               ...getColumnSearchProps("userInput"),
-              sorter: (a, b) => a.userInput.length - b.userInput.length,
-              sortDirections: ["descend", "ascend"],
+              // sorter: (a, b) => a.userInput.length - b.userInput.length,
+              // sortDirections: ["descend", "ascend"],
             },
             {
               title: "Điện thoại",
@@ -521,11 +611,13 @@ const Orders = () => {
             },
             {
               title: "Tên phòng",
-              dataIndex: "room",
-              render: (room) => {
-                return <span>{room?.nameRoom}</span>;
-              },
-            },
+              dataIndex: ['room', 'nameRoom'],
+              key: 'nameRoom',
+              ...getColumnSearchProps2('room.nameRoom'),
+              // render: (room) => {
+              //   return <span>{room?.nameRoom}</span>;
+              // },
+            },            
             {
               title: "Ngày đặt",
               dataIndex: "dateInput",
@@ -542,6 +634,7 @@ const Orders = () => {
               dataIndex: "dateInput",
               sorter: (a, b) => a.dateInput.length - b.dateInput.length,
               render: (value) => {
+                console.log(value);
                 const start = dayjs(value[0], "DD/MM/YYYY");
                 const end = dayjs(value[1], "DD/MM/YYYY");
                 const days = end.diff(start, "day");
@@ -572,7 +665,7 @@ const Orders = () => {
                 { text: "Đã hoàn thành", value: "3" },
                 { text: "Đã hủy đặt", value: "10" },
               ],
-              onFilter: (value, record) => record.statusOrder.indexOf(value) === 0,
+              onFilter: (value, record) => record.statusOrder === value,
               render: (value) => {
                 let status;
                 switch (value) {
@@ -621,7 +714,7 @@ const Orders = () => {
                 <div className="flex space-x-2">
                   <Button
                     color="default" variant="outlined"
-                    onClick={() => alert("Xem chi tiet")}
+                    onClick={() => viewOrderDetails(record)}
                   >
                     Chi tiết
                   </Button>

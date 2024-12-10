@@ -79,11 +79,49 @@ const Comment = () => {
       ),
   });
 
+  const getColumnSearchProps2 = (dataIndex) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          placeholder={`Search ${dataIndex}`}
+          onPressEnter={() => handleSearch(selectedKeys, confirm)}
+          style={{ width: 188, marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            onClick={() => handleSearch(selectedKeys, confirm)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Tìm
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Đặt lại
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+    onFilter: (value, record) => {
+      // Safely access nested property using optional chaining
+      const data = dataIndex.split('.').reduce((acc, key) => acc?.[key], record) || '';
+      return data.toString().toLowerCase().includes(value.toLowerCase());
+    },
+  });
+
   // Fetch comments data
   const fetchData = async () => {
     setLoading(true);
     try {
       const res = await apiGetAllComment();
+      console.log(res.data.data);
       setDataSource(res.data.data || []);
     } catch (error) {
       console.error('Failed to fetch comments:', error);
@@ -97,21 +135,21 @@ const Comment = () => {
 
   const handleToggleVisibility = async (record) => {
     try {
-      
+
       // Call your API or service to update the comment
       if (record.isDeleted) {
         await apiUnDeleteComment({
           idUser: record?.idUser,
           idComment: record?.idComment,
         });
-        swal("Thành Công!", "Bình luận đã khôi phục.", "success");        
+        swal("Thành Công!", "Bình luận đã khôi phục.", "success");
       } else {
         await apiDeleteComment({
           idUser: record?.idUser,
           idComment: record?.idComment,
         });
         swal("Thành Công!", "Bình luận đã được ẩn.", "success");
-      }  
+      }
       // Update the local state or refetch the data
       fetchData();
     } catch (error) {
@@ -129,7 +167,7 @@ const Comment = () => {
       });
       swal("Thành Công!", "Bình luận đã được xóa.", "success");
       fetchData()
-  
+
     } catch (error) {
       console.error('Error deleting comment:', error);
       swal("Lỗi!", "Không thể xóa bình luận.", "error");
@@ -150,9 +188,9 @@ const Comment = () => {
             columns={[
               {
                 title: 'Họ và tên',
-                dataIndex: ['userDetails', 'name'],
+                dataIndex: ['userDetails', 'name'], 
                 key: 'name',
-                ...getColumnSearchProps(['userDetails', 'name']),
+                ...getColumnSearchProps2('userDetails.name'),
               },
               {
                 title: 'Ảnh',
@@ -194,7 +232,7 @@ const Comment = () => {
                   { text: "Tạm ẩn", value: true },
                 ],
                 onFilter: (value, record) => record.isDeleted === value,
-                render: (value, record) => {                  
+                render: (value, record) => {
                   return value ? "Tạm ẩn" : "Hiển thị";
                 },
               },

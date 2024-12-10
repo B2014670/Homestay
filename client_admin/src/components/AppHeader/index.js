@@ -56,41 +56,13 @@ const AppHeader = () => {
     });
   };
 
-  return (
-    // <header className="bg-white shadow-md mb-4 sticky top-0 z-10">
-    //   <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-    //     <Space className="flex items-center">
-    //       <div>
-    //         <img src="/logo3.png" alt="Logo" className="w-[120px] h-[80px] object-contain" />
-    //       </div>
-    //       <Title level={4} className="m-0 hidden sm:block">HOMESTAY ADMIN DASHBOARD</Title>
-    //     </Space>
-    //     <Space className="flex items-center">
-    //       <Badge count={1} className="cursor-pointer">
-    //         <BellFilled style={{ fontSize: 24 }} className="text-gray-600" />
-    //       </Badge>
-    //       {IsLoggedIn && (
-    //         <Space size="small" className="ml-4">
-    //           <span className="hidden sm:inline text-gray-700">{nameUser}</span>
-    //           <Button
-    //             type="primary"
-    //             danger
-    //             icon={<LogoutOutlined />}
-    //             onClick={handleLogout}
-    //             className="flex items-center bg-red-500 hover:bg-red-600"
-    //           >
-    //             <span className="hidden sm:inline">Đăng Xuất</span>
-    //           </Button>
-    //         </Space>
-    //       )}
-    //     </Space>
-    //   </div>
-    // </header>
+  return (    
     <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         <Space className="flex items-center">
           <div className="flex-shrink-0">
-            <img src="/logo3.png" alt="Logo" className="w-24 h-12 object-contain" />
+            <div className="h-12 object-cover"></div>
+            {/* <img src="/OIP.png" alt="Logo" className="w-24 h-12 object-cover" /> */}
           </div>
           <h1 level={4} className="m-0 hidden sm:block font-semibold text-lg text-gray-800">
             HOMESTAY ADMIN

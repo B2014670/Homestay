@@ -580,7 +580,7 @@ class UserService {
       },
       { returnDocument: "after", projection: { order: { $elemMatch: { idOrder: idOrder } } } }
     );
-    console.log(result);
+    // console.log(result);
 
     if (!result) {
       throw new Error("Order not found or cannot be updated.");
@@ -671,7 +671,7 @@ class UserService {
           "order.$.pay": "true",
         },
       },
-      { returnDocument: "after" }
+      { returnDocument: "after", projection: { order: { $elemMatch: { idOrder: idOrder } } } }
     );
 
     return result;

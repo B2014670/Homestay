@@ -612,12 +612,19 @@ exports.checkinOrderRoom = async (req, res, next) => {
 };
 
 exports.completeOrderRoom = async (req, res, next) => {
-  // console.log(req.body)
+
   try {
     const userService = new UserService(MongoDB.client);
+    const roomService = new RoomService(MongoDB.client);
+
+    // Step 1: Complete the user's order
     const result = await userService.completeOrderRoom(req.body);
-    // console.log(result)
-    if (result) {
+
+    // Step 2: Delete the room booking dates
+    const roomResult = await roomService.deleteDateRoom(result.order[0])
+    // console.log(roomResult);
+
+    if (result &&  roomResult.acknowledged && roomResult.modifiedCount > 0) {
       return res.status(200).json({
         status: 1,
         data: result,
