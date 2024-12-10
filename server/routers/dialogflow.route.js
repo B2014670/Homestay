@@ -250,32 +250,22 @@ router.post("", async (req, res) => {
         parameters;
       //  console.log(parameters)
       const room = await dialogflow.getInfoRoom({ idRoom: enTenPhong });
-      console.log(room);
+      // console.log(room);
 
-      // Hàm này sẽ tạo một mảng các ngày từ ngày check-in đến ngày check-out
-      function generateDateArrayWithTimezone(startTimestamp, endTimestamp) {
-        const dateArray = [];
-        let currentDate = new Date(startTimestamp);
-        const lastDate = new Date(endTimestamp);
 
-        while (currentDate <= lastDate) {
-          const formattedDate = `${currentDate
-            .getDate()
-            .toString()
-            .padStart(2, "0")}/${(currentDate.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}/${currentDate.getFullYear()}`;
-          dateArray.push(formattedDate);
-          currentDate = new Date(
-            currentDate.setDate(currentDate.getDate() + 1)
-          );
-        }
-        return dateArray;
+      function convertISOToDDMMYYYY(isoString) {
+        const date = new Date(isoString);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        if (day > 12) return `${day}/${month}/${year}`;
+
+        return `${month}/${day}/${year}`;
       }
-      const arrayDate = generateDateArrayWithTimezone(
-        enNgayCheckIn,
-        enNgayCheckOut
-      );
+
+      const arrayDate = [convertISOToDDMMYYYY(enNgayCheckIn), convertISOToDDMMYYYY(enNgayCheckOut)];
+      const days = (new Date(arrayDate[1].split('/').reverse().join('-')) - 
+              new Date(arrayDate[0].split('/').reverse().join('-'))) / (1000 * 3600 * 24);
       console.log('arrayDate', arrayDate);
       const orderDetails = {
         enTenPhong,
@@ -291,16 +281,58 @@ router.post("", async (req, res) => {
 
       console.log('data', data);
 
+      // const confirmationMessage = `Chào anh/chị ${enTen.name
+      //   }! Homestay xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ. 
+      //   Anh/chị ${enTen.name} đặt phòng ${room.nameRoom} ngày nhận phòng : ${arrayDate[0]
+      //   }, ngày trả phòng: ${arrayDate[arrayDate.length - 1]}. 
+      //   Tổng số ngày là ${arrayDate.length}.
+      //   Tổng tiền: ${arrayDate.length * room.giaRoom}vnđ.
+      //   Khi nhận phòng tại quầy, vui lòng cung cấp tên và SĐT để nhận phòng hoặc mã đặt phòng: ${data.order[data.order.length - 1].idOrder
+      //   }.`;
+      // return res.send({
+      //   fulfillmentText: confirmationMessage,
+      // });
       const confirmationMessage = `Chào anh/chị ${enTen.name
-        }! Homestay xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ. 
-        Anh/chị ${enTen.name} đặt phòng ${room.nameRoom} ngày nhận phòng : ${arrayDate[0]
-        }, ngày trả phòng: ${arrayDate[arrayDate.length - 1]}. 
-        Tổng số ngày là ${arrayDate.length}.
-        Tổng tiền: ${arrayDate.length * room.giaRoom}vnđ.
-        Khi nhận phòng tại quầy, vui lòng cung cấp tên và SĐT để nhận phòng hoặc mã đặt phòng: ${data.order[data.order.length - 1].idOrder
-        }.`;
+        }! Homestay xin xác nhận thông tin đơn đặt phòng của mình lần nữa ạ.`;
+
+      const roomDetails = {
+        "type": "info",
+        "title": "Thông tin đặt phòng",
+        "subtitle": `Phòng: ${room.nameRoom}`,
+      };
+
+      const bookingDetails = {
+        "type": "description",
+        "text": [
+          `Ngày nhận: ${arrayDate[0]}`,
+          `Ngày trả: ${arrayDate[arrayDate.length - 1]}`,
+          `Tổng số ngày: ${days}`,
+          `Tổng tiền: ${data.totalMoney.toLocaleString()} vnđ`
+        ]
+      };
+
+      const bookingCode = {
+        "type": "description",
+        "text": [
+          `Khi nhận phòng tại quầy, vui lòng cung cấp tên và SĐT để nhận phòng hoặc mã đặt phòng: ${data.order[data.order.length - 1].idOrder}`
+        ]
+      };
+
       return res.send({
-        fulfillmentText: confirmationMessage,
+        fulfillmentMessages: [
+          {
+            text: {
+              text: [confirmationMessage]
+            }
+          },
+          {
+            payload: {
+              richContent: [
+                [roomDetails, bookingDetails, bookingCode]
+              ]
+            }
+          }
+        ]
       });
     } catch (error) {
       console.log(error);
@@ -511,15 +543,14 @@ router.post("", async (req, res) => {
   }
 
   //Huy dat phong
-  async function canleOrderRoom() {
+  async function cancelOrderRoom() {
     try {
-      // console.log(parameters)
       const idOrder = parameters.EnIdOrder;
       // console.log(idOrder)
       const data = await dialogflow.cancelOrderRoomByChatBot({
         idOrder: idOrder,
       });
-      console.log(data.status);
+      console.log('data.status',data.status);
       if (data.status === 1)
         return res.send({
           fulfillmentText: data.msg,
@@ -655,14 +686,14 @@ router.post("", async (req, res) => {
   if (intent === "inGiaPhong") {
     inTotalRoom();
   }
+  if (intent === "InCancleOrder - yes") {
+    cancelOrderRoom();
+  }
   if (intent === "inThanhToan - yes") {
     payOrderByBank();
   }
   if (intent === "inCheckPhongTrong") {
     checkRoomDate();
-  }
-  if (intent === "InCancelOrder - yes") {
-    canleOrderRoom();
   }
   if (intent === "inTraCuuDonDatPhong") {
     getInfoOrder();

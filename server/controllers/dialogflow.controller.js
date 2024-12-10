@@ -224,7 +224,15 @@ exports.checkRoomByChatBot = async (payload) => {
 exports.cancelOrderRoomByChatBot = async (payload) => {
   try {
     const userService = new UserService(MongoDB.client);
+    const roomService = new RoomService(MongoDB.client);
+
     const result = await userService.CancelOrderRoomByChatBot(payload)
+
+    // Step 2: Delete the room booking dates
+    if (result.result) {
+      const roomResult = await roomService.deleteDateRoom(result.result.order[0])
+    }
+
     return result;
   } catch (error) {
     console.log(error)

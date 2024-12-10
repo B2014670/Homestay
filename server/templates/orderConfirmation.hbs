@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{{!-- <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -13,6 +13,121 @@
     <div class="container">
         <h1>Xác Nhận Đơn Hàng</h1>
         <p>Cảm ơn bạn đã đặt hàng! Mã đơn hàng của bạn là: <strong>{{orderId}}</strong>.</p>
+    </div>
+</body>
+</html> --}}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo xác nhận đơn hàng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        li strong {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .service-details {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .service-details li {
+            font-size: 14px;
+        }
+        .highlight {
+            color: #e74c3c;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Xác nhận đơn hàng #{{orderId}}</h1>
+        
+        <p><strong>Thông tin người dùng:</strong></p>
+        <ul>
+            <li><strong>Họ và tên:</strong> {{userInput}}</li>
+            <li><strong>Số điện thoại:</strong> {{phoneInput}}</li>
+        </ul>
+
+        <p><strong>Thông tin đặt phòng:</strong></p>
+        <ul>
+            <li><strong>ID Phòng:</strong> {{idRoom}}</li>
+            <li><strong>Ngày đặt:</strong> {{dateInput}}</li>
+            <li><strong>Tổng tiền:</strong> {{totalMoney}} VND</li>
+            <li><strong>Trạng thái thanh toán:</strong> {{pay}}</li>
+            <li><strong>Phương thức thanh toán:</strong> {{paymentMethod}}</li>
+            <li><strong>Mã giao dịch:</strong> {{transactionId}}</li>
+            <li><strong>Tiền cọc:</strong> {{deposit}} VND</li>
+            <li><strong>Trạng thái đơn hàng:</strong> {{statusOrder}}</li>
+        </ul>
+
+        <p><strong>Dịch vụ bổ sung:</strong></p>
+        {{#if extraServices}}
+            <div class="service-details">
+                <ul>
+                    <li><strong>Dịch vụ:</strong> {{serviceType}}</li>
+                    <li><strong>Số lượng khách:</strong> {{guests}}</li>
+                    <li><strong>Ngày sử dụng:</strong> {{dates}}</li>
+                    <li><strong>Giá mỗi đơn vị:</strong> {{pricePerUnit}} VND</li>
+                    <li><strong>Tổng chi phí dịch vụ:</strong> {{totalServiceCost}} VND</li>
+                </ul>
+            </div>
+        {{else}}
+            <p>Không có dịch vụ bổ sung.</p>
+        {{/if}}
+
+        <p><strong>Thông tin đơn hàng đã được xác nhận. Chúng tôi sẽ liên hệ với bạn sớm nhất.</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>Trân trọng, <br> Đội ngũ hỗ trợ khách hàng</p>
     </div>
 </body>
 </html>

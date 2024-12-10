@@ -337,7 +337,7 @@ class RoomService {
 
     const result = await this.Room.updateOne(
       { _id: ObjectId.isValid(payload.idRoom) ? new ObjectId(payload.idRoom) : null },
-      { $pull: { ordersRoom: payload.dateInput } }, //{ $in: payload.dateOrderRoom }
+      { $pull: { ordersRoom: payload.dateInput } },
     );
     return result;
   }

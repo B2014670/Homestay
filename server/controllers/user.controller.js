@@ -571,10 +571,16 @@ exports.orderRoom = async (req, res, next) => {
 
     // Thực hiện lưu thông tin đặt phòng
     const roomOrderResult = await roomService.OrderRoom(room)
-    const userOrderResult  = await userService.OrderRoomUser(user)
+    const userOrderResult = await userService.OrderRoomUser(user)
 
-    if (roomOrderResult && userOrderResult) {
-      return res.status(200).send({ message: "Đặt phòng thành công!" });
+    if (roomOrderResult && userOrderResult) {     
+      try {
+        await sendEmail(userOrderResult.email, 'orderConfirmation', userOrderResult.order[userOrderResult.order.length - 1]);
+        return res.status(200).send({ message: "Đặt phòng thành công! Email xác nhận đã được gửi." });
+      } catch (error) {
+        console.error('Error sending confirmation email:', error);
+        return res.status(500).send({ message: "Đặt phòng thành công, nhưng có lỗi khi gửi email xác nhận!" });
+      }
     } else {
       return res.status(500).send({ message: "Lưu thông tin đặt phòng thất bại!" });
     }
@@ -1069,7 +1075,7 @@ exports.getExtraServiceById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const extraServiceService = new ExtraServiceService(MongoDB.client);
-    const data = await extraServiceService.getById(id); 
+    const data = await extraServiceService.getById(id);
 
     if (data) {
       return res.status(200).json(data);

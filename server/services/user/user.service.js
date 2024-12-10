@@ -702,10 +702,13 @@ class UserService {
   }
 
   async CancelOrderRoomByChatBot(payload) {
+    // console.log("payload", payload);
     const idOrder = payload.idOrder;
 
     // Tìm order dựa trên idOrder
     const order = await this.User.findOne({ "order.idOrder": idOrder });
+
+    // console.log('order', order);
 
     if (!order) {
       return "Không tìm thấy order nào có id " + idOrder;
@@ -716,16 +719,15 @@ class UserService {
     if (statusOrder === "10") {
       return {
         status: 1,
-        msg: "Đơn đặt phòng đã được hủy trước đó. !"
+        msg: "Đơn đặt phòng đã được hủy trước đó. !",
       };
     } else if (statusOrder === "1" || statusOrder === "2") {
       // Cập nhật statusOrder lên 10
       const result = await this.User.findOneAndUpdate(
         { "order.idOrder": idOrder },
         { $set: { "order.$.statusOrder": "10" } },
-        { returnDocument: "after" }
+        { returnDocument: "after", projection: { order: { $elemMatch: { idOrder: idOrder } } } }
       );
-      console.log(result)
       return {
         result: result,
         status: 0,
