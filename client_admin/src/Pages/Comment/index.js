@@ -204,6 +204,10 @@ const Comment = () => {
                 ),
               },
               {
+                title: 'Phòng',
+                dataIndex: ['roomDetails', 'nameRoom'],
+              },
+              {
                 title: 'Đánh giá',
                 dataIndex: 'rating',
                 key: 'rating',

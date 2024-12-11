@@ -535,6 +535,11 @@ class RoomService {
         }
       },
       {
+        $addFields: {
+          "cmtRoom.idRoom": { $toObjectId: "$cmtRoom.idRoom" }
+        }
+      },
+      {
         $lookup: {
           from: "users",
           localField: "cmtRoom.idUser",
@@ -545,6 +550,20 @@ class RoomService {
       {
         $unwind: {
           path: "$cmtRoom.userDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "rooms",
+          localField: "cmtRoom.idRoom",
+          foreignField: "_id",
+          as: "cmtRoom.roomDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$cmtRoom.roomDetails",
           preserveNullAndEmptyArrays: true
         }
       },
@@ -563,7 +582,8 @@ class RoomService {
           "cmtRoom.isDeleted": 1,
           "cmtRoom.userDetails._id": 1,
           "cmtRoom.userDetails.name": 1,
-          "cmtRoom.userDetails.img": 1
+          "cmtRoom.userDetails.img": 1,
+          "cmtRoom.roomDetails.nameRoom": 1
         }
       }
     ]).toArray();
