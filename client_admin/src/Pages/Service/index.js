@@ -290,7 +290,7 @@ const Service = () => {
                     >
                       Chỉnh sửa
                     </EditOutlined>
-                    <Popconfirm
+                    {/* <Popconfirm
                       okType="danger"
                       //  okButtonProps={{ style: {  backgroundColor: 'red'  }}}
                       title="Bạn có chắc chắn muốn xóa không?"
@@ -316,7 +316,7 @@ const Service = () => {
                         className="m-1 flex items-center justify-center"
                         style={{ fontSize: "20px", color: "red" }}
                       />
-                    </Popconfirm>
+                    </Popconfirm> */}
                   </div>
                 );
               },

@@ -735,7 +735,7 @@ const Orders = () => {
                   >
                     <Button
                       danger
-                      disabled={record.statusOrder !== '1' && record.statusOrder !== '2'}
+                      disabled={record.statusOrder !== '1' && record.statusOrder !== '2' || record.cccd}
                     >
                       Hủy
                     </Button>
